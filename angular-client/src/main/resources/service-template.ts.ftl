@@ -8,7 +8,7 @@
     <#elseif param.type.name == "number[]"  || param.type.name == "boolean[]" >
         headers['${param.parameterName}'] = ${param.name}.map(String);
     <#else>
-        headers['${param.parameterName}'] = ${param.name} as string;
+        headers['${param.parameterName}'] = ${param.name}.toString();
     </#if>
 </#macro>
 <#macro setQueryParam param>

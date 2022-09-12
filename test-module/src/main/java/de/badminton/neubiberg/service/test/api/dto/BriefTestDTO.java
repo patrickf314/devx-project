@@ -9,4 +9,7 @@ public class BriefTestDTO {
     private int id;
     private TestType type;
 
+    public int getId() {
+        return id;
+    }
 }

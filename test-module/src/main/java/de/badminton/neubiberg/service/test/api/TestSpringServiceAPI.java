@@ -1,8 +1,6 @@
 package de.badminton.neubiberg.service.test.api;
 
-import de.badminton.neubiberg.service.test.api.dto.ScoreDTO;
-import de.badminton.neubiberg.service.test.api.dto.TestDTO;
-import de.badminton.neubiberg.service.test.api.dto.TestRecordDTO;
+import de.badminton.neubiberg.service.test.api.dto.*;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +17,12 @@ public interface TestSpringServiceAPI {
     @GetMapping
     @RequestMapping(value = "dto", method = {RequestMethod.GET, RequestMethod.DELETE})
     ResponseEntity<TestDTO> getTestDTO(HttpRequest request, @RequestParam(value = "abc") String testQueryParam);
+
+    @GetMapping("bulk")
+    TestListDTO getTestDTOAsList();
+
+    @GetMapping("bulk2")
+    TestMapDTO<TestDTO> getTestDTOAsMap();
 
     @DeleteMapping("{id}")
     void deleteTestDTO(@RequestHeader(name = "TEST_HEADER", required = false) String header, @PathVariable int id);

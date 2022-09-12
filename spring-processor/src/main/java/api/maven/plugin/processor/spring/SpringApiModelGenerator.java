@@ -5,7 +5,7 @@ import api.maven.plugin.core.type.ApiMethodParameterType;
 import api.maven.plugin.core.type.ApiMethodResponseType;
 import api.maven.plugin.core.type.ApiTypeType;
 import api.maven.plugin.processor.spring.mapper.ParameterAnnotationMapper;
-import api.maven.plugin.processor.spring.mapper.TypeElementUtils;
+import api.maven.plugin.processor.spring.utils.TypeElementUtils;
 import api.maven.plugin.processor.spring.utils.AnnotationMirrorUtils;
 import org.springframework.http.HttpMessage;
 import org.springframework.http.ResponseEntity;
@@ -90,28 +90,27 @@ public class SpringApiModelGenerator {
         endpointModel.addMethod(methodModel);
     }
 
-    private void setReturnType(ApiMethodModel model, TypeMirror type) {
-        if (type.getKind() != TypeKind.DECLARED) {
-            model.setReturnType(mapTypeMirror(type, true));
+    private void setReturnType(ApiMethodModel model, TypeMirror typeMirror) {
+        if (!(typeMirror instanceof DeclaredType declaredType)) {
+            model.setReturnType(mapTypeMirror(typeMirror, true));
             return;
         }
 
-        var returnType = (DeclaredType) type;
-        if (!(returnType.asElement() instanceof TypeElement element)) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "Unexpected type mirror " + returnType.getClass().getName() + ", asElement() does not return a TypeElement");
+        if (!(declaredType.asElement() instanceof TypeElement element)) {
+            messager.printMessage(Diagnostic.Kind.ERROR, "Unexpected type mirror " + declaredType.getClass().getName() + ", asElement() does not return a TypeElement");
             return;
         }
 
         if (TypeElementUtils.isClass(element, ResponseEntity.class)) {
-            setReturnType(model, returnType.getTypeArguments().get(0));
-        } else if (TypeElementUtils.isImplementationOf(element, StreamingResponseBody.class)) {
+            setReturnType(model, declaredType.getTypeArguments().get(0));
+        } else if (TypeElementUtils.isImplementationOf(declaredType, StreamingResponseBody.class)) {
             model.setReturnType(ApiTypeModel.UNKNOWN);
             model.setResponseType(ApiMethodResponseType.STREAM);
         } else if (TypeElementUtils.isExtensionOf(element, ResponseBodyEmitter.class)) {
             model.setReturnType(ApiTypeModel.UNKNOWN);
             model.setResponseType(ApiMethodResponseType.SERVER_SEND_EVENT);
         } else {
-            model.setReturnType(mapDeclaredTypeMirror(returnType, true));
+            model.setReturnType(mapDeclaredTypeMirror(declaredType, true));
         }
     }
 
@@ -186,33 +185,48 @@ public class SpringApiModelGenerator {
         }
 
         var className = element.getQualifiedName().toString();
-
-        ApiTypeModel typeModel;
         if (className.equals(String.class.getName())) {
-            typeModel = new ApiTypeModel("string", ApiTypeType.JAVA_TYPE);
-        } else if (TypeElementUtils.isImplementationOf(element, Collection.class)) {
-            typeModel = new ApiTypeModel("collection", ApiTypeType.JAVA_TYPE);
-        } else if (TypeElementUtils.isImplementationOf(element, Map.class)) {
-            typeModel = new ApiTypeModel("map", ApiTypeType.JAVA_TYPE);
-        } else if (TypeElementUtils.isExtensionOf(element, Number.class)) {
-            typeModel = new ApiTypeModel("number", ApiTypeType.JAVA_TYPE);
-        } else if (element.getKind() == ElementKind.ENUM) {
-            var enumModel = createEnumModel(element, className);
-            typeModel = new ApiTypeModel(enumModel.getName(), ApiTypeType.ENUM, enumModel.getClassName());
-        } else if (element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.RECORD) {
-            var dtoModel = createDTOModel(element, className);
-            typeModel = new ApiTypeModel(dtoModel.getName(), ApiTypeType.DTO, dtoModel.getClassName());
-        } else {
-            typeModel = new ApiTypeModel("unknown", ApiTypeType.UNKNOWN, className);
+            return new ApiTypeModel("string", ApiTypeType.JAVA_TYPE, required);
         }
 
-        typeModel.setRequired(required);
-        typeModel.setTypeArguments(typeMirror.getTypeArguments()
+        if (TypeElementUtils.isExtensionOf(element, Number.class)) {
+            return new ApiTypeModel("number", ApiTypeType.JAVA_TYPE, required);
+        }
+
+        var collection = TypeElementUtils.getInterfaceTypeMirror(typeMirror, Collection.class);
+        if (collection.isPresent()) {
+            var typeArgs = TypeElementUtils.getTypeArgumentsOfInterface(typeMirror, Collection.class)
+                    .stream()
+                    .map(t -> this.mapTypeMirror(t, true))
+                    .toList();
+            return new ApiTypeModel("collection", ApiTypeType.JAVA_TYPE, required, typeArgs);
+        }
+
+        var map = TypeElementUtils.getInterfaceTypeMirror(element, Map.class);
+        if (map.isPresent()) {
+            var typeArgs = TypeElementUtils.getTypeArgumentsOfInterface(typeMirror, Map.class)
+                    .stream()
+                    .map(t -> this.mapTypeMirror(t, true))
+                    .toList();;
+            return new ApiTypeModel("map", ApiTypeType.JAVA_TYPE, required, typeArgs);
+        }
+
+        if (element.getKind() == ElementKind.ENUM) {
+            var enumModel = createEnumModel(element, className);
+            return new ApiTypeModel(enumModel.getName(), ApiTypeType.ENUM, enumModel.getClassName(), required);
+        }
+
+        var typeArguments = typeMirror.getTypeArguments()
                 .stream()
                 .map(t -> this.mapTypeMirror(t, true))
-                .collect(Collectors.toList()));
+                .toList();
 
-        return typeModel;
+        if (element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.RECORD) {
+            var dtoModel = createDTOModel(element, className);
+            return new ApiTypeModel(dtoModel.getName(), ApiTypeType.DTO, dtoModel.getClassName(), required, typeArguments);
+        }
+
+        return new ApiTypeModel("unknown", ApiTypeType.UNKNOWN, className, required);
     }
 
     private ApiDTOModel createDTOModel(TypeElement element, String className) {
@@ -248,12 +262,12 @@ public class SpringApiModelGenerator {
     }
 
     private boolean isRequiredDTOField(VariableElement element) {
-        if(TypeElementUtils.isAnnotationPresent(element, NotNull.class)) {
+        if (TypeElementUtils.isAnnotationPresent(element, NotNull.class)) {
             return true;
         }
 
         var type = element.asType();
-        if(type instanceof DeclaredType declaredType) {
+        if (type instanceof DeclaredType declaredType) {
             return declaredType.asElement().getKind() == ElementKind.ENUM;
         }
 
