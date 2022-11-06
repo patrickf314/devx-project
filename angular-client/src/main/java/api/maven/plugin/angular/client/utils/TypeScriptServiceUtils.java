@@ -2,8 +2,6 @@ package api.maven.plugin.angular.client.utils;
 
 public class TypeScriptServiceUtils {
 
-
-
     public static String getServiceByClassName(String className) {
         var i = className.indexOf(".service.");
         if(i == -1) {

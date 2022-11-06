@@ -86,6 +86,9 @@ public interface TypeScriptMapper {
             method.setReturnTypeWrapper("ServerSendEventSource");
             method.setReturnType(TypeScriptType.SERVER_SEND_EVENT);
         } else {
+            if(method.getReturnType().getName().equals("string")) {
+                method.setOptions("{responseType: 'text'}");
+            }
             method.setReturnTypeWrapper("Promise");
         }
     }

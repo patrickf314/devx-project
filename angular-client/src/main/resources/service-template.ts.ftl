@@ -108,7 +108,7 @@ export class ${model.name} {
 
         </#if>
         <#if method.returnTypeWrapper == 'Promise'>
-        return firstValueFrom(this.http.${method.httpMethod?lower_case}<${method.returnType.name}>(<@url method=method></@url><#if method.bodyParameter??>, ${method.bodyParameter}</#if><@options method=method></@options>));
+        return firstValueFrom(this.http.${method.httpMethod?lower_case}<#if method.returnType.name != 'string'><${method.returnType.name}></#if>(<@url method=method></@url><#if method.bodyParameter??>, ${method.bodyParameter}</#if><@options method=method></@options>));
         <#elseif method.returnTypeWrapper == 'Observable'>
         return this.http.${method.httpMethod?lower_case}(<@url method=method></@url><#if method.bodyParameter??>, ${method.bodyParameter}</#if><@options method=method></@options>).pipe(${method.returnTypeMapper});
         <#elseif method.returnTypeWrapper == 'ServerSendEventSource'>

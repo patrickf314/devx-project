@@ -18,6 +18,7 @@ public class ApiDTOModel {
     private ApiTypeModel extendedDTO;
     private Map<String, ApiTypeModel> fields = new HashMap<>();
     private List<String> typeArguments = new ArrayList<>();
+    private ApiEnclosingDTOModel enclosingDTO;
 
     public ApiDTOModel(String className, String name) {
         this.className = className;

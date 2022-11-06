@@ -1,13 +1,15 @@
 package api.maven.plugin.angular.client.utils;
 
-import api.maven.plugin.core.model.ApiDTOModel;
-import api.maven.plugin.core.model.ApiEnumModel;
-import api.maven.plugin.core.model.ApiServiceEndpointModel;
-import api.maven.plugin.core.model.ApiTypeModel;
+import api.maven.plugin.core.model.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class TypeScriptOutputDirectory {
 
@@ -48,23 +50,33 @@ public class TypeScriptOutputDirectory {
     }
 
     private static String serviceFileName(String name) {
-        if(name.endsWith("ServiceAPI")) {
+        if (name.endsWith("ServiceAPI")) {
             name = name.substring(0, name.length() - 10);
         }
 
         return TypeScriptUtils.toLowerCaseName(name) + ".service";
     }
 
-    public File dtoFolder(String serviceName) throws IOException {
-        return dtoFolder(serviceFolder(serviceName));
+    public File dtoFolder(String serviceName, ApiEnclosingDTOModel enclosingDTO) throws IOException {
+        return dtoFolder(serviceFolder(serviceName), enclosingDTO);
     }
 
-    public File dtoFolder(File serviceFolder) throws IOException {
-        return ensureFolderExists(new File(serviceFolder, "dto"), "dto");
+    public File dtoFolder(File serviceFolder, ApiEnclosingDTOModel enclosingDTO) throws IOException {
+        var dtoFolderName = "dto";
+
+        if (enclosingDTO != null) {
+            if (!enclosingDTO.getNesting().isEmpty()) {
+                dtoFolderName += "/" + enclosingDTO.getNesting().stream().map(this::enclosingFolderName).collect(Collectors.joining("/"));
+            }
+
+            dtoFolderName += "/" + enclosingFolderName(enclosingDTO.getName());
+        }
+
+        return ensureFolderExists(new File(serviceFolder, dtoFolderName), "dto");
     }
 
     public File dtoFile(ApiDTOModel dtoModel) throws IOException {
-        var file = new File(dtoFolder(TypeScriptServiceUtils.getServiceByClassName(dtoModel.getClassName())), dtoFileName(dtoModel) + ".ts");
+        var file = new File(dtoFolder(TypeScriptServiceUtils.getServiceByClassName(dtoModel.getClassName()), dtoModel.getEnclosingDTO()), dtoFileName(dtoModel) + ".ts");
         if (!file.exists() && !file.createNewFile()) {
             throw new IOException("Failed to create dto file " + file.getAbsolutePath());
         }
@@ -76,7 +88,7 @@ public class TypeScriptOutputDirectory {
     }
 
     private String dtoFileName(String name) {
-        if(name.endsWith("DTO")) {
+        if (name.endsWith("DTO")) {
             name = name.substring(0, name.length() - 3);
         }
 
@@ -108,36 +120,91 @@ public class TypeScriptOutputDirectory {
     }
 
     public String relativePath(ApiServiceEndpointModel endpointModel, ApiTypeModel targetType) {
-        return relativePath(TypeScriptServiceUtils.getServiceByClassName(endpointModel.getClassName()), null, targetType);
+        return relativePath(TypeScriptServiceUtils.getServiceByClassName(endpointModel.getClassName()), Collections.emptyList(), targetType);
     }
 
     public String relativePathToCommonsFile(ApiServiceEndpointModel endpointModel, String fileName) {
-        return relativePath(TypeScriptServiceUtils.getServiceByClassName(endpointModel.getClassName()), null, COMMONS_FOLDER_NAME, null) + fileName;
+        return relativePath(TypeScriptServiceUtils.getServiceByClassName(endpointModel.getClassName()), Collections.emptyList(), COMMONS_FOLDER_NAME, Collections.emptyList()) + fileName;
     }
 
     public String relativePath(ApiDTOModel dtoModel, ApiTypeModel targetType) {
-        return relativePath(TypeScriptServiceUtils.getServiceByClassName(dtoModel.getClassName()), "dto", targetType);
+        var nesting = new ArrayList<String>();
+
+        nesting.add("dto");
+        if (dtoModel.getEnclosingDTO() != null) {
+            nesting.addAll(dtoModel.getEnclosingDTO().getNesting().stream().map(this::enclosingFolderName).toList());
+            nesting.add(enclosingFolderName(dtoModel.getEnclosingDTO().getName()));
+        }
+
+        return relativePath(TypeScriptServiceUtils.getServiceByClassName(dtoModel.getClassName()), nesting, targetType);
     }
 
-    private String relativePath(String currentService, String currentSubFolder, ApiTypeModel targetType) {
-        return switch (targetType.getType()) {
-            case ENUM -> relativePath(currentService, currentSubFolder, TypeScriptServiceUtils.getServiceByClassName(targetType.getClassName()), "type") + enumFileName(targetType.getName());
-            case DTO -> relativePath(currentService, currentSubFolder, TypeScriptServiceUtils.getServiceByClassName(targetType.getClassName()), "dto") + dtoFileName(targetType.getName());
-            default -> throw new IllegalArgumentException("Cannot get relative path to type " + targetType.getType().name());
-        };
+    private String relativePath(String currentService, List<String> currentSubFolder, ApiTypeModel targetType) {
+        var nesting = new ArrayList<String>();
+
+        String fileName;
+        switch (targetType.getType()) {
+            case ENUM -> {
+                nesting.add("type");
+                fileName = enumFileName(targetType.getName());
+            }
+            case DTO -> {
+                nesting.add("dto");
+                fileName = dtoFileName(targetType.getName());
+            }
+            default ->
+                    throw new IllegalArgumentException("Cannot get relative path to type " + targetType.getType().name());
+        }
+
+        nesting.addAll(targetType.getNesting().stream().map(this::enclosingFolderName).toList());
+
+        return relativePath(currentService, currentSubFolder, TypeScriptServiceUtils.getServiceByClassName(targetType.getClassName()), nesting) + fileName;
     }
 
-    private String relativePath(String currentService, String currentSubFolder, String targetService, String targetSubFolder) {
+    private String relativePath(String currentService, List<String> currentSubFolder, String targetService, List<String> targetSubFolder) {
+        var builder = new StringBuilder();
+// -2 = 3 - 5
+        var depthDiff = currentSubFolder.size() - targetSubFolder.size();
+        if(depthDiff > 0) {
+            IntStream.range(0, depthDiff).mapToObj(i -> "../").forEach(builder::append);
+            depthDiff = 0;
+        }
+
+        var parentFolderMissmatch = !targetService.equals(currentService);
+        for(var i = 0; i < targetSubFolder.size() + depthDiff; i ++) {
+            if(parentFolderMissmatch) {
+                builder.append("../");
+                continue;
+            }
+
+            if(!targetSubFolder.get(i).equals(currentSubFolder.get(i))) {
+                builder.append("../");
+                parentFolderMissmatch = true;
+            }
+        }
 
         if (!targetService.equals(currentService)) {
-            return (currentSubFolder == null ? "../" : "../../") + targetService + (targetSubFolder == null ? "/" : "/" + targetSubFolder + "/");
-        } else if (Objects.equals(targetSubFolder, currentSubFolder)) {
-            return "./";
-        } else if (currentSubFolder == null) {
-            return "./" + targetSubFolder + "/";
-        } else {
-            return "../" + targetSubFolder + "/";
+            builder.append("../").append(targetService).append("/");
         }
+
+        if(builder.isEmpty()) {
+            builder.append("./");
+        }
+
+        parentFolderMissmatch = !targetService.equals(currentService);
+        for(var i = 0; i < targetSubFolder.size(); i ++) {
+            if(i >= currentSubFolder.size() || parentFolderMissmatch) {
+                builder.append(targetSubFolder.get(i)).append("/");
+                continue;
+            }
+
+            if(!currentSubFolder.get(i).equals(targetSubFolder.get(i))) {
+                builder.append(targetSubFolder.get(i)).append("/");
+                parentFolderMissmatch = true;
+            }
+        }
+
+        return builder.toString();
     }
 
     private File ensureFolderExists(File folder, String type) throws IOException {
@@ -145,6 +212,14 @@ public class TypeScriptOutputDirectory {
             throw new IOException("Failed to create " + type + " folder " + folder.getAbsolutePath());
         }
         return folder;
+    }
+
+    private String enclosingFolderName(String name) {
+        if (name.endsWith("DTO")) {
+            name = name.substring(0, name.length() - 3);
+        }
+
+        return TypeScriptUtils.toLowerCaseName(name);
     }
 
 }

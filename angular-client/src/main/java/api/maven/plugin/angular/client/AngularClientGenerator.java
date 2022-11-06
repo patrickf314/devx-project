@@ -11,6 +11,7 @@ import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import org.mapstruct.factory.Mappers;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;

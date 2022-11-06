@@ -21,6 +21,7 @@ public class ApiTypeModel {
     private String className;
     private boolean required;
     private List<ApiTypeModel> typeArguments;
+    private List<String> nesting;
 
     public ApiTypeModel(String name, ApiTypeType type) {
         this(name, type, null);
@@ -31,7 +32,7 @@ public class ApiTypeModel {
     }
 
     public ApiTypeModel(String name, ApiTypeType type, boolean required, List<ApiTypeModel> typeArguments) {
-        this(name, type, null, required, typeArguments);
+        this(name, type, null, required, typeArguments, Collections.emptyList());
     }
 
     public ApiTypeModel(String name, ApiTypeType type, String className) {
@@ -39,6 +40,6 @@ public class ApiTypeModel {
     }
 
     public ApiTypeModel(String name, ApiTypeType type, String className, boolean required) {
-        this(name, type, className, required, Collections.emptyList());
+        this(name, type, className, required, Collections.emptyList(), Collections.emptyList());
     }
 }

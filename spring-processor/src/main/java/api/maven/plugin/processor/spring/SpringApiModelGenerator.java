@@ -21,10 +21,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.servlet.ServletResponse;
 import javax.tools.Diagnostic;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static api.maven.plugin.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
@@ -223,7 +220,12 @@ public class SpringApiModelGenerator {
 
         if (element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.RECORD) {
             var dtoModel = createDTOModel(element, className);
-            return new ApiTypeModel(dtoModel.getName(), ApiTypeType.DTO, dtoModel.getClassName(), required, typeArguments);
+            var nesting = new ArrayList<String>();
+            if(dtoModel.getEnclosingDTO() != null) {
+                nesting.addAll(dtoModel.getEnclosingDTO().getNesting());
+                nesting.add(dtoModel.getEnclosingDTO().getName());
+            }
+            return new ApiTypeModel(dtoModel.getName(), ApiTypeType.DTO, dtoModel.getClassName(), required, typeArguments, nesting);
         }
 
         return new ApiTypeModel("unknown", ApiTypeType.UNKNOWN, className, required);
@@ -235,6 +237,17 @@ public class SpringApiModelGenerator {
         }
 
         var dtoModel = new ApiDTOModel(className, element.getSimpleName().toString());
+
+        if(element.getEnclosingElement() instanceof TypeElement enclosingElement) {
+            var enclosingDTO = createDTOModel(enclosingElement, enclosingElement.getQualifiedName().toString());
+            var nesting = new ArrayList<String>();
+            if(enclosingDTO.getEnclosingDTO() != null) {
+                nesting.addAll(enclosingDTO.getEnclosingDTO().getNesting());
+                nesting.add(enclosingDTO.getEnclosingDTO().getName());
+            }
+            dtoModel.setEnclosingDTO(new ApiEnclosingDTOModel(enclosingDTO.getClassName(), enclosingDTO.getName(), nesting));
+        }
+
         var superClass = element.getSuperclass();
 
         if (superClass.getKind() == TypeKind.DECLARED) {
