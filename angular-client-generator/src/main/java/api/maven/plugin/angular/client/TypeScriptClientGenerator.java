@@ -2,16 +2,15 @@ package api.maven.plugin.angular.client;
 
 import api.maven.plugin.angular.client.data.TypeScriptDependency;
 import api.maven.plugin.angular.client.data.TypeScriptTypeAlias;
+import api.maven.plugin.angular.client.mapper.TypeScriptMapper;
+import api.maven.plugin.angular.client.utils.TypeScriptOutputDirectory;
 import api.maven.plugin.core.model.*;
 import api.maven.plugin.core.type.ApiMethodResponseType;
 import api.maven.plugin.core.type.ApiTypeType;
-import api.maven.plugin.angular.client.mapper.TypeScriptMapper;
-import api.maven.plugin.angular.client.utils.TypeScriptOutputDirectory;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import org.mapstruct.factory.Mappers;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,19 +21,18 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class AngularClientGenerator {
+public abstract class TypeScriptClientGenerator {
 
-    private static final String RXJS_PATH = "rxjs";
-    private static final TypeScriptMapper MAPPER = Mappers.getMapper(TypeScriptMapper.class);
+    protected static final TypeScriptMapper MAPPER = Mappers.getMapper(TypeScriptMapper.class);
 
-    private final TypeScriptOutputDirectory outputDirectory;
-    private final Map<String, TypeScriptTypeAlias> typeAliases;
-    private final Configuration configuration;
+    protected final TypeScriptOutputDirectory outputDirectory;
+    protected final Map<String, TypeScriptTypeAlias> typeAliases;
+    protected final Configuration configuration;
 
     private final Set<String> copiedResourceFiles = new HashSet<>();
 
-    public AngularClientGenerator(String outputDirectory, List<TypeScriptTypeAlias> typeAliases) throws IOException {
-        this.outputDirectory = new TypeScriptOutputDirectory(outputDirectory);
+    public TypeScriptClientGenerator(TypeScriptOutputDirectory outputDirectory, List<TypeScriptTypeAlias> typeAliases) throws IOException {
+        this.outputDirectory = outputDirectory;
         this.typeAliases = typeAliases.stream().collect(Collectors.toMap(TypeScriptTypeAlias::getClassName, Function.identity()));
 
         configuration = new Configuration(Configuration.VERSION_2_3_20);
@@ -86,20 +84,13 @@ public class AngularClientGenerator {
         }
     }
 
-    private void generateEndpoint(ApiServiceEndpointModel endpointModel) throws IOException {
-        var file = outputDirectory.serviceFile(endpointModel);
-        var template = configuration.getTemplate("service-template.ts.ftl");
+    protected abstract void generateEndpoint(ApiServiceEndpointModel model) throws IOException;
 
-        try (var writer = new FileWriter(file, false)) {
-            template.process(Map.of("model", MAPPER.mapService(endpointModel, findDependencies(endpointModel), typeAliases)), writer);
-        } catch (TemplateException e) {
-            throw new IOException("Failed to process template", e);
-        }
-    }
-
-    private Collection<TypeScriptDependency> findDependencies(ApiServiceEndpointModel endpointModel) throws IOException {
+    protected Collection<TypeScriptDependency> findDependencies(ApiServiceEndpointModel endpointModel, Map<String, Set<String>> additionalDependencies) throws IOException {
         var dependencies = new HashMap<String, TypeScriptDependency>();
-        dependencies.put(RXJS_PATH, mapToDependency(RXJS_PATH, Set.of("firstValueFrom")));
+        for(var entry : additionalDependencies.entrySet()) {
+            dependencies.put(entry.getKey(), mapToDependency(entry.getKey(), entry.getValue()));
+        }
 
         for (var methodModels : endpointModel.getMethods().values()) {
             for (var methodModel : methodModels) {
@@ -135,20 +126,8 @@ public class AngularClientGenerator {
         return dependencies.values();
     }
 
-    private void addTypeDependencies(ApiServiceEndpointModel endpointModel, ApiMethodModel methodModel, Map<String, TypeScriptDependency> dependencies) throws IOException {
-        if (methodModel.getResponseType() == ApiMethodResponseType.STREAM) {
-            ensureFileCopied("download-info.ts");
-            var path = outputDirectory.relativePathToCommonsFile(endpointModel, "download-info");
-            dependencies.put(path, mapToDependency(path, Set.of("HTTP_DOWNLOAD_OPTIONS", "HTTP_DOWNLOAD_PIPE", "DownloadInfo")));
-            dependencies.get(RXJS_PATH).getIdentifiers().add("Observable");
-        } else if (methodModel.getResponseType() == ApiMethodResponseType.SERVER_SEND_EVENT) {
-            ensureFileCopied("server-send-event.ts");
-            var path = outputDirectory.relativePathToCommonsFile(endpointModel, "server-send-event");
-            dependencies.put(path, mapToDependency(path, Set.of("ServerSendEventSource", "ServerSentEvent")));
-        } else {
-            addTypeDependencies(endpointModel, methodModel.getReturnType(), dependencies);
-        }
-
+    protected void addTypeDependencies(ApiServiceEndpointModel endpointModel, ApiMethodModel methodModel, Map<String, TypeScriptDependency> dependencies) throws IOException {
+        addTypeDependencies(endpointModel, methodModel.getReturnType(), dependencies);
         methodModel.getParameters().forEach(param -> addTypeDependencies(endpointModel, param.getType(), dependencies));
     }
 

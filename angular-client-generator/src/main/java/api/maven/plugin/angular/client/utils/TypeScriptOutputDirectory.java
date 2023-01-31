@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class TypeScriptOutputDirectory {
+public abstract class TypeScriptOutputDirectory {
 
     private static final String COMMONS_FOLDER_NAME = "commons";
     private final File outputDirectory;
@@ -23,7 +23,6 @@ public class TypeScriptOutputDirectory {
     public File commonsFolder() throws IOException {
         return ensureFolderExists(new File(outputDirectory, COMMONS_FOLDER_NAME), COMMONS_FOLDER_NAME);
     }
-
 
     public File commonsFile(String fileName) throws IOException {
         var file = new File(commonsFolder(), fileName);
@@ -38,7 +37,7 @@ public class TypeScriptOutputDirectory {
     }
 
     public File serviceFile(ApiServiceEndpointModel endpointModel) throws IOException {
-        var file = new File(serviceFolder(TypeScriptServiceUtils.getServiceByClassName(endpointModel.getClassName())), serviceFileName(endpointModel) + ".ts");
+        var file = new File(serviceFolder(getServiceByClassName(endpointModel.getClassName())), serviceFileName(endpointModel) + ".ts");
         if (!file.exists() && !file.createNewFile()) {
             throw new IOException("Failed to create dto file " + file.getAbsolutePath());
         }
@@ -76,7 +75,7 @@ public class TypeScriptOutputDirectory {
     }
 
     public File dtoFile(ApiDTOModel dtoModel) throws IOException {
-        var file = new File(dtoFolder(TypeScriptServiceUtils.getServiceByClassName(dtoModel.getClassName()), dtoModel.getEnclosingDTO()), dtoFileName(dtoModel) + ".ts");
+        var file = new File(dtoFolder(getServiceByClassName(dtoModel.getClassName()), dtoModel.getEnclosingDTO()), dtoFileName(dtoModel) + ".ts");
         if (!file.exists() && !file.createNewFile()) {
             throw new IOException("Failed to create dto file " + file.getAbsolutePath());
         }
@@ -104,7 +103,7 @@ public class TypeScriptOutputDirectory {
     }
 
     public File enumFile(ApiEnumModel enumModel) throws IOException {
-        var file = new File(enumFolder(TypeScriptServiceUtils.getServiceByClassName(enumModel.getClassName())), enumFileName(enumModel) + ".ts");
+        var file = new File(enumFolder(getServiceByClassName(enumModel.getClassName())), enumFileName(enumModel) + ".ts");
         if (!file.exists() && !file.createNewFile()) {
             throw new IOException("Failed to create dto file " + file.getAbsolutePath());
         }
@@ -120,11 +119,11 @@ public class TypeScriptOutputDirectory {
     }
 
     public String relativePath(ApiServiceEndpointModel endpointModel, ApiTypeModel targetType) {
-        return relativePath(TypeScriptServiceUtils.getServiceByClassName(endpointModel.getClassName()), Collections.emptyList(), targetType);
+        return relativePath(getServiceByClassName(endpointModel.getClassName()), Collections.emptyList(), targetType);
     }
 
     public String relativePathToCommonsFile(ApiServiceEndpointModel endpointModel, String fileName) {
-        return relativePath(TypeScriptServiceUtils.getServiceByClassName(endpointModel.getClassName()), Collections.emptyList(), COMMONS_FOLDER_NAME, Collections.emptyList()) + fileName;
+        return relativePath(getServiceByClassName(endpointModel.getClassName()), Collections.emptyList(), COMMONS_FOLDER_NAME, Collections.emptyList()) + fileName;
     }
 
     public String relativePath(ApiDTOModel dtoModel, ApiTypeModel targetType) {
@@ -136,8 +135,10 @@ public class TypeScriptOutputDirectory {
             nesting.add(enclosingFolderName(dtoModel.getEnclosingDTO().getName()));
         }
 
-        return relativePath(TypeScriptServiceUtils.getServiceByClassName(dtoModel.getClassName()), nesting, targetType);
+        return relativePath(getServiceByClassName(dtoModel.getClassName()), nesting, targetType);
     }
+
+    protected abstract String getServiceByClassName(String className);
 
     private String relativePath(String currentService, List<String> currentSubFolder, ApiTypeModel targetType) {
         var nesting = new ArrayList<String>();
@@ -158,12 +159,11 @@ public class TypeScriptOutputDirectory {
 
         nesting.addAll(targetType.getNesting().stream().map(this::enclosingFolderName).toList());
 
-        return relativePath(currentService, currentSubFolder, TypeScriptServiceUtils.getServiceByClassName(targetType.getClassName()), nesting) + fileName;
+        return relativePath(currentService, currentSubFolder, getServiceByClassName(targetType.getClassName()), nesting) + fileName;
     }
 
     private String relativePath(String currentService, List<String> currentSubFolder, String targetService, List<String> targetSubFolder) {
         var builder = new StringBuilder();
-// -2 = 3 - 5
         var depthDiff = currentSubFolder.size() - targetSubFolder.size();
         if(depthDiff > 0) {
             IntStream.range(0, depthDiff).mapToObj(i -> "../").forEach(builder::append);

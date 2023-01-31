@@ -27,11 +27,34 @@
                 <artifactId>angular-client-maven-plugin</artifactId>
                 <version>${project.version}</version>
 
+                <configuration>
+                    <outputDirectory>${project.build.directory}/angular</outputDirectory>
+                </configuration>
+
                 <executions>
                     <execution>
                         <id>default-generate-sources</id>
                         <goals>
                             <goal>generate-angular-client</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>de.badminton.neubiberg</groupId>
+                <artifactId>react-client-maven-plugin</artifactId>
+                <version>${project.version}</version>
+
+                <configuration>
+                    <outputDirectory>${project.build.directory}/react</outputDirectory>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>default-generate-sources</id>
+                        <goals>
+                            <goal>generate-react-client</goal>
                         </goals>
                     </execution>
                 </executions>

@@ -13,11 +13,12 @@
 
         <module>spring-processor</module>
 
-        <module>angular-client</module>
+        <module>angular-client-generator</module>
         <module>angular-client-maven-plugin</module>
 
         <module>test-module</module>
         <module>test-client</module>
+        <module>react-client-maven-plugin</module>
     </modules>
 
     <packaging>pom</packaging>

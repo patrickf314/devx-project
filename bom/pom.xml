@@ -33,7 +33,7 @@
             </dependency>
             <dependency>
                 <groupId>de.badminton.neubiberg</groupId>
-                <artifactId>angular-client</artifactId>
+                <artifactId>angular-client-generator</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
