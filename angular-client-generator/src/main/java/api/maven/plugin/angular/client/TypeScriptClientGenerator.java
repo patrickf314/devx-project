@@ -42,7 +42,7 @@ public abstract class TypeScriptClientGenerator {
 
     public void generate(ApiModel model) throws IOException {
         for (var enumModel : model.getEnums().values()) {
-            if(typeAliases.containsKey(enumModel.getClassName())) {
+            if (typeAliases.containsKey(enumModel.getClassName())) {
                 continue;
             }
 
@@ -50,7 +50,7 @@ public abstract class TypeScriptClientGenerator {
         }
 
         for (var dtoModel : model.getDtos().values()) {
-            if(typeAliases.containsKey(dtoModel.getClassName())) {
+            if (typeAliases.containsKey(dtoModel.getClassName())) {
                 continue;
             }
 
@@ -88,7 +88,7 @@ public abstract class TypeScriptClientGenerator {
 
     protected Collection<TypeScriptDependency> findDependencies(ApiServiceEndpointModel endpointModel, Map<String, Set<String>> additionalDependencies) throws IOException {
         var dependencies = new HashMap<String, TypeScriptDependency>();
-        for(var entry : additionalDependencies.entrySet()) {
+        for (var entry : additionalDependencies.entrySet()) {
             dependencies.put(entry.getKey(), mapToDependency(entry.getKey(), entry.getValue()));
         }
 
@@ -106,15 +106,18 @@ public abstract class TypeScriptClientGenerator {
 
         if (dtoModel.getExtendedDTO() != null) {
             var alias = typeAliases.get(dtoModel.getExtendedDTO().getClassName());
-            if(alias == null) {
+            if (alias == null) {
                 var dependency = mapToDependency(dtoModel, dtoModel.getExtendedDTO());
                 dependencies.put(dependency.getPath(), dependency);
-            }else if(alias.getTsFile() != null){
+            } else if (alias.getTsPath() != null) {
+                var dependency = mapToDependency(alias.getTsPath(), Set.of(alias.getTsType()));
+                dependencies.put(dependency.getPath(), dependency);
+            } else if (alias.getTsFile() != null) {
                 var dependency = mapToDependency("../../../" + alias.getTsFile(), Set.of(alias.getTsType()));
                 dependencies.put(dependency.getPath(), dependency);
             }
 
-            for(var typeArgument : dtoModel.getExtendedDTO().getTypeArguments()) {
+            for (var typeArgument : dtoModel.getExtendedDTO().getTypeArguments()) {
                 addTypeDependencies(dtoModel, typeArgument, dependencies);
             }
         }
@@ -152,7 +155,7 @@ public abstract class TypeScriptClientGenerator {
 
     private void addTypeDependencies(ApiServiceEndpointModel endpointModel, ApiTypeModel returnOrParamType, Map<String, TypeScriptDependency> dependencies) {
         var alias = typeAliases.get(returnOrParamType.getClassName());
-        if(alias == null) {
+        if (alias == null) {
             switch (returnOrParamType.getType()) {
                 case JAVA_TYPE -> addJavaTypeDependencies(endpointModel, returnOrParamType, dependencies);
                 case ENUM, DTO -> addEnumOrDTOTypeDependencies(endpointModel, returnOrParamType, dependencies);
@@ -161,14 +164,16 @@ public abstract class TypeScriptClientGenerator {
             return;
         }
 
-        if(alias.getTsFile() != null) {
+        if (alias.getTsPath() != null) {
+            dependencies.computeIfAbsent(alias.getTsPath(), path -> mapToDependency(path, new HashSet<>())).getIdentifiers().add(alias.getTsType());
+        } else if (alias.getTsFile() != null) {
             dependencies.computeIfAbsent("../../" + alias.getTsFile(), path -> mapToDependency(path, new HashSet<>())).getIdentifiers().add(alias.getTsType());
         }
     }
 
     private void addTypeDependencies(ApiDTOModel dtoModel, ApiTypeModel fieldType, Map<String, TypeScriptDependency> dependencies) {
         var alias = typeAliases.get(fieldType.getClassName());
-        if(alias == null) {
+        if (alias == null) {
             switch (fieldType.getType()) {
                 case JAVA_TYPE -> addJavaTypeDependencies(dtoModel, fieldType, dependencies);
                 case ENUM, DTO -> addEnumOrDTOTypeDependencies(dtoModel, fieldType, dependencies);
@@ -177,7 +182,9 @@ public abstract class TypeScriptClientGenerator {
             return;
         }
 
-        if(alias.getTsFile() != null) {
+        if (alias.getTsPath() != null) {
+            dependencies.computeIfAbsent(alias.getTsPath(), path -> mapToDependency(path, new HashSet<>())).getIdentifiers().add(alias.getTsType());
+        } else if (alias.getTsFile() != null) {
             dependencies.computeIfAbsent("../../../" + alias.getTsFile(), path -> mapToDependency(path, new HashSet<>())).getIdentifiers().add(alias.getTsType());
         }
     }

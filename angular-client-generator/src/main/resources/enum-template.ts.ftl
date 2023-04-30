@@ -16,5 +16,5 @@ export const ${model.name}s: ${model.name}[] = [${model.values?map(value -> "'" 
  * @returns {boolean} true if value is of type ${model.name}
  */
 export function is${model.name}(value: unknown): value is ${model.name} {
-    return typeof value === 'string' && ${model.name}s.indexOf(value as ${model.name}) !== -1;
+    return typeof value === 'string' && ${model.name}s.includes(value as ${model.name});
 }

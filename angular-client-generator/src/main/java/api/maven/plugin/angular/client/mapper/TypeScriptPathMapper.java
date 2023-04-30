@@ -33,19 +33,8 @@ public final class TypeScriptPathMapper {
             params.add(pathMatcher.group(1));
         }
 
-        var path = "'" + pathMatcher.replaceAll("' + $1 + '");
-        if(path.endsWith(" + '")){
-            path = path.substring(0, path.length() - 4);
-        }else{
-            path += "'";
-        }
-
-        if(path.equals("''")) {
-            path = "";
-        }
-
         var tsPath = new TypeScriptPath();
-        tsPath.setPath(path);
+        tsPath.setPath(pathMatcher.replaceAll("\\${$1}"));
         tsPath.setParams(params);
         return tsPath;
     }

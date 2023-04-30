@@ -1,7 +1,8 @@
 <#-- @ftlvariable name="model" type="api.maven.plugin.angular.client.data.TypeScriptDTO" -->
+/* eslint-disable @typescript-eslint/consistent-type-imports */
 <#if model.dependencies?has_content>
 <#list model.dependencies as dependency>
-import {${dependency.identifiers?join(", ")}} from '${dependency.path}';
+import { ${dependency.identifiers?join(", ")} } from '${dependency.path}';
 </#list>
 
 </#if>

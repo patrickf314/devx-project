@@ -129,7 +129,9 @@ public class SpringApiModelGenerator {
             return true;
         }
 
-        return !TypeElementUtils.isImplementationOf(typeElement, HttpMessage.class) && !TypeElementUtils.isImplementationOf(typeElement, ServletResponse.class);
+        return !TypeElementUtils.isImplementationOf(typeElement, HttpMessage.class)
+                && !TypeElementUtils.isImplementationOf(typeElement, ServletResponse.class)
+                && !TypeElementUtils.isImplementationOf(typeElement, "jakarta.servlet.http.HttpServletResponse");
     }
 
     private ApiMethodParameterModel mapMethodParameter(VariableElement element) {
@@ -204,7 +206,8 @@ public class SpringApiModelGenerator {
             var typeArgs = TypeElementUtils.getTypeArgumentsOfInterface(typeMirror, Map.class)
                     .stream()
                     .map(t -> this.mapTypeMirror(t, true))
-                    .toList();;
+                    .toList();
+            ;
             return new ApiTypeModel("map", ApiTypeType.JAVA_TYPE, required, typeArgs);
         }
 
@@ -221,7 +224,7 @@ public class SpringApiModelGenerator {
         if (element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.RECORD) {
             var dtoModel = createDTOModel(element, className);
             var nesting = new ArrayList<String>();
-            if(dtoModel.getEnclosingDTO() != null) {
+            if (dtoModel.getEnclosingDTO() != null) {
                 nesting.addAll(dtoModel.getEnclosingDTO().getNesting());
                 nesting.add(dtoModel.getEnclosingDTO().getName());
             }
@@ -238,10 +241,10 @@ public class SpringApiModelGenerator {
 
         var dtoModel = new ApiDTOModel(className, element.getSimpleName().toString());
 
-        if(element.getEnclosingElement() instanceof TypeElement enclosingElement) {
+        if (element.getEnclosingElement() instanceof TypeElement enclosingElement) {
             var enclosingDTO = createDTOModel(enclosingElement, enclosingElement.getQualifiedName().toString());
             var nesting = new ArrayList<String>();
-            if(enclosingDTO.getEnclosingDTO() != null) {
+            if (enclosingDTO.getEnclosingDTO() != null) {
                 nesting.addAll(enclosingDTO.getEnclosingDTO().getNesting());
                 nesting.add(enclosingDTO.getEnclosingDTO().getName());
             }
@@ -275,7 +278,8 @@ public class SpringApiModelGenerator {
     }
 
     private boolean isRequiredDTOField(VariableElement element) {
-        if (TypeElementUtils.isAnnotationPresent(element, NotNull.class)) {
+        if (TypeElementUtils.isAnnotationPresent(element, "javax.validation.constraints.NotNull")
+                || TypeElementUtils.isAnnotationPresent(element, "jakarta.validation.constraints.NotNull")) {
             return true;
         }
 

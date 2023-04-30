@@ -75,7 +75,7 @@ public final class TypeScriptTypeMapper {
             throw new IllegalArgumentException("Invalid map type: key type must be string or number, but was " + keyType);
         }
 
-        return createTypeScriptType("{[key: " + keyType + "]: " + valueType + " | undefined}", false);
+        return createTypeScriptType("Record<" + keyType + ", " + valueType + " | undefined>", false);
     }
 
     private static TypeScriptType mapUnknownType() {

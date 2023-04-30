@@ -8,5 +8,6 @@ public class TypeScriptTypeAlias {
     private String className;
     private String tsFile;
     private String tsType;
+    private String tsPath;
 
 }

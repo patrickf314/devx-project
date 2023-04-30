@@ -17,15 +17,27 @@ public final class TypeElementUtils {
     }
 
     public static boolean isImplementationOf(TypeMirror typeMirror, Class<?> i) {
+        return isImplementationOf(typeMirror, i.getName());
+    }
+
+    public static boolean isImplementationOf(TypeMirror typeMirror, String i) {
         return getInterfaceTypeMirror(typeMirror, i).isPresent();
     }
 
     public static boolean isImplementationOf(TypeElement typeElement, Class<?> i) {
+        return isImplementationOf(typeElement, i.getName());
+    }
+
+    public static boolean isImplementationOf(TypeElement typeElement, String i) {
         return getInterfaceTypeMirror(typeElement, i).isPresent();
     }
 
     public static Optional<TypeMirror> getInterfaceTypeMirror(TypeMirror typeMirror, Class<?> i) {
-        if(!(typeMirror instanceof DeclaredType declaredType) || !(declaredType.asElement() instanceof TypeElement element)) {
+        return getInterfaceTypeMirror(typeMirror, i.getName());
+    }
+
+    public static Optional<TypeMirror> getInterfaceTypeMirror(TypeMirror typeMirror, String i) {
+        if (!(typeMirror instanceof DeclaredType declaredType) || !(declaredType.asElement() instanceof TypeElement element)) {
             return Optional.empty();
         }
 
@@ -33,6 +45,10 @@ public final class TypeElementUtils {
     }
 
     public static Optional<TypeMirror> getInterfaceTypeMirror(TypeElement typeElement, Class<?> i) {
+        return getInterfaceTypeMirror(typeElement, i.getName());
+    }
+
+    public static Optional<TypeMirror> getInterfaceTypeMirror(TypeElement typeElement, String i) {
         if (isClass(typeElement, i)) {
             return Optional.of(typeElement.asType());
         }
@@ -57,7 +73,7 @@ public final class TypeElementUtils {
     }
 
     public static List<? extends TypeMirror> getTypeArgumentsOfInterface(TypeMirror typeMirror, Class<?> i) {
-        if(!(typeMirror instanceof DeclaredType declaredType)) {
+        if (!(typeMirror instanceof DeclaredType declaredType)) {
             throw new IllegalArgumentException("Type mirror of type " + typeMirror.getClass().getName() + " cannot have type arguments");
         }
 
@@ -65,7 +81,7 @@ public final class TypeElementUtils {
             return declaredType.getTypeArguments();
         }
 
-        if(!(declaredType.asElement() instanceof TypeElement element)) {
+        if (!(declaredType.asElement() instanceof TypeElement element)) {
             throw new IllegalArgumentException("Unexpected type element " + declaredType.asElement().getClass().getName() + "of declared type.");
         }
 
@@ -73,7 +89,7 @@ public final class TypeElementUtils {
         var typeParameters = element.getTypeParameters();
         var aliases = new HashMap<String, TypeMirror>();
 
-        for(var j = 0; j < typeParameters.size(); j++) {
+        for (var j = 0; j < typeParameters.size(); j++) {
             aliases.put(typeParameters.get(j).getSimpleName().toString(), typeArguments.get(j));
         }
 
@@ -135,13 +151,21 @@ public final class TypeElementUtils {
     }
 
     public static boolean isClass(TypeMirror typeMirror, Class<?> c) {
+        return isClass(typeMirror, c.getName());
+    }
+
+    public static boolean isClass(TypeMirror typeMirror, String c) {
         return typeMirror instanceof DeclaredType declaredType
                 && declaredType.asElement() instanceof TypeElement element
                 && isClass(element, c);
     }
 
     public static boolean isClass(TypeElement element, Class<?> c) {
-        return element.getQualifiedName().toString().equals(c.getName());
+        return isClass(element, c.getName());
+    }
+
+    public static boolean isClass(TypeElement element, String c) {
+        return c.equals(element.getQualifiedName().toString());
     }
 
     public static List<VariableElement> getFields(TypeElement element) {
@@ -154,13 +178,17 @@ public final class TypeElementUtils {
     }
 
     public static boolean isAnnotationPresent(Element element, Class<? extends Annotation> annotation) {
+        return isAnnotationPresent(element, annotation.getName());
+    }
+
+    public static boolean isAnnotationPresent(Element element, String annotation) {
         return element.getAnnotationMirrors()
                 .stream()
                 .map(AnnotationMirror::getAnnotationType)
                 .map(TypeElementUtils::mapToTypeElement)
                 .map(TypeElement::getQualifiedName)
                 .map(Name::toString)
-                .anyMatch(annotation.getName()::equals);
+                .anyMatch(annotation::equals);
     }
 
     private static TypeElement mapInterfaceMirrorToTypeElement(TypeMirror mirror) {

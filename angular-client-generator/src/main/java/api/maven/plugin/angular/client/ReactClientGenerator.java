@@ -4,14 +4,13 @@ import api.maven.plugin.angular.client.data.TypeScriptDependency;
 import api.maven.plugin.angular.client.data.TypeScriptTypeAlias;
 import api.maven.plugin.angular.client.utils.TypeScriptOutputDirectory;
 import api.maven.plugin.core.model.ApiServiceEndpointModel;
+import api.maven.plugin.core.type.ApiMethodResponseType;
 import freemarker.template.TemplateException;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ReactClientGenerator extends TypeScriptClientGenerator {
 
@@ -19,13 +18,13 @@ public class ReactClientGenerator extends TypeScriptClientGenerator {
         super(new TypeScriptOutputDirectory(outputDirectory) {
             @Override
             protected String getServiceByClassName(String className) {
-                if(!className.startsWith("de.badminton.neubiberg.backend.api.")) {
+                if (!className.startsWith("de.badminton.neubiberg.backend.api.")) {
                     return "common";
                 }
 
                 var i = "de.badminton.neubiberg.backend.api.".length();
                 var j = className.indexOf('.', i);
-                if(j == -1) {
+                if (j == -1) {
                     return "common";
                 }
 
@@ -47,12 +46,40 @@ public class ReactClientGenerator extends TypeScriptClientGenerator {
     }
 
     protected Collection<TypeScriptDependency> findDependencies(ApiServiceEndpointModel endpointModel) throws IOException {
-        return findDependencies(endpointModel, Map.of(
-                "../../config", Set.of("Config"),
+        var dependencies = new HashMap<>(Map.of(
                 "@reduxjs/toolkit", Set.of("createAsyncThunk"),
-                "../../common/service/service-commons", Set.of("prepareHeaders", "mapJsonResponse", "mapVoidResponse", "ThunkOptions", "url"),
                 "../../slice/app-store", Set.of("AppState", "useAppDispatch"),
                 "react", Set.of("useMemo")
         ));
+
+        var returnTypes = endpointModel.getMethods().values().stream().flatMap(List::stream).map(method -> {
+            if (method.getResponseType() == ApiMethodResponseType.STREAM) {
+                return "stream";
+            }
+
+            if ("void".equals(method.getReturnType().getName())) {
+                return "void";
+            } else {
+                return "json";
+            }
+        }).collect(Collectors.toSet());
+
+        var serviceCommonsDependencies = new HashSet<>(Set.of("backendUrl", "prepareHeaders", "ThunkOptions", "url"));
+        if (returnTypes.contains("void")) {
+            serviceCommonsDependencies.add("mapVoidResponse");
+        }
+        if (returnTypes.contains("stream")) {
+            serviceCommonsDependencies.add("mapStreamingResponse");
+            dependencies.put("../../common/service/download-stream.dto", Set.of("DownloadStreamDTO"));
+        }
+        if (returnTypes.contains("json")) {
+            serviceCommonsDependencies.add("mapJsonResponse");
+        }
+
+        dependencies.put("../../common/service/service-commons", serviceCommonsDependencies);
+
+        return
+
+                findDependencies(endpointModel, dependencies);
     }
 }

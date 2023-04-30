@@ -15,7 +15,7 @@ public class TypeScriptPath {
         var newParams = new ArrayList<>(params);
         newParams.replaceAll(param -> param.equals(target) ? replacement : param);
 
-        var newPath = path.replace(" + " + target, " + " + replacement);
+        var newPath = path.replace("${" + target + "}", "${" + replacement + "}");
         var newThis = new TypeScriptPath();
 
         newThis.setParams(newParams);
