@@ -7,6 +7,9 @@
         <groupId>de.badminton.neubiberg</groupId>
         <version>1.0</version>
     </parent>
+    <modules>
+        <module>../dto-matcher-maven-plugin</module>
+    </modules>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>api-maven-plugin-bom</artifactId>
@@ -16,6 +19,8 @@
         <spring.version>5.3.22</spring.version>
         <javax-servlet.version>4.0.1</javax-servlet.version>
         <jakarta.version>2.0.2</jakarta.version>
+        <jakarta-persistence.version>3.1.0</jakarta-persistence.version>
+        <mustache.version>0.9.6</mustache.version>
     </properties>
 
     <dependencyManagement>
@@ -33,7 +38,23 @@
             </dependency>
             <dependency>
                 <groupId>de.badminton.neubiberg</groupId>
+                <artifactId>annotations</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.badminton.neubiberg</groupId>
+                <artifactId>entity-matcher-processor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.badminton.neubiberg</groupId>
                 <artifactId>angular-client-generator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>de.badminton.neubiberg</groupId>
+                <artifactId>processor-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -54,11 +75,22 @@
                 <artifactId>javax.servlet-api</artifactId>
                 <version>${javax-servlet.version}</version>
             </dependency>
+            <dependency>
+                <groupId>jakarta.persistence</groupId>
+                <artifactId>jakarta.persistence-api</artifactId>
+                <version>${jakarta-persistence.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>jakarta.validation</groupId>
                 <artifactId>jakarta.validation-api</artifactId>
                 <version>${jakarta.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.spullara.mustache.java</groupId>
+                <artifactId>compiler</artifactId>
+                <version>${mustache.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

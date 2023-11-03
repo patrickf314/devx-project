@@ -1,8 +1,8 @@
 package api.maven.plugin.react.client;
 
-import api.maven.plugin.angular.client.AngularClientGenerator;
 import api.maven.plugin.angular.client.ReactClientGenerator;
 import api.maven.plugin.angular.client.data.TypeScriptTypeAlias;
+import api.maven.plugin.core.io.ApiModelFileExtractor;
 import api.maven.plugin.core.io.JarApiModelExtractor;
 import api.maven.plugin.core.model.ApiModel;
 import org.apache.maven.artifact.Artifact;
@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mojo(
         name = "generate-react-client",
@@ -35,6 +36,8 @@ public class ReactClientGeneratorMojo extends AbstractMojo {
     private String outputDirectory;
     @Parameter
     private List<TypeScriptTypeAlias> typeScriptTypeAliases;
+    @Parameter(property = "apiClientGenerator.apiModelJson")
+    private File apiModelJson;
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -45,13 +48,15 @@ public class ReactClientGeneratorMojo extends AbstractMojo {
         getLog().info("Starting generation of API clients...");
         getLog().debug("Searing for api model definition in dependencies...");
 
-        var apiModels = mavenProject.getArtifacts()
-                .stream()
-                .map(Artifact::getFile)
+        var apiModels = findApiModelFiles()
                 .map(this::extract)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
+
+        if (apiModels.isEmpty()) {
+            throw new MojoExecutionException("No api models found");
+        }
 
         getLog().debug("Found " + apiModels.size() + " api model(s) in dependencies, start client generations");
 
@@ -64,6 +69,18 @@ public class ReactClientGeneratorMojo extends AbstractMojo {
         getLog().info("API client generation completed");
     }
 
+    private Stream<File> findApiModelFiles() {
+        if (apiModelJson != null) {
+            getLog().info("Using api modal json file " + apiModelJson.getAbsolutePath());
+            return Stream.of(apiModelJson);
+        }
+
+        getLog().info("Searching api modal json in artifacts...");
+        return mavenProject.getArtifacts()
+                .stream()
+                .map(Artifact::getFile);
+    }
+
     private void createClient(List<ApiModel> apiModels) throws IOException {
         var generator = new ReactClientGenerator(outputDirectory, typeScriptTypeAliases);
         for (var apiModel : apiModels) {
@@ -74,8 +91,10 @@ public class ReactClientGeneratorMojo extends AbstractMojo {
     private Optional<ApiModel> extract(File file) {
         if (file.getName().endsWith(".jar")) {
             return new JarApiModelExtractor().extract(file);
+        } else if (file.getName().endsWith(".json")) {
+            return new ApiModelFileExtractor().extract(file);
         } else {
-            getLog().warn("Cannot extract artifact file " + file.getAbsolutePath());
+            getLog().debug("Cannot extract artifact file " + file.getAbsolutePath());
             return Optional.empty();
         }
     }

@@ -12,8 +12,8 @@
 
     <artifactId>api-maven-plugin-spring-processor</artifactId>
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>20</maven.compiler.source>
+        <maven.compiler.target>20</maven.compiler.target>
     </properties>
 
 
@@ -21,6 +21,10 @@
         <dependency>
             <groupId>de.badminton.neubiberg</groupId>
             <artifactId>api-maven-plugin-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.badminton.neubiberg</groupId>
+            <artifactId>processor-common</artifactId>
         </dependency>
 
         <dependency>
@@ -31,6 +35,7 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
         </dependency>
+
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -38,6 +43,10 @@
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.badminton.neubiberg</groupId>
+            <artifactId>annotations</artifactId>
         </dependency>
     </dependencies>
 

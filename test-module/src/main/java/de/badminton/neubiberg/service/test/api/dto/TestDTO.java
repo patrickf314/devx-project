@@ -1,5 +1,6 @@
 package de.badminton.neubiberg.service.test.api.dto;
 
+import api.maven.plugin.annotations.Readonly;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,5 +18,7 @@ public class TestDTO extends BriefTestDTO {
     private String str;
     @NotNull
     private TestDTO child;
+
+    private boolean checked;
 
 }

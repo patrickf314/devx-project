@@ -2,7 +2,7 @@ package api.maven.plugin.processor.spring.mapper;
 
 import api.maven.plugin.core.type.ApiMethodParameterType;
 import api.maven.plugin.processor.spring.data.ParameterAnnotation;
-import api.maven.plugin.processor.spring.utils.AnnotationMirrorUtils;
+import api.maven.plugin.common.processor.utils.AnnotationMirrorUtils;
 import org.springframework.web.bind.annotation.ValueConstants;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -10,7 +10,7 @@ import javax.lang.model.element.AnnotationMirror;
 import static api.maven.plugin.processor.spring.SpringAnnotations.*;
 import static api.maven.plugin.processor.spring.mapper.AnnotationValueMapper.mapAnnotationValueToBoolean;
 import static api.maven.plugin.processor.spring.mapper.AnnotationValueMapper.mapAnnotationValueToString;
-import static api.maven.plugin.processor.spring.utils.AnnotationMirrorUtils.extractFieldsFromAnnotationMirror;
+import static api.maven.plugin.common.processor.utils.AnnotationMirrorUtils.extractFieldsFromAnnotationMirror;
 
 public final class ParameterAnnotationMapper {
 

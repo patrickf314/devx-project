@@ -49,7 +49,8 @@ public class ReactClientGenerator extends TypeScriptClientGenerator {
         var dependencies = new HashMap<>(Map.of(
                 "@reduxjs/toolkit", Set.of("createAsyncThunk"),
                 "../../slice/app-store", Set.of("AppState", "useAppDispatch"),
-                "react", Set.of("useMemo")
+                "react", Set.of("useMemo"),
+                "../../common/service/thunk-config", Set.of("ThunkOptions")
         ));
 
         var returnTypes = endpointModel.getMethods().values().stream().flatMap(List::stream).map(method -> {
@@ -64,7 +65,7 @@ public class ReactClientGenerator extends TypeScriptClientGenerator {
             }
         }).collect(Collectors.toSet());
 
-        var serviceCommonsDependencies = new HashSet<>(Set.of("backendUrl", "prepareHeaders", "ThunkOptions", "url"));
+        var serviceCommonsDependencies = new HashSet<>(Set.of("backendUrl", "prepareHeaders", "url"));
         if (returnTypes.contains("void")) {
             serviceCommonsDependencies.add("mapVoidResponse");
         }
@@ -78,8 +79,6 @@ public class ReactClientGenerator extends TypeScriptClientGenerator {
 
         dependencies.put("../../common/service/service-commons", serviceCommonsDependencies);
 
-        return
-
-                findDependencies(endpointModel, dependencies);
+        return findDependencies(endpointModel, dependencies);
     }
 }

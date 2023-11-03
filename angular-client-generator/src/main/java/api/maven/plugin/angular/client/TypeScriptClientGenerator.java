@@ -5,7 +5,6 @@ import api.maven.plugin.angular.client.data.TypeScriptTypeAlias;
 import api.maven.plugin.angular.client.mapper.TypeScriptMapper;
 import api.maven.plugin.angular.client.utils.TypeScriptOutputDirectory;
 import api.maven.plugin.core.model.*;
-import api.maven.plugin.core.type.ApiMethodResponseType;
 import api.maven.plugin.core.type.ApiTypeType;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
@@ -31,7 +30,7 @@ public abstract class TypeScriptClientGenerator {
 
     private final Set<String> copiedResourceFiles = new HashSet<>();
 
-    public TypeScriptClientGenerator(TypeScriptOutputDirectory outputDirectory, List<TypeScriptTypeAlias> typeAliases) throws IOException {
+    protected TypeScriptClientGenerator(TypeScriptOutputDirectory outputDirectory, List<TypeScriptTypeAlias> typeAliases) throws IOException {
         this.outputDirectory = outputDirectory;
         this.typeAliases = typeAliases.stream().collect(Collectors.toMap(TypeScriptTypeAlias::getClassName, Function.identity()));
 
@@ -155,7 +154,7 @@ public abstract class TypeScriptClientGenerator {
 
     private void addTypeDependencies(ApiServiceEndpointModel endpointModel, ApiTypeModel returnOrParamType, Map<String, TypeScriptDependency> dependencies) {
         var alias = typeAliases.get(returnOrParamType.getClassName());
-        if (alias == null) {
+        if (alias == null || (alias.getAnnotation() != null && !returnOrParamType.getAnnotations().contains(alias.getAnnotation()))) {
             switch (returnOrParamType.getType()) {
                 case JAVA_TYPE -> addJavaTypeDependencies(endpointModel, returnOrParamType, dependencies);
                 case ENUM, DTO -> addEnumOrDTOTypeDependencies(endpointModel, returnOrParamType, dependencies);
@@ -173,7 +172,7 @@ public abstract class TypeScriptClientGenerator {
 
     private void addTypeDependencies(ApiDTOModel dtoModel, ApiTypeModel fieldType, Map<String, TypeScriptDependency> dependencies) {
         var alias = typeAliases.get(fieldType.getClassName());
-        if (alias == null) {
+        if (alias == null || (alias.getAnnotation() != null && !fieldType.getAnnotations().contains(alias.getAnnotation()))) {
             switch (fieldType.getType()) {
                 case JAVA_TYPE -> addJavaTypeDependencies(dtoModel, fieldType, dependencies);
                 case ENUM, DTO -> addEnumOrDTOTypeDependencies(dtoModel, fieldType, dependencies);

@@ -1,4 +1,4 @@
-package api.maven.plugin.processor.spring.utils;
+package api.maven.plugin.common.processor.utils;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;

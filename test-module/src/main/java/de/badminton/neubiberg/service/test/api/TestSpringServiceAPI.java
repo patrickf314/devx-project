@@ -10,6 +10,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RequestMapping("test")
 public interface TestSpringServiceAPI {
@@ -42,4 +43,7 @@ public interface TestSpringServiceAPI {
 
     @GetMapping("score")
     ScoreDTO getScore(@RequestBody Map<Integer, String> fieldValue);
+
+    @GetMapping("withOptionalParameters")
+    List<String> getWithOptionalParameter(@RequestParam(value = "filter", required = false) Set<String> filter);
 }

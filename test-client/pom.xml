@@ -3,20 +3,31 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>api-maven-plugin</artifactId>
         <groupId>de.badminton.neubiberg</groupId>
+        <artifactId>api-maven-plugin-bom</artifactId>
         <version>1.0</version>
+        <relativePath>../bom</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>test-client</artifactId>
-    <packaging>pom</packaging>
 
     <dependencies>
         <dependency>
             <groupId>de.badminton.neubiberg</groupId>
             <artifactId>test-module</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -55,6 +66,19 @@
                         <id>default-generate-sources</id>
                         <goals>
                             <goal>generate-react-client</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>de.badminton.neubiberg</groupId>
+                <artifactId>dto-matcher-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-dto-matchers</goal>
                         </goals>
                     </execution>
                 </executions>

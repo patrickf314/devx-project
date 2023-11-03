@@ -15,13 +15,15 @@ public class ApiDTOModel {
     private String className;
     private String name;
 
+    private boolean javaRecord;
     private ApiTypeModel extendedDTO;
     private Map<String, ApiTypeModel> fields = new HashMap<>();
     private List<String> typeArguments = new ArrayList<>();
     private ApiEnclosingDTOModel enclosingDTO;
 
-    public ApiDTOModel(String className, String name) {
+    public ApiDTOModel(String className, String name, boolean javaRecord) {
         this.className = className;
         this.name = name;
+        this.javaRecord = javaRecord;
     }
 }

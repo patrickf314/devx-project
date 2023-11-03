@@ -22,12 +22,12 @@ public final class TypeScriptTypeMapper {
         }
 
         var typeAlias = typeAliases.get(model.getClassName());
-        if (typeAlias != null) {
+        if (typeAlias != null && (typeAlias.getAnnotation() == null || model.getAnnotations().contains(typeAlias.getAnnotation()))) {
             return mapTypeAlias(typeAlias, !model.isRequired());
         }
 
         if (Pattern.class.getName().equals(model.getClassName())) {
-            return createTypeScriptType("RegExp", !model.isRequired());
+            return createTypeScriptType("string", !model.isRequired());
         }
 
         return switch (model.getType()) {
@@ -49,7 +49,8 @@ public final class TypeScriptTypeMapper {
 
     private static TypeScriptType mapJavaType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
         return switch (model.getName()) {
-            case "int", "double", "float", "long", "short", "byte", "number" -> createTypeScriptType("number", !model.isRequired());
+            case "int", "double", "float", "long", "short", "byte", "number" ->
+                    createTypeScriptType("number", !model.isRequired());
             case "boolean" -> createTypeScriptType("boolean", false);
             case "char", "string" -> createTypeScriptType("string", !model.isRequired());
             case "void" -> createTypeScriptType("void", false);
@@ -60,7 +61,7 @@ public final class TypeScriptTypeMapper {
     }
 
     private static TypeScriptType mapArrayType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
-        return createTypeScriptType(mapType(model.getTypeArguments().get(0), typeAliases).getName() + "[]", false);
+        return createTypeScriptType(mapType(model.getTypeArguments().get(0), typeAliases).getName() + "[]", !model.isRequired());
     }
 
     private static TypeScriptType mapMapType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {

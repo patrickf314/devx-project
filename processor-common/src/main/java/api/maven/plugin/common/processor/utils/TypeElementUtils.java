@@ -1,4 +1,4 @@
-package api.maven.plugin.processor.spring.utils;
+package api.maven.plugin.common.processor.utils;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static java.util.function.Predicate.not;
 
 public final class TypeElementUtils {
 
@@ -168,13 +170,28 @@ public final class TypeElementUtils {
         return c.equals(element.getQualifiedName().toString());
     }
 
-    public static List<VariableElement> getFields(TypeElement element) {
+    public static List<VariableElement> getNonStaticFields(TypeElement element) {
         return element.getEnclosedElements()
                 .stream()
-                .filter(field -> field instanceof VariableElement)
-                .filter(field -> !(field instanceof RecordComponentElement))
+                .filter(not(TypeElementUtils::isStatic))
+                .filter(VariableElement.class::isInstance)
+                .filter(not(RecordComponentElement.class::isInstance))
                 .map(VariableElement.class::cast)
                 .toList();
+    }
+
+    public static List<VariableElement> getEnumValues(TypeElement element) {
+        return element.getEnclosedElements()
+                .stream()
+                .filter(TypeElementUtils::isStatic)
+                .filter(VariableElement.class::isInstance)
+                .filter(not(RecordComponentElement.class::isInstance))
+                .map(VariableElement.class::cast)
+                .toList();
+    }
+
+    public static boolean isStatic(Element element) {
+        return element.getModifiers().contains(Modifier.STATIC);
     }
 
     public static boolean isAnnotationPresent(Element element, Class<? extends Annotation> annotation) {
@@ -189,6 +206,19 @@ public final class TypeElementUtils {
                 .map(TypeElement::getQualifiedName)
                 .map(Name::toString)
                 .anyMatch(annotation::equals);
+    }
+
+    public static String getPackageName(TypeElement typeElement) {
+        var enclosingElement = typeElement.getEnclosingElement();
+        if(enclosingElement instanceof PackageElement packageElement) {
+            return packageElement.getQualifiedName().toString();
+        }
+
+        if(enclosingElement instanceof TypeElement enclosingTypeElement) {
+            return getPackageName(enclosingTypeElement);
+        }
+
+        throw new IllegalArgumentException("Failed to get package name for type element " + typeElement.getQualifiedName());
     }
 
     private static TypeElement mapInterfaceMirrorToTypeElement(TypeMirror mirror) {

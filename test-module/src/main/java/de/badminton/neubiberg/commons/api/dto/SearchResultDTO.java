@@ -2,6 +2,7 @@ package de.badminton.neubiberg.commons.api.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -15,6 +16,7 @@ import java.util.List;
 @Data
 public class SearchResultDTO<T> {
 
+    @NotNull
     private List<T> result;
     private int hits;
 

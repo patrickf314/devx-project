@@ -1,10 +1,9 @@
 package api.maven.plugin.processor.spring.mapper;
 
 import api.maven.plugin.processor.spring.data.RequestMappingAnnotation;
-import api.maven.plugin.processor.spring.utils.AnnotationMirrorUtils;
+import api.maven.plugin.common.processor.utils.AnnotationMirrorUtils;
 
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.TypeElement;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +11,7 @@ import java.util.List;
 import static api.maven.plugin.processor.spring.SpringAnnotations.*;
 import static api.maven.plugin.processor.spring.mapper.AnnotationValueMapper.*;
 import static api.maven.plugin.processor.spring.mapper.AnnotationValueMapper.mapAnnotationValueToStringArray;
-import static api.maven.plugin.processor.spring.utils.AnnotationMirrorUtils.extractFieldsFromAnnotationMirror;
+import static api.maven.plugin.common.processor.utils.AnnotationMirrorUtils.extractFieldsFromAnnotationMirror;
 
 public final class RequestMappingAnnotationMapper {
 

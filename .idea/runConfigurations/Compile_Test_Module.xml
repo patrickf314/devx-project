@@ -5,6 +5,7 @@
       <option name="myRunnerSettings" />
       <option name="myRunnerParameters">
         <MavenRunnerParameters>
+          <option name="cmdOptions" />
           <option name="profiles">
             <set />
           </option>
@@ -12,19 +13,22 @@
             <list>
               <option value="clean" />
               <option value="install" />
-              <option value="-pl" />
-              <option value="spring-processor,test-module" />
             </list>
           </option>
           <option name="pomFileName" />
           <option name="profilesMap">
             <map />
           </option>
+          <option name="projectsCmdOptionValues">
+            <list />
+          </option>
           <option name="resolveToWorkspace" value="false" />
-          <option name="workingDirPath" value="$PROJECT_DIR$" />
+          <option name="workingDirPath" value="$PROJECT_DIR$/test-module" />
         </MavenRunnerParameters>
       </option>
     </MavenSettings>
-    <method v="2" />
+    <method v="2">
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/pom.xml" goal="install -pl entity-matcher-processor,spring-processor -T1C -DskipTests" />
+    </method>
   </configuration>
 </component>

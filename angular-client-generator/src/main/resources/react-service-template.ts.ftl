@@ -53,12 +53,12 @@ function baseUrl(state: AppState${model.basePaths[0].params?has_content?then(", 
 }
 <#list model.methods as method>
 
-export const ${method.name}Thunk = createAsyncThunk<<#if method.returnType.name == "void">undefined<#elseif method.returnType.name == 'DownloadInfo'>DownloadStreamDTO<Uint8Array><#else>${method.returnType.name}</#if>, <@methodParameterType method=method emptyParameterType="undefined"/>>('${model.name}/${method.name}', async function(arg: <@methodParameterType method=method emptyParameterType="undefined"/>, thunkAPI): <#if method.returnTypeWrapper == 'Observable'>Promise<DownloadStreamDTO<Uint8Array>><#else>${method.returnTypeWrapper}<<#if method.returnType.name == "void">undefined<#else>${method.returnType.name}</#if>></#if> {
+export const ${method.name}Thunk = createAsyncThunk('${model.name}/${method.name}', async function(arg: <@methodParameterType method=method emptyParameterType="undefined"/>, thunkAPI): <#if method.returnTypeWrapper == 'Observable'>Promise<DownloadStreamDTO<Uint8Array>><#else>${method.returnTypeWrapper}<${method.returnType.name}></#if> {
     <#if method.parameters?has_content>
     const { ${method.parameters?map(param -> param.name)?join(", ")} } = arg;
     </#if>
 
-    const headers = prepareHeaders(thunkAPI.getState() as AppState<#if method.bodyParameter?has_content>, { contentType: 'json' }<#elseif method.formData>, { contentType: 'formData' }</#if>);
+    const headers = prepareHeaders(thunkAPI.getState()<#if method.bodyParameter?has_content>, { contentType: <#if method.formData>'multipart'<#else>'json'</#if> }<#elseif method.formData>, { contentType: 'formData' }</#if>);
     <#if method.headerParams?has_content>
     <#list method.headerParams as headerParam>
     <#if headerParam.optional>if (typeof ${headerParam.name} !== 'undefined') {
@@ -77,7 +77,7 @@ export const ${method.name}Thunk = createAsyncThunk<<#if method.returnType.name 
     </#if>
     </#list>
 
-    <#elseif method.queryParams?has_content && method.httpMethod == "GET">
+    <#elseif method.queryParams?has_content && (method.httpMethod == "GET" || method.httpMethod == "DELETE")>
     const params: Record<string, string | number | boolean | Array<string | number | boolean>> = {};
     <#list method.queryParams as param>
     <#if param.optional>if (typeof ${param.name} !== 'undefined') {
@@ -87,11 +87,11 @@ export const ${method.name}Thunk = createAsyncThunk<<#if method.returnType.name 
     </#list>
 
     </#if>
-    <#if method.returnType.name != "void">return </#if>await fetch(url(<@url method=method state="thunkAPI.getState() as AppState"></@url><#if method.queryParams?has_content && method.httpMethod == "GET">, params</#if>), {
+    <#if method.returnType.name != "void">return </#if>await fetch(url(<@url method=method state="thunkAPI.getState()"></@url><#if method.queryParams?has_content && (method.httpMethod == "GET" || method.httpMethod == "DELETE")>, params</#if>), {
         method: '${method.httpMethod?lower_case}',
         credentials: 'include',
         headers<#if method.formData || method.bodyParameter?has_content>,
-        body: <#if method.bodyParameter?has_content>JSON.stringify(${method.bodyParameter})<#else>formData</#if>
+        body: <#if method.bodyParameter?has_content && !method.formData>JSON.stringify(${method.bodyParameter})<#else>formData</#if>
         </#if>
 
     }).then(res => map<#switch method.returnType.name><#case 'void'>VoidResponse<#break><#case 'string'>StringResponse<#break><#case 'DownloadInfo'>StreamingResponse<#break><#default>JsonResponse<${method.returnType.name}></#switch>(res));

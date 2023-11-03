@@ -24,7 +24,7 @@ import static api.maven.plugin.processor.spring.SpringAnnotations.*;
         PUT_MAPPING,
         DELETE_MAPPING
 })
-@SupportedSourceVersion(SourceVersion.RELEASE_17)
+@SupportedSourceVersion(SourceVersion.RELEASE_20)
 public class SpringAnnotationProcessor extends AbstractProcessor {
 
     @Override

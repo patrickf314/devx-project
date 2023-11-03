@@ -9,5 +9,6 @@ public class TypeScriptTypeAlias {
     private String tsFile;
     private String tsType;
     private String tsPath;
+    private String annotation;
 
 }
