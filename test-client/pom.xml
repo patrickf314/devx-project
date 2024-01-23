@@ -3,10 +3,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>de.badminton.neubiberg</groupId>
-        <artifactId>api-maven-plugin-bom</artifactId>
+        <groupId>de.devx.project</groupId>
+        <artifactId>devx-project</artifactId>
         <version>1.0</version>
-        <relativePath>../bom</relativePath>
+        <relativePath>../../pom</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,7 +14,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>de.badminton.neubiberg</groupId>
+            <groupId>de.devx.project</groupId>
             <artifactId>test-module</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -34,7 +34,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>de.badminton.neubiberg</groupId>
+                <groupId>de.devx.project</groupId>
                 <artifactId>angular-client-maven-plugin</artifactId>
                 <version>${project.version}</version>
 
@@ -53,7 +53,7 @@
             </plugin>
 
             <plugin>
-                <groupId>de.badminton.neubiberg</groupId>
+                <groupId>de.devx.project</groupId>
                 <artifactId>react-client-maven-plugin</artifactId>
                 <version>${project.version}</version>
 
@@ -72,7 +72,7 @@
             </plugin>
 
             <plugin>
-                <groupId>de.badminton.neubiberg</groupId>
+                <groupId>de.devx.project</groupId>
                 <artifactId>dto-matcher-maven-plugin</artifactId>
                 <version>${project.version}</version>
                 <executions>

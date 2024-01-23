@@ -3,40 +3,61 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.devx.project</groupId>
+        <artifactId>bom</artifactId>
+        <version>1.0</version>
+        <relativePath>/bom</relativePath>
+    </parent>
 
-    <groupId>de.badminton.neubiberg</groupId>
-    <artifactId>api-maven-plugin</artifactId>
-    <version>1.0</version>
+    <artifactId>devx-project</artifactId>
+
     <modules>
         <module>bom</module>
-        <module>core</module>
 
-        <module>spring-processor</module>
-
-        <module>angular-client-generator</module>
-        <module>angular-client-maven-plugin</module>
-
-        <module>test-module</module>
-        <module>test-client</module>
-        <module>react-client-maven-plugin</module>
-        <module>entity-matcher-processor</module>
-        <module>processor-common</module>
         <module>annotations</module>
-        <module>hamcrest-matcher-annotation-processor</module>
+
+        <module>commons/api-model-commons</module>
+        <module>commons/generator-commons</module>
+        <module>commons/maven-plugin-commons</module>
+        <module>commons/processor-commons</module>
+        <module>commons/test-commons</module>
+        <module>commons/typescript-client-commons</module>
+
+        <module>api-model/spring-web-annotation-processor</module>
+
+        <module>angular/angular-client-generator</module>
+        <module>angular/angular-client-maven-plugin</module>
+
+        <module>hamcrest/hamcrest-matcher-generator</module>
+        <module>hamcrest/hamcrest-matcher-annotation-processor</module>
+        <module>hamcrest/hamcrest-matcher-dto-maven-plugin</module>
+        <module>hamcrest/hamcrest-matcher-entity-processor</module>
+
+        <module>playwright/playwright-client-generator</module>
+        <module>playwright/playwright-client-maven-plugin</module>
+
+        <module>react/react-client-generator</module>
+        <module>react/react-client-api-maven-plugin</module>
     </modules>
 
     <packaging>pom</packaging>
 
     <properties>
-        <maven.compiler.source>12</maven.compiler.source>
-        <maven.compiler.target>12</maven.compiler.target>
+        <maven.compiler.source>20</maven.compiler.source>
+        <maven.compiler.target>20</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <maven-plugin.version>3.6.4</maven-plugin.version>
+        <maven-plugin.version>3.11.0</maven-plugin.version>
         <maven-compiler.version>3.10.1</maven-compiler.version>
-        <maven-api.version>3.8.6</maven-api.version>
-        <maven-annotations.version>3.6.4</maven-annotations.version>
-        <maven-core.version>3.8.6</maven-core.version>
+        <maven-api.version>3.9.6</maven-api.version>
+        <maven-annotations.version>3.11.0</maven-annotations.version>
+        <maven-core.version>3.9.6</maven-core.version>
+
+        <spring.version>5.3.22</spring.version>
+
+        <jakarta.version>2.0.2</jakarta.version>
+        <jakarta-persistence.version>3.1.0</jakarta-persistence.version>
 
         <jackson.version>2.13.3</jackson.version>
 
@@ -46,13 +67,14 @@
 
         <freemarker.version>2.3.31</freemarker.version>
 
-        <junit.version>5.9.0</junit.version>
+        <junit.version>5.10.1</junit.version>
         <hamcrest.version>2.2</hamcrest.version>
+        <mockito.version>5.7.0</mockito.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Maven Dependencies -->
+            <!-- Maven Plugin Dependencies -->
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
@@ -70,6 +92,30 @@
                 <artifactId>maven-core</artifactId>
                 <version>${maven-core.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <!-- Spring Framework -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+
+            <!-- Jakarta -->
+            <dependency>
+                <groupId>jakarta.persistence</groupId>
+                <artifactId>jakarta.persistence-api</artifactId>
+                <version>${jakarta-persistence.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>${jakarta.version}</version>
             </dependency>
 
             <!-- Jackson -->
@@ -109,9 +155,21 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-core</artifactId>
                 <version>${hamcrest.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
@@ -138,6 +196,20 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler.version}</version>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

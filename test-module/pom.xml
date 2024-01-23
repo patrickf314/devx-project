@@ -3,10 +3,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>api-maven-plugin-bom</artifactId>
+        <artifactId>devx-project</artifactId>
         <groupId>de.badminton.neubiberg</groupId>
         <version>1.0</version>
-        <relativePath>../bom</relativePath>
+        <relativePath>../../pom</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -21,7 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>de.badminton.neubiberg</groupId>
-            <artifactId>api-maven-plugin-spring-processor</artifactId>
+            <artifactId>spring-web-annotation-processor</artifactId>
         </dependency>
         <dependency>
             <groupId>de.badminton.neubiberg</groupId>
