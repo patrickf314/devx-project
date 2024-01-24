@@ -2,15 +2,19 @@ package de.devx.project.commons.client.typescript.mapper;
 
 import de.devx.project.commons.api.model.data.ApiTypeModel;
 import de.devx.project.commons.api.model.type.ApiTypeType;
-import de.devx.project.commons.client.typescript.io.TypeScriptTypeAlias;
 import de.devx.project.commons.client.typescript.data.TypeScriptTypeModel;
+import de.devx.project.commons.client.typescript.properties.TypeScriptTypeAlias;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Named;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.Collections.emptySet;
 
 @Mapper
 public interface TypeScriptTypeMapper {
@@ -22,12 +26,12 @@ public interface TypeScriptTypeMapper {
         }
 
         var typeAlias = typeAliases.get(type.getClassName());
-        if (typeAlias != null && (typeAlias.getAnnotation() == null || type.getAnnotations().contains(typeAlias.getAnnotation()))) {
+        if (typeAlias != null) {
             return mapTypeAlias(typeAlias, !type.isRequired());
         }
 
         if (Pattern.class.getName().equals(type.getClassName())) {
-            return createTypeScriptType("string", !type.isRequired());
+            return createTypeScriptType("string", !type.isRequired(), emptySet());
         }
 
         return switch (type.getType()) {
@@ -40,20 +44,20 @@ public interface TypeScriptTypeMapper {
     }
 
     default TypeScriptTypeModel mapTypeAlias(TypeScriptTypeAlias typeAlias, boolean optional) {
-        return createTypeScriptType(typeAlias.getTsType(), optional);
+        return createTypeScriptType(typeAlias.type(), optional, Set.of(typeAlias.className()));
     }
 
     default TypeScriptTypeModel mapGenericType(ApiTypeModel model) {
-        return createTypeScriptType(model.getName(), !model.isRequired());
+        return createTypeScriptType(model.getName(), !model.isRequired(), emptySet());
     }
 
     default TypeScriptTypeModel mapJavaType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
         return switch (model.getName()) {
             case "int", "double", "float", "long", "short", "byte", "number" ->
-                    createTypeScriptType("number", !model.isRequired());
-            case "boolean" -> createTypeScriptType("boolean", false);
-            case "char", "string" -> createTypeScriptType("string", !model.isRequired());
-            case "void" -> createTypeScriptType("void", false);
+                    createTypeScriptType("number", !model.isRequired(), emptySet());
+            case "boolean" -> createTypeScriptType("boolean", false, emptySet());
+            case "char", "string" -> createTypeScriptType("string", !model.isRequired(), emptySet());
+            case "void" -> createTypeScriptType("void", false, emptySet());
             case "array", "collection" -> mapArrayType(model, typeAliases);
             case "map" -> mapMapType(model, typeAliases);
             default -> mapUnknownType();
@@ -61,12 +65,13 @@ public interface TypeScriptTypeMapper {
     }
 
     default TypeScriptTypeModel mapArrayType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
-        return createTypeScriptType(mapType(model.getTypeArguments().get(0), typeAliases).getName() + "[]", !model.isRequired());
+        var typeArgument = mapType(model.getTypeArguments().get(0), typeAliases);
+        return createTypeScriptType(typeArgument.getName() + "[]", !model.isRequired(), typeArgument.getDependentClassNames());
     }
 
     default TypeScriptTypeModel mapMapType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
         var keyType = mapType(model.getTypeArguments().get(0), typeAliases).getName();
-        var valueType = mapType(model.getTypeArguments().get(1), typeAliases).getName();
+        var valueType = mapType(model.getTypeArguments().get(1), typeAliases);
 
         if (model.getTypeArguments().get(0).getType() == ApiTypeType.ENUM) {
             keyType = "string";
@@ -76,32 +81,44 @@ public interface TypeScriptTypeMapper {
             throw new IllegalArgumentException("Invalid map type: key type must be string or number, but was " + keyType);
         }
 
-        return createTypeScriptType("Record<" + keyType + ", " + valueType + " | undefined>", false);
+        return createTypeScriptType("Record<" + keyType + ", " + valueType + " | undefined>", false, valueType.getDependentClassNames());
     }
 
     default TypeScriptTypeModel mapUnknownType() {
-        return createTypeScriptType("unknown", false);
+        return createTypeScriptType("unknown", false, emptySet());
     }
 
     default TypeScriptTypeModel mapEnumType(ApiTypeModel model) {
-        return createTypeScriptType(model.getName(), !model.isRequired());
+        return createTypeScriptType(model.getName(), !model.isRequired(), emptySet());
     }
 
     @Named("mapDTOType")
     default TypeScriptTypeModel mapDTOType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
+        var typeArguments = model.getTypeArguments()
+                .stream()
+                .map(t -> mapType(t, typeAliases))
+                .toList();
+
         var builder = new StringBuilder();
         builder.append(model.getName());
         if (!model.getTypeArguments().isEmpty()) {
             builder.append("<")
-                    .append(model.getTypeArguments().stream().map(t -> mapType(t, typeAliases))
-                            .map(t -> t.getName() + (t.isOptional() ? " | undefined" : "")).collect(Collectors.joining(", ")))
+                    .append(typeArguments.stream()
+                            .map(t -> t.getName() + (t.isOptional() ? " | undefined" : ""))
+                            .collect(Collectors.joining(", "))
+                    )
                     .append(">");
         }
 
-        return createTypeScriptType(builder.toString(), !model.isRequired());
+        var dependentClassNames = Stream.concat(
+                typeArguments.stream().map(TypeScriptTypeModel::getDependentClassNames).flatMap(Set::stream),
+                Stream.of(model.getClassName())
+        ).collect(Collectors.toSet());
+
+        return createTypeScriptType(builder.toString(), !model.isRequired(), dependentClassNames);
     }
 
-    private TypeScriptTypeModel createTypeScriptType(String name, boolean optional) {
-        return new TypeScriptTypeModel(name, optional);
+    private TypeScriptTypeModel createTypeScriptType(String name, boolean optional, Set<String> dependentClassNames) {
+        return new TypeScriptTypeModel(name, optional, dependentClassNames);
     }
 }

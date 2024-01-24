@@ -4,8 +4,8 @@ import de.devx.project.commons.api.model.data.ApiDTOModel;
 import de.devx.project.commons.api.model.data.ApiTypeModel;
 import de.devx.project.commons.client.typescript.data.TypeScriptDTOFieldModel;
 import de.devx.project.commons.client.typescript.data.TypeScriptDTOModel;
-import de.devx.project.commons.client.typescript.data.TypeScriptDependencyModel;
-import de.devx.project.commons.client.typescript.io.TypeScriptTypeAlias;
+import de.devx.project.commons.client.typescript.data.TypeScriptImportModel;
+import de.devx.project.commons.client.typescript.properties.TypeScriptTypeAlias;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -18,7 +18,7 @@ import java.util.Map;
 public interface TypeScriptDTOMapper {
 
     @Mapping(target = "extendedDTO", qualifiedByName = "mapDTOType")
-    TypeScriptDTOModel mapDTO(ApiDTOModel model, Collection<TypeScriptDependencyModel> dependencies, @Context Map<String, TypeScriptTypeAlias> typeAliases);
+    TypeScriptDTOModel mapDTO(ApiDTOModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases);
 
     default List<TypeScriptDTOFieldModel> mapDTOFields(Map<String, ApiTypeModel> models, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
         return models.entrySet()

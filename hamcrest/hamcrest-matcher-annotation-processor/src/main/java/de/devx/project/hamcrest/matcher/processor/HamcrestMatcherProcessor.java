@@ -2,7 +2,7 @@ package de.devx.project.hamcrest.matcher.processor;
 
 import de.devx.project.commons.generator.io.SourceFileGenerator;
 import de.devx.project.commons.generator.logging.Logger;
-import de.devx.project.commons.processor.io.JavaSourceFileGenerator;
+import de.devx.project.commons.processor.io.ProcessorJavaFileGenerator;
 import de.devx.project.commons.processor.logging.JavaProcessorLogger;
 import de.devx.project.hamcrest.matcher.generator.HamcrestMatcherGenerator;
 import de.devx.project.hamcrest.matcher.processor.mapper.HamcrestMatcherElementMapper;
@@ -44,7 +44,7 @@ public class HamcrestMatcherProcessor extends AbstractProcessor {
 
     public SourceFileGenerator getFileGenerator() {
         if (fileGenerator == null) {
-            fileGenerator = new JavaSourceFileGenerator(processingEnv.getFiler());
+            fileGenerator = new ProcessorJavaFileGenerator(processingEnv.getFiler());
         }
 
         return fileGenerator;

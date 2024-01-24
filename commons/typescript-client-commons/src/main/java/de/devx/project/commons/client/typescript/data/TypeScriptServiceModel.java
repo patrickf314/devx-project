@@ -9,7 +9,6 @@ import java.util.List;
 @Data
 public class TypeScriptServiceModel {
 
-    private Collection<TypeScriptDependencyModel> dependencies = new ArrayList<>();
     private String className;
     private String name;
 

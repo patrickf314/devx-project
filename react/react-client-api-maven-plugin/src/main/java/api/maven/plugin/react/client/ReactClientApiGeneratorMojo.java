@@ -1,17 +1,17 @@
 package api.maven.plugin.react.client;
 
-import de.devx.project.client.react.ReactClientDependencyResolver;
 import de.devx.project.client.react.ReactClientGenerator;
+import de.devx.project.client.react.properties.ReactClientGeneratorProperties;
 import de.devx.project.commons.api.model.data.ApiModel;
 import de.devx.project.commons.api.model.io.ApiModelFileExtractor;
 import de.devx.project.commons.api.model.io.JarApiModelExtractor;
 import de.devx.project.commons.client.typescript.io.TypeScriptFileGenerator;
-import de.devx.project.commons.client.typescript.io.TypeScriptPackageAlias;
-import de.devx.project.commons.client.typescript.io.TypeScriptRelativePaths;
-import de.devx.project.commons.client.typescript.io.TypeScriptTypeAlias;
 import de.devx.project.commons.client.typescript.mapper.TypeScriptDTOMapper;
 import de.devx.project.commons.client.typescript.mapper.TypeScriptEnumMapper;
 import de.devx.project.commons.client.typescript.mapper.TypeScriptServiceMapper;
+import de.devx.project.commons.client.typescript.properties.TypeScriptDependency;
+import de.devx.project.commons.client.typescript.properties.TypeScriptPackageAlias;
+import de.devx.project.commons.client.typescript.properties.TypeScriptTypeAlias;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -45,27 +45,33 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
 
     @Parameter(readonly = true, required = true, defaultValue = "${project}")
     private MavenProject mavenProject;
+
     @Parameter(defaultValue = "${project.build.directory}")
     private String outputDirectory;
-    @Parameter
-    private List<TypeScriptTypeAlias> typeScriptTypeAliases;
     @Parameter(property = "apiClientGenerator.apiModelJson")
     private File apiModelJson;
+
     @Parameter
-    private String defaultPackage;
+    private List<TypeScriptTypeAlias> typeAliases;
     @Parameter
-    private List<TypeScriptPackageAlias> typeScriptPackageAliases;
+    private List<TypeScriptPackageAlias> packageAliases;
+    @Parameter
+    private String defaultPackageAlias;
+    @Parameter(required = true)
+    private TypeScriptDependency errorMapper;
+    @Parameter(required = true)
+    private TypeScriptDependency errorSerializer;
+    @Parameter(required = true)
+    private TypeScriptDependency reduxThunkConfig;
+    @Parameter
+    private TypeScriptDependency httpHeaderCustomizer;
+    @Parameter
+    private TypeScriptDependency backendUrlGetter;
+    @Parameter
+    private String backendUrl;
 
     @Override
     public void execute() throws MojoExecutionException {
-        if (typeScriptTypeAliases == null) {
-            typeScriptTypeAliases = Collections.emptyList();
-        }
-
-        if (typeScriptPackageAliases == null) {
-            typeScriptPackageAliases = Collections.emptyList();
-        }
-
         getLog().info("Starting generation of API clients...");
         getLog().debug("Searing for api model definition in dependencies...");
 
@@ -103,15 +109,13 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
     }
 
     private void generateClients(List<ApiModel> apiModels) throws IOException {
-        var typeAliases = typeScriptTypeAliases.stream().collect(Collectors.toMap(TypeScriptTypeAlias::getClassName, Function.identity()));
+        var typeAliases = this.typeAliases.stream().collect(Collectors.toMap(TypeScriptTypeAlias::className, Function.identity()));
         var fileGenerator = new TypeScriptFileGenerator(outputDirectory);
-        var generator = new ReactClientGenerator(fileGenerator, typeScriptPackageAliases, defaultPackage);
-        var relativePaths = new TypeScriptRelativePaths(fileGenerator, generator::extractPackageNameFromClassName);
-        var dependencyResolver = new ReactClientDependencyResolver(relativePaths, typeAliases);
+        var generator = new ReactClientGenerator(fileGenerator, properties());
 
         for (var apiModel : apiModels) {
-            var services = apiModel.getEndpoints().values().stream().map(service -> SERVICE_MAPPER.mapService(service, dependencyResolver.resolveDependencies(service), typeAliases)).toList();
-            var dtos = apiModel.getDtos().values().stream().map(dto -> DTO_MAPPER.mapDTO(dto, dependencyResolver.resolveDependencies(dto), typeAliases)).toList();
+            var services = apiModel.getEndpoints().values().stream().map(service -> SERVICE_MAPPER.mapService(service, typeAliases)).toList();
+            var dtos = apiModel.getDtos().values().stream().map(dto -> DTO_MAPPER.mapDTO(dto, typeAliases)).toList();
             var enums = apiModel.getEnums().values().stream().map(ENUM_MAPPER::mapEnum).toList();
 
             for (var service : services) {
@@ -137,5 +141,18 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
             getLog().debug("Cannot extract artifact file " + file.getAbsolutePath());
             return Optional.empty();
         }
+    }
+
+    private ReactClientGeneratorProperties properties() {
+        return new ReactClientGeneratorProperties(
+                packageAliases == null ? Collections.emptyList() : packageAliases,
+                defaultPackageAlias,
+                errorMapper,
+                errorSerializer,
+                reduxThunkConfig,
+                httpHeaderCustomizer,
+                backendUrlGetter,
+                backendUrl
+        );
     }
 }

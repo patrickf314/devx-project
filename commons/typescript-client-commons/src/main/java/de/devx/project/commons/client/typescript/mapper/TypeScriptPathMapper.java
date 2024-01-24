@@ -1,19 +1,10 @@
 package de.devx.project.commons.client.typescript.mapper;
 
-import de.devx.project.commons.api.model.data.ApiServiceEndpointModel;
-import de.devx.project.commons.client.typescript.data.TypeScriptDependencyModel;
 import de.devx.project.commons.client.typescript.data.TypeScriptPathModel;
-import de.devx.project.commons.client.typescript.data.TypeScriptServiceMethodParameterModel;
-import de.devx.project.commons.client.typescript.data.TypeScriptServiceModel;
-import de.devx.project.commons.client.typescript.io.TypeScriptTypeAlias;
-import org.mapstruct.AfterMapping;
-import org.mapstruct.Context;
 import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
 
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Mapper
 public interface TypeScriptPathMapper {

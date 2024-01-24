@@ -1,5 +1,6 @@
 package de.devx.project.commons.maven.io;
 
+import de.devx.project.commons.generator.io.JavaFileGenerator;
 import de.devx.project.commons.generator.io.SourceFileGenerator;
 import lombok.RequiredArgsConstructor;
 
@@ -9,7 +10,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 @RequiredArgsConstructor
-public class MavenSourceFileGenerator implements SourceFileGenerator {
+public class MavenJavaFileGenerator implements JavaFileGenerator {
 
     private final String outputDirectory;
 
@@ -17,11 +18,6 @@ public class MavenSourceFileGenerator implements SourceFileGenerator {
     public Writer createSourceFile(String packageName, String className) throws IOException {
         var file = new File(createPackageDirectory(packageName), fileName(className));
         return new FileWriter(file);
-    }
-
-    @Override
-    public String fileName(String className) {
-        return className + ".java";
     }
 
     private File createPackageDirectory(String packageName) throws IOException {

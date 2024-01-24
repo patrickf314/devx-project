@@ -2,7 +2,7 @@ package de.devx.project.hamcrest.matcher.maven.dto;
 
 import de.devx.project.commons.api.model.data.ApiModel;
 import de.devx.project.commons.api.model.io.JarApiModelExtractor;
-import de.devx.project.commons.maven.io.MavenSourceFileGenerator;
+import de.devx.project.commons.maven.io.MavenJavaFileGenerator;
 import de.devx.project.hamcrest.matcher.generator.HamcrestMatcherGenerator;
 import de.devx.project.hamcrest.matcher.maven.dto.mapper.DTOHamcrestMatcherMapper;
 import lombok.AllArgsConstructor;
@@ -64,7 +64,7 @@ public class DTOHamcrestMatcherMojo extends AbstractMojo {
     }
 
     private void createMatchers(List<ApiModel> apiModels) throws IOException {
-        var fileGenerator = new MavenSourceFileGenerator(outputDirectory);
+        var fileGenerator = new MavenJavaFileGenerator(outputDirectory);
         var generator = new HamcrestMatcherGenerator(fileGenerator);
 
         var matchers = apiModels.stream()

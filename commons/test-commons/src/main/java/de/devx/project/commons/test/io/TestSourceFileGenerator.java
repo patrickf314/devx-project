@@ -22,6 +22,11 @@ public class TestSourceFileGenerator implements SourceFileGenerator {
         return className;
     }
 
+    @Override
+    public String importPath(String currentPackage, String targetPackage) {
+        return targetPackage;
+    }
+
     public Optional<String> getFileContent(String packageName, String className) {
         return Optional.ofNullable(sourceFiles.get(packageName + "." + className))
                 .map(StringWriter::toString);

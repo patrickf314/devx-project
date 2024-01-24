@@ -6,7 +6,7 @@ import de.devx.project.commons.api.model.type.ApiMethodParameterType;
 import de.devx.project.commons.api.model.type.ApiMethodResponseType;
 import de.devx.project.commons.client.typescript.data.TypeScriptServiceMethodModel;
 import de.devx.project.commons.client.typescript.data.TypeScriptServiceMethodParameterModel;
-import de.devx.project.commons.client.typescript.io.TypeScriptTypeAlias;
+import de.devx.project.commons.client.typescript.properties.TypeScriptTypeAlias;
 import de.devx.project.commons.client.typescript.utils.TypeScriptServiceMethodMapperUtils;
 import org.mapstruct.*;
 

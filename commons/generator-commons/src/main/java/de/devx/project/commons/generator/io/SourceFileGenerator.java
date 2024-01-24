@@ -8,4 +8,6 @@ public interface SourceFileGenerator {
     Writer createSourceFile(String packageName, String className) throws IOException;
 
     String fileName(String className);
+
+    String importPath(String currentPackage, String targetPackage);
 }

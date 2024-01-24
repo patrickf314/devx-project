@@ -1,11 +1,13 @@
 package de.devx.project.commons.client.typescript.data;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.Set;
 
 @Data
-public class TypeScriptDependencyModel {
+@AllArgsConstructor
+public class TypeScriptImportModel {
 
     private String path;
     private Set<String> identifiers;

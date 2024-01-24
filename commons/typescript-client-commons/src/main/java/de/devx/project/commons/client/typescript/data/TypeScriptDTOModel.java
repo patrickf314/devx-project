@@ -8,7 +8,6 @@ import java.util.List;
 @Data
 public class TypeScriptDTOModel {
 
-    private Collection<TypeScriptDependencyModel> dependencies;
     private String className;
     private String name;
     private List<String> typeArguments;

@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RequiredArgsConstructor
 public class TypeScriptFileGenerator implements SourceFileGenerator {
@@ -25,18 +27,45 @@ public class TypeScriptFileGenerator implements SourceFileGenerator {
     @Override
     public String fileName(String className) {
         if (className.endsWith("ServiceAPI") || className.endsWith("ServiceApi")) {
-            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 10)) + ".service";
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 10)) + ".service.ts";
         }
 
         if (className.endsWith("DTO") || className.endsWith("Dto")) {
-            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 3) + ".dto");
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 3) + ".dto.ts");
         }
 
         if (className.endsWith("Type")) {
-            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 4)) + ".type";
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 4)) + ".type.ts";
         }
 
-        return TypeScriptUtils.toLowerCaseName(className);
+        return TypeScriptUtils.toLowerCaseName(className) + ".ts";
+    }
+
+    @Override
+    public String importPath(String currentPackage, String targetPackage) {
+        var currentPath = currentPackage.split("\\.");
+        var targetPath = targetPackage.split("\\.");
+
+        var commonDepth = 0;
+        for (var i = 0; i < Math.min(currentPath.length, targetPath.length); i++) {
+            if (!currentPath[i].equals(targetPath[i])) {
+                break;
+            }
+            commonDepth++;
+        }
+
+        var importPath = new StringBuilder();
+        if (commonDepth == currentPath.length) {
+            importPath.append(".");
+        } else {
+            importPath.append(IntStream.range(commonDepth, currentPath.length).mapToObj(i -> "..").collect(Collectors.joining("/")));
+        }
+
+        for (var i = commonDepth; i < targetPath.length; i++) {
+            importPath.append("/").append(targetPath[i]);
+        }
+
+        return importPath.toString();
     }
 
     private File packageDirectory(String packageName) throws IOException {

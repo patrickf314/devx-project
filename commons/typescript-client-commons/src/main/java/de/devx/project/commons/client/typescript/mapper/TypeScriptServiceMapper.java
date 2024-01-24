@@ -1,14 +1,14 @@
 package de.devx.project.commons.client.typescript.mapper;
 
 import de.devx.project.commons.api.model.data.ApiServiceEndpointModel;
-import de.devx.project.commons.client.typescript.data.TypeScriptDependencyModel;
 import de.devx.project.commons.client.typescript.data.TypeScriptServiceMethodParameterModel;
 import de.devx.project.commons.client.typescript.data.TypeScriptServiceModel;
-import de.devx.project.commons.client.typescript.io.TypeScriptTypeAlias;
-import org.mapstruct.*;
+import de.devx.project.commons.client.typescript.properties.TypeScriptTypeAlias;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Context;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Mapper(uses = {TypeScriptTypeMapper.class, TypeScriptServiceMethodMapper.class, TypeScriptPathMapper.class})
 public interface TypeScriptServiceMapper {
 
-    TypeScriptServiceModel mapService(ApiServiceEndpointModel endpointModel, Collection<TypeScriptDependencyModel> dependencies, @Context Map<String, TypeScriptTypeAlias> typeAliases);
+    TypeScriptServiceModel mapService(ApiServiceEndpointModel endpointModel, @Context Map<String, TypeScriptTypeAlias> typeAliases);
 
     @AfterMapping
     default void adjustParameterNames(@MappingTarget TypeScriptServiceModel service) {
