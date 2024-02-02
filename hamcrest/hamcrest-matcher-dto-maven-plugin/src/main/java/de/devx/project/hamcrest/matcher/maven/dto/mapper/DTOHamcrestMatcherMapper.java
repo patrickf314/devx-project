@@ -15,6 +15,7 @@ import org.mapstruct.Named;
 import java.util.*;
 
 import static de.devx.project.hamcrest.matcher.generator.data.HamcrestClassFieldTypeModel.*;
+import static java.util.Collections.emptyList;
 
 @Mapper
 public interface DTOHamcrestMatcherMapper {
@@ -31,6 +32,7 @@ public interface DTOHamcrestMatcherMapper {
     @Mapping(target = "className", source = "name")
     @Mapping(target = "generics", source = "typeArguments")
     @Mapping(target = "fields", source = ".")
+    @Mapping(target = "enclosingDTO", source = "enclosingDTO.name")
     HamcrestMatcherModel mapApiDTO(ApiDTOModel dto, @Context ApiModel model);
 
     @Named("packageName")
@@ -47,21 +49,47 @@ public interface DTOHamcrestMatcherMapper {
     }
 
     default List<HamcrestClassFieldModel> mapFields(ApiDTOModel dto, @Context ApiModel model) {
+        return mapFields(dto, model, dto.getTypeArguments().stream().map(HamcrestClassFieldTypeModel::genericType).toList());
+    }
+
+    default List<HamcrestClassFieldModel> mapFields(ApiDTOModel dto, @Context ApiModel model, @Context List<HamcrestClassFieldTypeModel> typeArguments) {
+        var typeArgumentsAliases = mapTypeArguments(dto, typeArguments);
+
         var list = new ArrayList<HamcrestClassFieldModel>();
         if (dto.getExtendedDTO() != null) {
-            list.addAll(mapFields(model.getDtos().get(dto.getExtendedDTO().getClassName()), model));
+            var extendedDTO = model.getDtos().get(dto.getExtendedDTO().getClassName());
+            list.addAll(mapFields(extendedDTO, model, dto.getExtendedDTO()
+                    .getTypeArguments()
+                    .stream()
+                    .map(type -> mapType(type, typeArgumentsAliases))
+                    .toList()
+            ));
         }
+
+        var typeArgumentAliases = mapTypeArguments(dto, typeArguments);
 
         list.addAll(dto.getFields()
                 .entrySet()
                 .stream()
-                .map(fieldModel -> mapField(fieldModel, dto.isJavaRecord()))
+                .map(fieldModel -> mapField(fieldModel, dto.isJavaRecord(), typeArgumentAliases))
                 .toList());
 
         return list;
     }
 
-    default HamcrestClassFieldModel mapField(Map.Entry<String, ApiTypeModel> fieldModel, @Context boolean javaRecord) {
+    private HashMap<String, HamcrestClassFieldTypeModel> mapTypeArguments(ApiDTOModel dto, List<HamcrestClassFieldTypeModel> typeArguments) {
+        if (typeArguments.size() != dto.getTypeArguments().size()) {
+            throw new IllegalArgumentException("Invalid type arguments");
+        }
+
+        var typeArgumentAliases = new HashMap<String, HamcrestClassFieldTypeModel>();
+        for (var i = 0; i < typeArguments.size(); i++) {
+            typeArgumentAliases.put(dto.getTypeArguments().get(i), typeArguments.get(i));
+        }
+        return typeArgumentAliases;
+    }
+
+    default HamcrestClassFieldModel mapField(Map.Entry<String, ApiTypeModel> fieldModel, @Context boolean javaRecord, @Context Map<String, HamcrestClassFieldTypeModel> typeArguments) {
         var name = fieldModel.getKey();
         var type = fieldModel.getValue();
         String getter;
@@ -74,12 +102,12 @@ public interface DTOHamcrestMatcherMapper {
             getter = "get" + upperFirstChar(name);
         }
 
-        return new HamcrestClassFieldModel(mapType(type), name, getter);
+        return new HamcrestClassFieldModel(mapType(type, typeArguments), name, getter);
     }
 
-    default HamcrestClassFieldTypeModel mapType(ApiTypeModel type) {
+    default HamcrestClassFieldTypeModel mapType(ApiTypeModel type, @Context Map<String, HamcrestClassFieldTypeModel> typeArguments) {
         if (type.getType() == ApiTypeType.GENERIC_TYPE) {
-            return genericType(type.getName());
+            return Objects.requireNonNull(typeArguments.get(type.getName()));
         }
 
         if (type.getType() == ApiTypeType.UNKNOWN) {
@@ -88,8 +116,9 @@ public interface DTOHamcrestMatcherMapper {
 
         var generics = type.getTypeArguments()
                 .stream()
-                .map(this::mapType)
+                .map(typeArgument -> mapType(typeArgument, typeArguments))
                 .toList();
+
         if (type.getType() == ApiTypeType.DTO || type.getType() == ApiTypeType.ENUM) {
             return objectType(packageName(type.getClassName()), type.getName(), generics);
         }
@@ -107,19 +136,19 @@ public interface DTOHamcrestMatcherMapper {
         }
 
         if ("string".equals(type.getName())) {
-            return objectType(JAVA_LANG_PACKAGE, "String", Collections.emptyList());
+            return objectType(JAVA_LANG_PACKAGE, "String", emptyList());
         }
 
         if ("number".equals(type.getName())) {
             var i = type.getClassName().lastIndexOf('.');
-            return objectType(JAVA_LANG_PACKAGE, type.getClassName().substring(i + 1), Collections.emptyList());
+            return objectType(JAVA_LANG_PACKAGE, type.getClassName().substring(i + 1), emptyList());
         }
 
         if ("int".equals(type.getName())) {
-            return type.isRequired() ? primaryType("int", "Integer") : objectType(JAVA_LANG_PACKAGE, "Integer", Collections.emptyList());
+            return type.isRequired() ? primaryType("int", "Integer") : objectType(JAVA_LANG_PACKAGE, "Integer", emptyList());
         }
 
-        return type.isRequired() ? primaryType(type.getName(), upperFirstChar(type.getName())) : objectType(JAVA_LANG_PACKAGE, upperFirstChar(type.getName()), Collections.emptyList());
+        return type.isRequired() ? primaryType(type.getName(), upperFirstChar(type.getName())) : objectType(JAVA_LANG_PACKAGE, upperFirstChar(type.getName()), emptyList());
     }
 
     private String upperFirstChar(String str) {

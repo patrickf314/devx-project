@@ -1,5 +1,13 @@
 package de.devx.project.commons.client.typescript.properties;
 
-public record TypeScriptPackageAlias(String prefix, String alias) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class TypeScriptPackageAlias {
+    private String prefix;
+    private String alias;
 }

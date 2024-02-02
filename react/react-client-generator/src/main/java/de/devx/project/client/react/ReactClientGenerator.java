@@ -35,7 +35,7 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
         generatedClasses.add(model.getClassName());
 
         var packageName = properties.getPackageNameForClass(model.getClassName());
-        var imports = resolveImports(packageName, model,properties.getBackendUrlGetter(), properties.getHttpHeaderCustomizer(),
+        var imports = resolveImports(packageName, model, properties.getBackendUrlGetter(), properties.getHttpHeaderCustomizer(),
                 new TypeScriptDependency("State", utilityPackage() + "/thunk-options.ts"),
                 new TypeScriptDependency("ThunkOptions", utilityPackage() + "/thunk-options.ts"),
                 new TypeScriptDependency("Dispatch", utilityPackage() + "/thunk-options.ts"),
@@ -43,20 +43,21 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
                 new TypeScriptDependency("mapJsonResponse", utilityPackage() + "/react-service-commons.ts"),
                 new TypeScriptDependency("mapVoidResponse", utilityPackage() + "/react-service-commons.ts"),
                 new TypeScriptDependency("mapStringResponse", utilityPackage() + "/react-service-commons.ts"),
-                new TypeScriptDependency("mapStreamingResponse", utilityPackage() + "/react-service-commons.ts")
+                new TypeScriptDependency("mapStreamingResponse", utilityPackage() + "/react-service-commons.ts"),
+                new TypeScriptDependency("DownloadStreamDTO", utilityPackage() + "/download-stream.dto.ts")
         );
 
         processTemplate("react-service-template.ts.ftl", packageName, model.getName(), Map.of(
                 "model", model,
                 "imports", imports,
-                "backendUrl", properties.getBackendUrl(),
-                "backendUrlGetterIdentifier", properties.getBackendUrlGetter() == null ? "" : properties.getBackendUrlGetter().identifier(),
-                "prepareHeadersIdentifier", properties.getHttpHeaderCustomizer() == null ? "" : properties.getHttpHeaderCustomizer().identifier()
+                "backendUrl", properties.getBackendUrl() == null ? "" : properties.getBackendUrl(),
+                "backendUrlGetterIdentifier", properties.getBackendUrlGetter() == null ? "" : properties.getBackendUrlGetter().getIdentifier(),
+                "prepareHeadersIdentifier", properties.getHttpHeaderCustomizer() == null ? "" : properties.getHttpHeaderCustomizer().getIdentifier()
         ));
     }
 
     public void generateUtilities() throws IOException {
-        var packageName = utilityPackage();
+        var packageName = utilityPackage().replace('/', '.');
         if (!generatedClasses.contains(packageName + "." + DOWNLOAD_STREAM)) {
             generatedClasses.add(packageName + "." + DOWNLOAD_STREAM);
             processTemplate("download-stream.dto.ts.ftl", packageName, DOWNLOAD_STREAM, Map.of());
@@ -66,16 +67,16 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
             generatedClasses.add(packageName + "." + THUNK_OPTIONS);
             processTemplate("thunk-options.ts.ftl", packageName, THUNK_OPTIONS, Map.of(
                     "imports", resolveImports(packageName, properties.getReduxThunkConfig(), properties.getErrorSerializer()),
-                    "reduxThunkConfigIdentifier", properties.getReduxThunkConfig().identifier(),
-                    "errorSerializerIdentifier", properties.getErrorSerializer().identifier()
+                    "reduxThunkConfigIdentifier", properties.getReduxThunkConfig().getIdentifier(),
+                    "errorSerializerIdentifier", properties.getErrorSerializer().getIdentifier()
             ));
         }
 
         if (!generatedClasses.contains(packageName + "." + SERVICE_COMMONS)) {
             generatedClasses.add(packageName + "." + SERVICE_COMMONS);
             processTemplate("react-service-commons.ts.ftl", packageName, SERVICE_COMMONS, Map.of(
-                    "imports", resolveImports(packageName, properties.getErrorSerializer()),
-                    "errorMapperIdentifier", properties.getErrorMapper().identifier()
+                    "imports", resolveImports(packageName, properties.getErrorMapper()),
+                    "errorMapperIdentifier", properties.getErrorMapper().getIdentifier()
             ));
         }
     }
@@ -89,20 +90,20 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
         resolveImports(currentPackage, dependencies).forEach(i -> addImport(i, imports));
         model.getMethods()
                 .stream()
-                .map(method -> importModelsForMethod(currentPackage, method))
+                .map(method -> importModelsForMethod(currentPackage, method, model.getClassName()))
                 .flatMap(List::stream)
                 .forEach(i -> addImport(i, imports));
         return imports.values();
     }
 
-    private List<TypeScriptImportModel> importModelsForMethod(String currentPackage, TypeScriptServiceMethodModel model) {
+    private List<TypeScriptImportModel> importModelsForMethod(String currentPackage, TypeScriptServiceMethodModel model, String currentClassName) {
         return Stream.concat(
                 model.getParameters()
                         .stream()
                         .map(TypeScriptServiceMethodParameterModel::getType)
-                        .map(type -> importModelsForType(currentPackage, type))
+                        .map(type -> importModelsForType(currentPackage, type, currentClassName))
                         .flatMap(List::stream),
-                importModelsForType(currentPackage, model.getReturnType()).stream()
+                importModelsForType(currentPackage, model.getReturnType(), currentClassName).stream()
         ).toList();
     }
 }

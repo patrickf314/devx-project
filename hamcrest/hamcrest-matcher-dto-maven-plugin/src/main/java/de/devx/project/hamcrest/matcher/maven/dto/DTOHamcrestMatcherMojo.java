@@ -4,6 +4,7 @@ import de.devx.project.commons.api.model.data.ApiModel;
 import de.devx.project.commons.api.model.io.JarApiModelExtractor;
 import de.devx.project.commons.maven.io.MavenJavaFileGenerator;
 import de.devx.project.hamcrest.matcher.generator.HamcrestMatcherGenerator;
+import de.devx.project.hamcrest.matcher.generator.data.HamcrestMatcherModel;
 import de.devx.project.hamcrest.matcher.maven.dto.mapper.DTOHamcrestMatcherMapper;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Mojo(
         name = "generate-dto-hamcrest-matchers",
@@ -38,6 +40,9 @@ public class DTOHamcrestMatcherMojo extends AbstractMojo {
     private MavenProject mavenProject;
     @Parameter(defaultValue = "${project.build.directory}/generated-test-sources/test-annotations")
     private String outputDirectory;
+
+    @Parameter
+    private Set<String> packages;
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -70,11 +75,20 @@ public class DTOHamcrestMatcherMojo extends AbstractMojo {
         var matchers = apiModels.stream()
                 .map(MAPPER::mapApiDTOs)
                 .flatMap(List::stream)
+                .filter(this::filterMatcher)
                 .toList();
 
         for (var matcher : matchers) {
             generator.generate(matcher);
         }
+    }
+
+    private boolean filterMatcher(HamcrestMatcherModel hamcrestMatcherModel) {
+        if (packages == null || packages.isEmpty()) {
+            return true;
+        }
+
+        return packages.stream().anyMatch(prefix -> hamcrestMatcherModel.getPackageName().startsWith(prefix));
     }
 
     private Optional<ApiModel> extract(File file) {

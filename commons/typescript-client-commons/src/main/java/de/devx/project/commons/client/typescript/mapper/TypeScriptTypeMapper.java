@@ -44,7 +44,7 @@ public interface TypeScriptTypeMapper {
     }
 
     default TypeScriptTypeModel mapTypeAlias(TypeScriptTypeAlias typeAlias, boolean optional) {
-        return createTypeScriptType(typeAlias.type(), optional, Set.of(typeAlias.className()));
+        return createTypeScriptType(typeAlias.getType(), optional, Set.of(typeAlias.getClassName()));
     }
 
     default TypeScriptTypeModel mapGenericType(ApiTypeModel model) {
@@ -81,7 +81,7 @@ public interface TypeScriptTypeMapper {
             throw new IllegalArgumentException("Invalid map type: key type must be string or number, but was " + keyType);
         }
 
-        return createTypeScriptType("Record<" + keyType + ", " + valueType + " | undefined>", false, valueType.getDependentClassNames());
+        return createTypeScriptType("Record<" + keyType + ", " + valueType.getName() + " | undefined>", false, valueType.getDependentClassNames());
     }
 
     default TypeScriptTypeModel mapUnknownType() {
@@ -89,11 +89,15 @@ public interface TypeScriptTypeMapper {
     }
 
     default TypeScriptTypeModel mapEnumType(ApiTypeModel model) {
-        return createTypeScriptType(model.getName(), !model.isRequired(), emptySet());
+        return createTypeScriptType(model.getName(), !model.isRequired(), Set.of(model.getClassName()));
     }
 
     @Named("mapDTOType")
     default TypeScriptTypeModel mapDTOType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
+        if(model == null) {
+            return null;
+        }
+
         var typeArguments = model.getTypeArguments()
                 .stream()
                 .map(t -> mapType(t, typeAliases))

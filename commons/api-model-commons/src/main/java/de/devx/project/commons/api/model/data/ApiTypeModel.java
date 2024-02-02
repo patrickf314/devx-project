@@ -27,15 +27,15 @@ public class ApiTypeModel {
         this(name, type, null, required);
     }
 
-    public ApiTypeModel(String name, ApiTypeType type, boolean required, List<ApiTypeModel> typeArguments) {
-        this(name, type, null, required, typeArguments, Collections.emptyList(), Collections.emptyList());
-    }
-
     public ApiTypeModel(String name, ApiTypeType type, String className) {
         this(name, type, className, false);
     }
 
     public ApiTypeModel(String name, ApiTypeType type, String className, boolean required) {
-        this(name, type, className, required, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        this(name, type, className, required, Collections.emptyList());
+    }
+
+    public ApiTypeModel(String name, ApiTypeType type, String className, boolean required, List<ApiTypeModel> typeArguments) {
+        this(name, type, className, required, typeArguments, Collections.emptyList(), Collections.emptyList());
     }
 }

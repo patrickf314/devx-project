@@ -2,7 +2,6 @@
 <#-- @ftlvariable name="imports" type="java.util.List<de.devx.project.commons.client.typescript.data.TypeScriptImportModel>" -->
 <#-- @ftlvariable name="errorMapperIdentifier" type="java.lang.String" -->
 import { type DownloadStreamDTO } from './download-stream.dto';
-import { type State } from './thunk-options';
 <#list imports as import>
 import { ${import.identifiers?join(", ")} } from '${import.path}';
 </#list>

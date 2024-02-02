@@ -21,6 +21,7 @@ class ReactClientGeneratorTest {
     private final TestSourceFileGenerator fileGenerator = new TestSourceFileGenerator();
     private final ReactClientGenerator generator = new ReactClientGenerator(fileGenerator, new ReactClientGeneratorProperties(
             List.of(),
+            List.of(),
             null,
             new TypeScriptDependency("testErrorMapper", "commons/service-commons.ts"),
             new TypeScriptDependency("testErrorSerializer", "commons/service-commons.ts"),

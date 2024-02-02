@@ -104,7 +104,7 @@ export const ${method.name}Thunk = createAsyncThunk('${model.name}/${method.name
         body: <#if method.bodyParameter?has_content && !method.formData>JSON.stringify(${method.bodyParameter})<#else>formData</#if>
         </#if>
 
-    }).then(res => map<#switch method.returnType.name><#case 'void'>VoidResponse<#break><#case 'string'>StringResponse<#break><#case 'DownloadInfo'>StreamingResponse<#break><#default>JsonResponse<${method.returnType.name}></#switch>(res));
+    }).then(res => map<#if method.returnTypeWrapper == 'Observable'>StreamingResponse<#else><#switch method.returnType.name><#case 'void'>VoidResponse<#break><#case 'string'>StringResponse<#break><#case 'DownloadInfo'>StreamingResponse<#break><#default>JsonResponse<${method.returnType.name}></#switch></#if>(res));
 }, ThunkOptions);
 </#list>
 

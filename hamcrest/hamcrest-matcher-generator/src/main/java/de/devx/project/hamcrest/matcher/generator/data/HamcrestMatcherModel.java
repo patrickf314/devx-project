@@ -11,6 +11,7 @@ public class HamcrestMatcherModel {
     private String packageName;
     private String className;
     private String generics = "";
+    private String enclosingDTO;
     private List<HamcrestClassFieldModel> fields = new ArrayList<>();
 
 }

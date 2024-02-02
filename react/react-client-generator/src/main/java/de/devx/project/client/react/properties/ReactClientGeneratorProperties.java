@@ -22,8 +22,8 @@ public class ReactClientGeneratorProperties extends TypeScriptClientGeneratorPro
     private final TypeScriptDependency backendUrlGetter;
     private final String backendUrl;
 
-    public ReactClientGeneratorProperties(List<TypeScriptPackageAlias> packageAliases, String defaultPackageAlias, TypeScriptDependency errorMapper, TypeScriptDependency errorSerializer, TypeScriptDependency reduxThunkConfig, TypeScriptDependency httpHeaderCustomizer, TypeScriptDependency backendUrlGetter, String backendUrl) {
-        super(packageAliases, defaultPackageAlias);
+    public ReactClientGeneratorProperties(List<TypeScriptTypeAlias> typeAliases, List<TypeScriptPackageAlias> packageAliases, String defaultPackageAlias, TypeScriptDependency errorMapper, TypeScriptDependency errorSerializer, TypeScriptDependency reduxThunkConfig, TypeScriptDependency httpHeaderCustomizer, TypeScriptDependency backendUrlGetter, String backendUrl) {
+        super(typeAliases, packageAliases, defaultPackageAlias);
 
         this.errorMapper = errorMapper;
         this.errorSerializer = errorSerializer;

@@ -9,10 +9,8 @@ import freemarker.template.TemplateException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 public class HamcrestMatcherGenerator {
@@ -31,6 +29,10 @@ public class HamcrestMatcherGenerator {
     }
 
     public void generate(HamcrestMatcherModel matcher) throws IOException {
+        if(matcher.getEnclosingDTO() != null) {
+            return;
+        }
+
         try (var writer = fileGenerator.createSourceFile(matcher.getPackageName(), matcher.getClassName() + "Matcher")) {
             var imports = getImports(matcher);
             configuration.getTemplate("HamcrestMatcher.ftl").process(Map.of(
@@ -44,33 +46,26 @@ public class HamcrestMatcherGenerator {
     }
 
     private List<String> getImports(HamcrestMatcherModel matcher) {
-        var checkedClasses = new HashSet<String>();
         return matcher.getFields()
                 .stream()
                 .map(HamcrestClassFieldModel::getType)
-                .flatMap(type -> streamImports(type, matcher.getPackageName(), checkedClasses))
+                .flatMap(type -> streamImports(type, matcher.getPackageName()))
                 .distinct()
                 .sorted()
                 .toList();
     }
 
-    private Stream<String> streamImports(HamcrestClassFieldTypeModel type, String packageName, Set<String> checkedClasses) {
-        if (type.getPackageName() == null || JAVA_LANG_PACKAGE.equals(type.getPackageName()) || packageName.equals(type.getPackageName())) {
+    private Stream<String> streamImports(HamcrestClassFieldTypeModel type, String packageName) {
+        if (type.getPackageName() == null || JAVA_LANG_PACKAGE.equals(type.getPackageName())) {
             return Stream.empty();
         }
 
-        var fullName = type.getPackageName() + "." + type.getClassName();
-
-        if (checkedClasses.contains(fullName)) {
-            return Stream.empty();
-        }
-        checkedClasses.add(fullName);
-
+        var fullName = packageName.equals(type.getPackageName()) ? Stream.<String>empty() : Stream.of(type.getPackageName() + "." + type.getClassName());
         var generics = type.getGenerics()
                 .stream()
-                .flatMap(genericType -> streamImports(genericType, packageName, checkedClasses));
+                .flatMap(genericType -> streamImports(genericType, packageName));
 
-        return Stream.concat(Stream.of(fullName), generics);
+        return Stream.concat(fullName, generics);
     }
 
     private String lowerFirstChar(String str) {

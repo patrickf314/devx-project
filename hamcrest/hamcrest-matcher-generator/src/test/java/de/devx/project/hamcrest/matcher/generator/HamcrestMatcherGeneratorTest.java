@@ -38,6 +38,7 @@ class HamcrestMatcherGeneratorTest {
                 Arguments.of(SET_TYPE, List.of("java.util.Set")),
                 Arguments.of(MAP_TYPE, List.of("java.util.List", "java.util.Map")),
                 Arguments.of(OBJECT_TYPE, List.of("de.custom.app.data.CustomObject")),
+                Arguments.of(objectType("java.util", "List", List.of(OBJECT_TYPE)), List.of("de.custom.app.data.CustomObject", "java.util.List")),
                 Arguments.of(objectType("de.test.matcher", "ObjectInSamePackage", emptyList()), List.of())
         );
     }
@@ -102,7 +103,7 @@ class HamcrestMatcherGeneratorTest {
                     }
                              
                     public TestClassMatcher withTestField(Matcher<%1$s> testField) {
-                        return new TestClassMatcherTestClass(testField);
+                        return new TestClassMatcher(testField);
                     }
                 }""".formatted(fieldType.getFullType(false), fieldType.getFullType(true), expectedImports)
         ));

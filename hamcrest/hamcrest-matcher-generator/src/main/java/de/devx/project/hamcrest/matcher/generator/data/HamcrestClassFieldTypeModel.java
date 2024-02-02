@@ -47,7 +47,7 @@ public class HamcrestClassFieldTypeModel {
             builder.append("<")
                     .append(
                             generics.stream()
-                                    .map(type -> type.getFullType(false))
+                                    .map(type -> "? extends " + type.getFullType(false))
                                     .collect(Collectors.joining(", "))
                     )
                     .append(">");

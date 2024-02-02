@@ -13,12 +13,9 @@ import java.util.List;
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class TypeScriptClientGeneratorProperties {
 
+    private final List<TypeScriptTypeAlias> typeAliases;
     private final List<TypeScriptPackageAlias> packageAliases;
     private final String defaultPackageAlias;
-
-    public List<TypeScriptPackageAlias> getPackageAliases() {
-        return packageAliases == null ? Collections.emptyList() : packageAliases;
-    }
 
     public String getPackageNameForClass(String className) {
         var i = className.lastIndexOf('.');
@@ -27,9 +24,9 @@ public class TypeScriptClientGeneratorProperties {
         }
 
         var packageName = className.substring(0, i);
-        for (var packageAlias : getPackageAliases()) {
-            if (packageName.startsWith(packageAlias.prefix() + ".")) {
-                return (packageAlias.alias() == null ? "" : packageAlias.alias() + ".") + packageName.substring(packageAlias.prefix().length() + 1);
+        for (var packageAlias : packageAliases) {
+            if (packageName.startsWith(packageAlias.getPrefix() + ".")) {
+                return (packageAlias.getAlias() == null ? "" : packageAlias.getAlias() + ".") + packageName.substring(packageAlias.getPrefix().length() + 1);
             }
         }
 

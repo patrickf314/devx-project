@@ -53,7 +53,7 @@ public class ${matcher.className}Matcher${matcher.generics} extends TypeSafeMatc
     }
 
     public ${matcher.className}Matcher${matcher.generics} with${field.name?cap_first}(${field.matcherType} ${field.name}) {
-        return new ${matcher.className}Matcher${matcher.className}(${matcher.fields?map(field -> field.name)?join(", ")});
+        return new ${matcher.className}Matcher${matcher.generics}(${matcher.fields?map(field -> field.name)?join(", ")});
     }
 </#list>
 }
