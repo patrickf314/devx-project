@@ -23,7 +23,7 @@
         </dependency>
         <dependency>
             <groupId>de.devx.project</groupId>
-            <artifactId>processor-commons</artifactId>
+            <artifactId>spring-web-processor-commons</artifactId>
         </dependency>
 
         <dependency>

@@ -1,10 +1,12 @@
 package api.maven.plugin.processor.spring;
 
-import api.maven.plugin.processor.spring.mapper.ParameterAnnotationMapper;
 import de.devx.project.commons.api.model.data.*;
 import de.devx.project.commons.api.model.type.ApiMethodParameterType;
 import de.devx.project.commons.api.model.type.ApiMethodResponseType;
 import de.devx.project.commons.api.model.type.ApiTypeType;
+import de.devx.project.commons.processor.spring.SpringAnnotations;
+import de.devx.project.commons.processor.spring.mapper.ParameterAnnotationMapper;
+import de.devx.project.commons.processor.spring.type.ParameterType;
 import de.devx.project.commons.processor.utils.AnnotationMirrorUtils;
 import de.devx.project.commons.processor.utils.TypeElementUtils;
 import org.springframework.http.HttpMessage;
@@ -22,8 +24,8 @@ import javax.tools.Diagnostic;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static de.devx.project.commons.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
 import static de.devx.project.commons.processor.utils.AnnotationMirrorUtils.findAnnotationMirror;
-import static api.maven.plugin.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
 
 public class SpringApiModelGenerator {
 
@@ -128,8 +130,8 @@ public class SpringApiModelGenerator {
         }
 
         return !TypeElementUtils.isImplementationOf(typeElement, HttpMessage.class)
-                && !TypeElementUtils.isImplementationOf(typeElement, "jakarta.servlet.ServletResponse")
-                && !TypeElementUtils.isImplementationOf(typeElement, "jakarta.servlet.http.HttpServletResponse");
+               && !TypeElementUtils.isImplementationOf(typeElement, "jakarta.servlet.ServletResponse")
+               && !TypeElementUtils.isImplementationOf(typeElement, "jakarta.servlet.http.HttpServletResponse");
     }
 
     private ApiMethodParameterModel mapMethodParameter(VariableElement element) {
@@ -150,12 +152,21 @@ public class SpringApiModelGenerator {
         } else {
             var annotation = parameterAnnotations.get(0);
             parameterModel.setType(mapTypeMirror(element.asType(), annotation.getDefaultValue() == null && annotation.isRequired(), element.getAnnotationMirrors()));
-            parameterModel.setIn(annotation.getType());
+            parameterModel.setIn(mapMethodParameterType(annotation.getType()));
             parameterModel.setDefaultValue(annotation.getDefaultValue());
             parameterModel.setParameterName(annotation.getName() == null ? parameterModel.getName() : annotation.getName());
         }
 
         return parameterModel;
+    }
+
+    private ApiMethodParameterType mapMethodParameterType(ParameterType type) {
+        return switch (type) {
+            case BODY -> ApiMethodParameterType.BODY;
+            case PATH -> ApiMethodParameterType.PATH;
+            case QUERY -> ApiMethodParameterType.QUERY;
+            case HEADER -> ApiMethodParameterType.HEADER;
+        };
     }
 
     private ApiTypeModel mapTypeMirror(TypeMirror typeMirror, boolean required, List<? extends AnnotationMirror> annotations) {
@@ -279,7 +290,7 @@ public class SpringApiModelGenerator {
 
     private boolean isRequiredDTOField(VariableElement element) {
         if (TypeElementUtils.isAnnotationPresent(element, "javax.validation.constraints.NotNull")
-                || TypeElementUtils.isAnnotationPresent(element, "jakarta.validation.constraints.NotNull")) {
+            || TypeElementUtils.isAnnotationPresent(element, "jakarta.validation.constraints.NotNull")) {
             return true;
         }
 

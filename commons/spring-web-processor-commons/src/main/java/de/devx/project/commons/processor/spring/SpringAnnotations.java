@@ -1,4 +1,4 @@
-package api.maven.plugin.processor.spring;
+package de.devx.project.commons.processor.spring;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +18,7 @@ public final class SpringAnnotations {
     public static final String REQUEST_HEADER = RequestHeader.class.getName();
     public static final String REQUEST_BODY = RequestBody.class.getName();
 
+    public static final Set<String> MAPPING_ANNOTATIONS = Set.of(REQUEST_MAPPING, GET_MAPPING, POST_MAPPING, PUT_MAPPING, DELETE_MAPPING);
     public static final Set<String> PARAMETER_ANNOTATIONS = Set.of(REQUEST_PARAM, PATH_VARIABLE, REQUEST_HEADER, REQUEST_BODY);
 
     private SpringAnnotations() {

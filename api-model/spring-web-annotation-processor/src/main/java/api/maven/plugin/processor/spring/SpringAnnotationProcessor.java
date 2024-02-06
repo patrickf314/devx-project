@@ -15,7 +15,7 @@ import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.util.Set;
 
-import static api.maven.plugin.processor.spring.SpringAnnotations.*;
+import static de.devx.project.commons.processor.spring.SpringAnnotations.*;
 
 @SupportedAnnotationTypes(value = {
         REQUEST_MAPPING,

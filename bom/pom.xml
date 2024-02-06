@@ -35,6 +35,11 @@
             </dependency>
             <dependency>
                 <groupId>de.devx.project</groupId>
+                <artifactId>spring-web-processor-commons</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.devx.project</groupId>
                 <artifactId>generator-commons</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -92,6 +97,18 @@
             <dependency>
                 <groupId>de.devx.project</groupId>
                 <artifactId>hamcrest-matcher-entity-processor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Spring WebMVC Test -->
+            <dependency>
+                <groupId>de.devx.project</groupId>
+                <artifactId>spring-webmvc-test-generator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.devx.project</groupId>
+                <artifactId>spring-webmvc-test-annotation-processor</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

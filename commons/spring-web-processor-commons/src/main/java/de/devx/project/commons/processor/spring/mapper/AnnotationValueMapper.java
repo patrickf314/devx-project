@@ -1,4 +1,4 @@
-package api.maven.plugin.processor.spring.mapper;
+package de.devx.project.commons.processor.spring.mapper;
 
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.VariableElement;
