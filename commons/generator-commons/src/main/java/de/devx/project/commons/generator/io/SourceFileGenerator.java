@@ -7,7 +7,11 @@ public interface SourceFileGenerator {
 
     Writer createSourceFile(String packageName, String className) throws IOException;
 
-    String fileName(String className);
+    default String fileName(String className){
+        return fileName(className, true);
+    }
+
+    String fileName(String className, boolean withExtension);
 
     String importPath(String currentPackage, String targetPackage);
 }

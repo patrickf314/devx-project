@@ -16,11 +16,15 @@ public final class ExecutableElementUtils {
     }
 
     public static boolean areMethodsEqual(ExecutableElement target, ExecutableElement source) {
-        return hasSignature(target, source.getSimpleName(), ((ExecutableType) source.asType()).getParameterTypes());
+        return hasSignature(target, source.getReturnType(), source.getSimpleName(), ((ExecutableType) source.asType()).getParameterTypes());
     }
 
-    public static boolean hasSignature(ExecutableElement method, Name name, List<? extends TypeMirror> parameterTypes) {
+    public static boolean hasSignature(ExecutableElement method, TypeMirror returnType, Name name, List<? extends TypeMirror> parameterTypes) {
         if (!method.getSimpleName().equals(name)) {
+            return false;
+        }
+
+        if (!method.getReturnType().toString().equals(returnType.toString())) {
             return false;
         }
 
@@ -33,16 +37,16 @@ public final class ExecutableElementUtils {
     }
 
     public static boolean containsMethod(Element element, ExecutableElement method) {
-        return containsMethod(element, method.getSimpleName(), ((ExecutableType) method.asType()).getParameterTypes());
+        return containsMethod(element, method.getReturnType(), method.getSimpleName(), ((ExecutableType) method.asType()).getParameterTypes());
     }
 
-    public static boolean containsMethod(DeclaredType type, Name name, List<? extends TypeMirror> parameterTypes) {
-        return containsMethod(type.asElement(), name, parameterTypes);
+    public static boolean containsMethod(DeclaredType type, TypeMirror returnType, Name name, List<? extends TypeMirror> parameterTypes) {
+        return containsMethod(type.asElement(), returnType, name, parameterTypes);
     }
 
-    public static boolean containsMethod(Element element, Name name, List<? extends TypeMirror> parameterTypes) {
+    public static boolean containsMethod(Element element, TypeMirror returnType, Name name, List<? extends TypeMirror> parameterTypes) {
         if (element instanceof TypeElement classElement) {
-            return classElement.getEnclosedElements().stream().anyMatch(child -> child instanceof ExecutableElement method && hasSignature(method, name, parameterTypes));
+            return classElement.getEnclosedElements().stream().anyMatch(child -> child instanceof ExecutableElement method && hasSignature(method, returnType, name, parameterTypes));
         }
 
         return false;

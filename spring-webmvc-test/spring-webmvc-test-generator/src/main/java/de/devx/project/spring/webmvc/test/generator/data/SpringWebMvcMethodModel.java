@@ -1,9 +1,12 @@
 package de.devx.project.spring.webmvc.test.generator.data;
 
 import lombok.Data;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 public class SpringWebMvcMethodModel {
@@ -39,7 +42,24 @@ public class SpringWebMvcMethodModel {
         return parameters.stream().filter(p -> p.getIn() == path).toList();
     }
 
+    public List<SpringWebMvcParameterModel> getFileParams() {
+        return parameters.stream().filter(SpringWebMvcParameterModel::isMultipartFile).toList();
+    }
+
     public String getCapitalizedName() {
         return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
+
+    public boolean isMultipartRequest() {
+        return parameters.stream().anyMatch(SpringWebMvcParameterModel::isMultipartFile);
+    }
+
+    public boolean isAsync() {
+        var contentType = returnType;
+        if(returnType.isClass(ResponseEntity.class)) {
+            contentType = returnType.getGenerics().get(0);
+        }
+
+        return contentType.isClass(StreamingResponseBody.class);
     }
 }

@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class TypeScriptTypeAlias {
     private String className;
     private String type;
+    private String dependency;
     private String path;
 }

@@ -45,7 +45,10 @@ class TypeScriptFileGeneratorTest {
                 Arguments.of("de.devx.project.test.service1", "de.devx.project.test.service2", "../service2"),
                 Arguments.of("de.devx.project.test.service1", "de.devx.project.test.service1.dto", "./dto"),
                 Arguments.of("de.devx.project.test.service1.dto", "de.devx.project.test.service1.type", "../type"),
-                Arguments.of("de.devx.project.test.service1.dto", "de.devx.project.test.service2.dto", "../../service2/dto")
+                Arguments.of("de.devx.project.test.service1.dto", "de.devx.project.test.service2.dto", "../../service2/dto"),
+                Arguments.of("", "nested.package", "./nested/package"),
+                Arguments.of("nested.package", "", "../.."),
+                Arguments.of("", "", ".")
         );
     }
 

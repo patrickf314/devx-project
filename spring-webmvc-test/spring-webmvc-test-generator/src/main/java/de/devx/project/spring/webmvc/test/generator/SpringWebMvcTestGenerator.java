@@ -4,13 +4,11 @@ import de.devx.project.commons.generator.io.SourceFileGenerator;
 import de.devx.project.spring.webmvc.test.generator.data.*;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
+import org.springframework.http.MediaType;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,39 +29,15 @@ public class SpringWebMvcTestGenerator {
     public void generate(SpringWebMvcTestModel test) throws IOException {
         try (var writer = fileGenerator.createSourceFile(test.getPackageName(), test.getName())) {
             var parametrizedRandom = getParametrizedRandom(test);
-            var randomFunctions = getRandomFunctions(test, parametrizedRandom);
 
             configuration.getTemplate("SpringWebMvcTest.ftl").process(Map.of(
                     "test", test,
                     "imports", getImports(test),
-                    "parametrizedRandom", parametrizedRandom.values(),
-                    "randomFunctions", randomFunctions
+                    "randomFunctions", new SpringWebMvcRandomFunctionsModel(parametrizedRandom)
             ), writer);
         } catch (TemplateException e) {
             throw new IOException("Failed to process template", e);
         }
-    }
-
-    private Map<String, String> getRandomFunctions(SpringWebMvcTestModel model, Map<SpringWebMvcTypeModel, SpringWebMvcParametrizedRandomModel> parametrizedRandom) {
-        return model.getMethods().stream()
-                .flatMap(this::streamTypes)
-                .distinct()
-                .collect(Collectors.toMap(Object::toString, type -> getRandomFunction(type, parametrizedRandom)));
-    }
-
-    private String getRandomFunction(SpringWebMvcTypeModel model, Map<SpringWebMvcTypeModel, SpringWebMvcParametrizedRandomModel> parametrizedRandomMap) {
-        var parametrizedRandom = parametrizedRandomMap.get(model);
-        if (parametrizedRandom != null) {
-            return parametrizedRandom.getName() + "()";
-        }
-
-        return switch (model.getName()) {
-            case "int" -> "random.nextInt()";
-            case "double" -> "random.nextDouble()";
-            case "float" -> "random.nextFloat()";
-            case "boolean" -> "random.nextBoolean()";
-            default -> "random.nextObject(" + model.getName() + ".class)";
-        };
     }
 
     private Map<SpringWebMvcTypeModel, SpringWebMvcParametrizedRandomModel> getParametrizedRandom(SpringWebMvcTestModel model) {
@@ -88,11 +62,11 @@ public class SpringWebMvcTestGenerator {
     }
 
     private SpringWebMvcParametrizedRandomModel mapToParametrizedRandom(Map<String, Integer> counter, SpringWebMvcTypeModel model) {
-        var parametrizedRandomMethodsWithSameName = counter.compute(model.getName(), (ignore, c) -> c == null ? 1 : c + 1);
+        var parametrizedRandomMethodsWithSameName = counter.compute(model.getMockName(), (ignore, c) -> c == null ? 1 : c + 1);
         if (parametrizedRandomMethodsWithSameName == 1) {
-            return new SpringWebMvcParametrizedRandomModel("next" + model.getName(), model);
+            return new SpringWebMvcParametrizedRandomModel("next" + model.getMockName(), model);
         } else {
-            return new SpringWebMvcParametrizedRandomModel("next" + model.getName() + parametrizedRandomMethodsWithSameName, model);
+            return new SpringWebMvcParametrizedRandomModel("next" + model.getMockName() + parametrizedRandomMethodsWithSameName, model);
         }
     }
 
@@ -119,12 +93,12 @@ public class SpringWebMvcTestGenerator {
     }
 
     private Stream<String> asImport(String currentPackage, SpringWebMvcTypeModel model) {
-        if (model.getPackageName() == null || "java.lang".equals(model.getPackageName())) {
+        if (model.getMockPackageName() == null || "java.lang".equals(model.getMockPackageName())) {
             return Stream.empty();
         }
 
         return Stream.concat(
-                Stream.of(model).filter(m -> !m.getPackageName().equals(currentPackage)).map(m -> m.getPackageName() + "." + m.getName()),
+                Stream.of(model).filter(m -> !m.getMockPackageName().equals(currentPackage)).map(m -> m.getMockPackageName() + "." + m.getMockName()),
                 model.getGenerics().stream().flatMap(generic -> asImport(currentPackage, generic))
         );
     }

@@ -65,6 +65,7 @@ public class DTOHamcrestMatcherMojo extends AbstractMojo {
             throw new MojoExecutionException("Failed to generate hamcrest matchers", e);
         }
 
+        mavenProject.addTestCompileSourceRoot(outputDirectory);
         getLog().info("DTO hamcrest matcher generation completed");
     }
 

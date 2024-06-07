@@ -2,6 +2,7 @@ package de.devx.project.spring.webmvc.test.generator.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Objects;
 
@@ -19,6 +20,10 @@ public class SpringWebMvcParameterModel {
         }
 
         return "String.valueOf(" + name + ")";
+    }
+
+    public boolean isMultipartFile() {
+        return type.isMultipartFile();
     }
 
     public enum Type {

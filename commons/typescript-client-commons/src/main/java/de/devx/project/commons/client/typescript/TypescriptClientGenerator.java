@@ -1,24 +1,19 @@
 package de.devx.project.commons.client.typescript;
 
 import de.devx.project.commons.client.typescript.data.*;
-import de.devx.project.commons.client.typescript.mapper.TypeScriptTypeMapper;
 import de.devx.project.commons.client.typescript.properties.TypeScriptClientGeneratorProperties;
 import de.devx.project.commons.client.typescript.properties.TypeScriptDependency;
 import de.devx.project.commons.generator.io.SourceFileGenerator;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
-import org.mapstruct.factory.Mappers;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Predicate;
 
 import static java.util.function.Predicate.not;
 
 public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProperties> {
-
-    private static final TypeScriptTypeMapper MAPPER = Mappers.getMapper(TypeScriptTypeMapper.class);
 
     protected final SourceFileGenerator fileGenerator;
     protected final P properties;
@@ -73,10 +68,27 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
         Arrays.stream(dependencies)
                 .filter(Objects::nonNull)
                 .map(dependency -> {
-                    var i = dependency.getPath().lastIndexOf('/');
-                    var targetPackage = dependency.getPath().substring(0, i).replace('/', '.');
-                    var fileName = dependency.getPath().substring(i + 1, dependency.getPath().lastIndexOf('.'));
+                    if (dependency.getDependency() != null) {
+                        return new TypeScriptImportModel(dependency.getDependency(), Set.of(dependency.getIdentifier()));
+                    }
 
+                    var path = dependency.getPath();
+                    String fileName;
+                    var i = path.lastIndexOf('/');
+                    var j = dependency.getPath().lastIndexOf('.');
+                    if (j == -1) {
+                        throw new IllegalArgumentException("Path '" + path + "' is not a valid file path.");
+                    }
+
+                    if (i != -1) {
+                        fileName = path.substring(i + 1, j);
+                        path = path.substring(0, i);
+                    } else {
+                        fileName = path.substring(0, j);
+                        path = "";
+                    }
+
+                    var targetPackage = path.replace('/', '.');
                     var importPath = fileGenerator.importPath(currentPackage, targetPackage);
                     return new TypeScriptImportModel(importPath + "/" + fileName, Set.of(dependency.getIdentifier()));
                 })
@@ -105,13 +117,17 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
     }
 
     private TypeScriptImportModel importModelForClassName(String currentPackage, String className) {
-        var alias = properties.getTypeAliases().stream().filter(a -> a.getClassName().equals(className)).findAny();
-        if (alias.isPresent()) {
-            if (alias.get().getPath() == null) {
+        var alias = properties.getTypeAliases().stream().filter(a -> a.getClassName().equals(className)).findAny().orElse(null);
+        if (alias != null) {
+            if (alias.getDependency() == null && alias.getPath() == null) {
                 return null;
             }
 
-            return new TypeScriptImportModel(alias.get().getPath(), Set.of(alias.get().getType()));
+            if (alias.getDependency() != null) {
+                return new TypeScriptImportModel(alias.getDependency(), Set.of(alias.getType()));
+            } else {
+                return new TypeScriptImportModel(fileGenerator.importPath(currentPackage, alias.getPath()), Set.of(alias.getType()));
+            }
         }
 
         var targetPackage = properties.getPackageNameForClass(className);

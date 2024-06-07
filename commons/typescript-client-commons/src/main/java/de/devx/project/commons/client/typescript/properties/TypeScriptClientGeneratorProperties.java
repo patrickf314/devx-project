@@ -1,16 +1,12 @@
 package de.devx.project.commons.client.typescript.properties;
 
-import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Collections;
 import java.util.List;
 
 @Data
-@Builder
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
+@RequiredArgsConstructor
 public class TypeScriptClientGeneratorProperties {
 
     private final List<TypeScriptTypeAlias> typeAliases;

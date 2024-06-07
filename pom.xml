@@ -40,6 +40,8 @@
         <module>react/react-client-generator</module>
         <module>react/react-client-api-maven-plugin</module>
 
+        <module>typescript/typescript-client-api-maven-plugin</module>
+
         <module>spring-webmvc-test/spring-webmvc-test-generator</module>
         <module>spring-webmvc-test/spring-webmvc-test-annotation-processor</module>
         <module>commons/spring-web-processor-commons</module>

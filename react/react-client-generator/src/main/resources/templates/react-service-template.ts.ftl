@@ -65,8 +65,7 @@ export const ${method.name}Thunk = createAsyncThunk('${model.name}/${method.name
     const headers = new Headers();
     <#if method.bodyParameter?has_content && !method.formData>
     headers.set('Content-Type', 'application/json');
-    <#elseif method.formData>
-    headers.set('Content-Type', 'application/x-www-form-urlencoded');
+    <#-- Do not set content type when using form data. See https://stackoverflow.com/questions/46640024/how-do-i-post-form-data-with-fetch-api -->
     </#if>
     <#if method.headerParams?has_content>
     <#list method.headerParams as headerParam>

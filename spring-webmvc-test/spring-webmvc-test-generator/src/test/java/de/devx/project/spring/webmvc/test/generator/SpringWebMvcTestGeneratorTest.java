@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static de.devx.project.spring.webmvc.test.generator.data.SpringWebMvcTypeModel.fromClass;
-import static de.devx.project.spring.webmvc.test.generator.data.SpringWebMvcTypeModel.primary;
+import static de.devx.project.spring.webmvc.test.generator.data.SpringWebMvcTypeModel.primitive;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -28,7 +28,7 @@ class SpringWebMvcTestGeneratorTest {
         method.setPath(new SpringWebMvcPathModel("/test-ids", Collections.emptyList()));
         method.setReturnType(fromClass("java.utils.List", List.of(fromClass(Integer.class))));
         method.setHttpMethod("GET");
-        method.setParameters(List.of(new SpringWebMvcParameterModel("id", SpringWebMvcParameterModel.Type.QUERY, primary("int"))));
+        method.setParameters(List.of(new SpringWebMvcParameterModel("id", SpringWebMvcParameterModel.Type.QUERY, primitive("int"))));
 
         var test = new SpringWebMvcTestModel();
         test.setName("TestControllerWebMvcTestBase");

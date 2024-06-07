@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -23,9 +24,10 @@ class TypescriptClientGeneratorTest {
     private static final TypeScriptPackageAlias PACKAGE_ALIAS = new TypeScriptPackageAlias("de.test.typescript.client", null);
 
     private final TestSourceFileGenerator fileGenerator = new TestSourceFileGenerator();
-    private final TypescriptClientGenerator<TypeScriptClientGeneratorProperties> generator = new TypescriptClientGenerator<>(fileGenerator, TypeScriptClientGeneratorProperties.builder()
-            .packageAliases(List.of(PACKAGE_ALIAS))
-            .build());
+    private final TypescriptClientGenerator<TypeScriptClientGeneratorProperties> generator = new TypescriptClientGenerator<>(
+            fileGenerator,
+            new TypeScriptClientGeneratorProperties(emptyList(), List.of(PACKAGE_ALIAS), null)
+    );
 
     @Test
     void testGenerateEnum() throws IOException {

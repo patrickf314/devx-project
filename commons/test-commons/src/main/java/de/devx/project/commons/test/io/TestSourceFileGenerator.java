@@ -18,7 +18,7 @@ public class TestSourceFileGenerator implements SourceFileGenerator {
     }
 
     @Override
-    public String fileName(String className) {
+    public String fileName(String className, boolean withExtension) {
         return className;
     }
 

@@ -47,8 +47,11 @@ public interface TypeScriptMapper {
     @Mapping(target = "formData", ignore = true)
     @Mapping(target = "headerParams", ignore = true)
     @Mapping(target = "queryParams", ignore = true)
+    @Mapping(target = "pathParams", ignore = true)
     @Mapping(target = "bodyParameter", ignore = true)
     @Mapping(target = "basePathParamNames", ignore = true)
+    @Mapping(target = "returnTypeMapper", ignore = true)
+    @Mapping(target = "options", ignore = true)
     TypeScriptServiceMethod mapMethod(ApiMethodModel methodModel, String httpMethod, String path, @Context Map<String, TypeScriptTypeAlias> typeAliases);
 
     TypeScriptServiceMethodParameter mapParameter(ApiMethodParameterModel parameterModel, @Context Map<String, TypeScriptTypeAlias> typeAliases);
@@ -94,7 +97,7 @@ public interface TypeScriptMapper {
     }
 
     @AfterMapping
-    default void setHeaderAndQueryParameters(ApiMethodModel methodModel, @MappingTarget TypeScriptServiceMethod method, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
+    default void setMethodParameters(ApiMethodModel methodModel, @MappingTarget TypeScriptServiceMethod method, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
         var parameters = methodModel.getParameters().stream().collect(Collectors.groupingBy(ApiMethodParameterModel::getIn));
 
         method.setQueryParams(parameters.getOrDefault(ApiMethodParameterType.QUERY, Collections.emptyList()).stream().map(p -> mapParameter(p, typeAliases)).toList());

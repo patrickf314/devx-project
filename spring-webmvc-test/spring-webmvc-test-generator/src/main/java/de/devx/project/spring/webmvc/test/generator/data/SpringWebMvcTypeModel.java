@@ -2,16 +2,18 @@ package de.devx.project.spring.webmvc.test.generator.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
 public class SpringWebMvcTypeModel {
 
-    public static final SpringWebMvcTypeModel VOID = primary("void");
+    public static final SpringWebMvcTypeModel VOID = primitive("void");
 
     private String name;
     private String packageName;
@@ -21,7 +23,7 @@ public class SpringWebMvcTypeModel {
         return new SpringWebMvcTypeModel(name, null, Collections.emptyList());
     }
 
-    public static SpringWebMvcTypeModel primary(String name) {
+    public static SpringWebMvcTypeModel primitive(String name) {
         return new SpringWebMvcTypeModel(name, null, Collections.emptyList());
     }
 
@@ -40,6 +42,22 @@ public class SpringWebMvcTypeModel {
         return new SpringWebMvcTypeModel(name, packageName, generics);
     }
 
+    public static SpringWebMvcTypeModel array(SpringWebMvcTypeModel component) {
+        return new SpringWebMvcTypeModel(null, null, List.of(component));
+    }
+
+    public boolean isArray() {
+        return name == null && packageName == null;
+    }
+
+    public String getMockName() {
+        return isMultipartFile() ? "MockMultipartFile" : name;
+    }
+
+    public String getMockPackageName() {
+        return isMultipartFile() ? "org.springframework.mock.web" : packageName;
+    }
+
     public SpringWebMvcTypeModel getNonPrimaryType() {
         return switch (name) {
             case "int" -> fromClass(Integer.class);
@@ -53,10 +71,30 @@ public class SpringWebMvcTypeModel {
     }
 
     public String getFullName() {
-        if (generics.isEmpty()) {
-            return name;
+        if (isArray()) {
+            return generics.get(0).getFullName() + "[]";
         }
 
-        return name + "<" + generics.stream().map(SpringWebMvcTypeModel::getFullName).collect(Collectors.joining(", ")) + ">";
+        if (generics.isEmpty()) {
+            return getMockName();
+        }
+
+        return getMockName() + "<" + generics.stream().map(SpringWebMvcTypeModel::getFullName).collect(Collectors.joining(", ")) + ">";
+    }
+
+    public boolean isMultipartFile() {
+        return isClass(MultipartFile.class);
+    }
+
+    public boolean isClass(Class<?> clazz) {
+        if(isArray()) {
+            return clazz.isArray() && generics.get(0).isClass(clazz.getComponentType());
+        }
+
+        if(packageName == null) {
+            return clazz.isPrimitive() && clazz.getName().equals(name);
+        }
+
+        return clazz.getName().equals(packageName + "." + name);
     }
 }

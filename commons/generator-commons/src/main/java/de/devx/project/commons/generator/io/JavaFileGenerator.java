@@ -3,8 +3,12 @@ package de.devx.project.commons.generator.io;
 public interface JavaFileGenerator extends SourceFileGenerator {
 
     @Override
-    default String fileName(String className) {
-        return className + ".java";
+    default String fileName(String className, boolean withExtension) {
+        if(withExtension) {
+            return className + ".java";
+        }
+
+        return className;
     }
 
     @Override

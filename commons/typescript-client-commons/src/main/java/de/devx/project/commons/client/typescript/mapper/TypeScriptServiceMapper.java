@@ -1,6 +1,7 @@
 package de.devx.project.commons.client.typescript.mapper;
 
 import de.devx.project.commons.api.model.data.ApiServiceEndpointModel;
+import de.devx.project.commons.client.typescript.data.TypeScriptPathModel;
 import de.devx.project.commons.client.typescript.data.TypeScriptServiceMethodParameterModel;
 import de.devx.project.commons.client.typescript.data.TypeScriptServiceModel;
 import de.devx.project.commons.client.typescript.properties.TypeScriptTypeAlias;
@@ -23,20 +24,26 @@ public interface TypeScriptServiceMapper {
         var basePathParams = service.getBasePaths().get(0).getParams();
 
         for (var method : service.getMethods()) {
-            var map = method.getPathParams()
+            var parameterNames = method.getPathParams()
                     .stream()
                     .collect(Collectors.toMap(TypeScriptServiceMethodParameterModel::getParameterName, TypeScriptServiceMethodParameterModel::getName));
 
-            method.setBasePathParamNames(basePathParams.stream().map(map::get).toList());
-
-            var path = method.getPath();
-            for (var entry : map.entrySet()) {
-                if (!Objects.equals(entry.getKey(), entry.getValue())) {
-                    path = path.replaceParamName(entry.getKey(), entry.getValue());
-                }
-            }
-
-            method.setPath(path);
+            method.setBasePathParamNames(basePathParams.stream().map(parameterNames::get).toList());
+            method.setPath(adjustPath(method.getPath(), parameterNames));
         }
+    }
+
+    private TypeScriptPathModel adjustPath(TypeScriptPathModel path, Map<String, String> parameterNames) {
+        if (path == null) {
+            return null;
+        }
+
+        for (var entry : parameterNames.entrySet()) {
+            if (!Objects.equals(entry.getKey(), entry.getValue())) {
+                path = path.replaceParamName(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return path;
     }
 }

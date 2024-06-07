@@ -16,12 +16,10 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.NoType;
-import javax.lang.model.type.PrimitiveType;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.devx.project.commons.processor.spring.SpringAnnotations.MAPPING_ANNOTATIONS;
 import static de.devx.project.commons.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
@@ -120,7 +118,7 @@ public class SpringWebMvcTestAnnotationProcessor extends AbstractProcessor {
         var parameters = method.getParameters().stream().filter(this::isNotExcludedParameter).toList();
 
         model.setParameters(parameters.stream().map(this::createMethodParameterModel).toList());
-        model.setDefaultServiceCall(containsMethod(service, method.getSimpleName(), parameters.stream().map(VariableElement::asType).toList()));
+        model.setDefaultServiceCall(containsMethod(service, method.getReturnType(), method.getSimpleName(), parameters.stream().map(VariableElement::asType).toList()));
 
         return Optional.of(model);
     }
@@ -200,7 +198,11 @@ public class SpringWebMvcTestAnnotationProcessor extends AbstractProcessor {
         }
 
         if (type instanceof PrimitiveType) {
-            return SpringWebMvcTypeModel.primary(type.toString());
+            return SpringWebMvcTypeModel.primitive(type.toString());
+        }
+
+        if (type instanceof ArrayType arrayType) {
+            return SpringWebMvcTypeModel.array(mapType(arrayType.getComponentType()));
         }
 
         throw new IllegalArgumentException("Cannot map value " + type.getClass().getName() + " to a type model.");

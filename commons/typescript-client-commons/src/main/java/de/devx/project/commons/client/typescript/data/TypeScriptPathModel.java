@@ -14,6 +14,10 @@ public class TypeScriptPathModel {
     private List<String> params;
 
     public TypeScriptPathModel replaceParamName(String target, String replacement) {
+        if(this.path == null) {
+            return this;
+        }
+
         var newParams = new ArrayList<>(params);
         newParams.replaceAll(param -> param.equals(target) ? replacement : param);
 

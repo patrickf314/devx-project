@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,25 +26,39 @@ public class TypeScriptFileGenerator implements SourceFileGenerator {
     }
 
     @Override
-    public String fileName(String className) {
+    public String fileName(String className, boolean withExtension) {
+        var extension = withExtension ? ".ts" : "";
+
         if (className.endsWith("ServiceAPI") || className.endsWith("ServiceApi")) {
-            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 10)) + ".service.ts";
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 10)) + ".service" + extension;
         }
 
         if (className.endsWith("DTO") || className.endsWith("Dto")) {
-            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 3) + ".dto.ts");
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 3)) + ".dto" + extension;
         }
 
         if (className.endsWith("Type")) {
-            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 4)) + ".type.ts";
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 4)) + ".type" + extension;
         }
 
-        return TypeScriptUtils.toLowerCaseName(className) + ".ts";
+        return TypeScriptUtils.toLowerCaseName(className) + extension;
     }
 
     @Override
     public String importPath(String currentPackage, String targetPackage) {
+        if (currentPackage.isEmpty() && targetPackage.isEmpty()) {
+            return ".";
+        }
+
+        if (currentPackage.isEmpty()) {
+            return "./" + targetPackage.replace('.', '/');
+        }
+
         var currentPath = currentPackage.split("\\.");
+        if (targetPackage.isEmpty()) {
+            return Arrays.stream(currentPath).map(ignored -> "..").collect(Collectors.joining("/"));
+        }
+
         var targetPath = targetPackage.split("\\.");
 
         var commonDepth = 0;
@@ -69,6 +84,10 @@ public class TypeScriptFileGenerator implements SourceFileGenerator {
     }
 
     private File packageDirectory(String packageName) throws IOException {
+        if(packageName.isEmpty()) {
+            return new File(outputDirectory);
+        }
+
         var directory = new File(outputDirectory, packageName.replace('.', File.separatorChar));
         return ensurePackageDirectoryExists(directory, packageName);
     }
