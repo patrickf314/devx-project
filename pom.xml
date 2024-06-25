@@ -11,6 +11,37 @@
     </parent>
 
     <artifactId>devx-project</artifactId>
+    <packaging>pom</packaging>
+
+    <properties>
+        <maven.compiler.source>20</maven.compiler.source>
+        <maven.compiler.target>20</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <maven-plugin.version>3.11.0</maven-plugin.version>
+        <maven-compiler.version>3.10.1</maven-compiler.version>
+        <maven-api.version>3.9.6</maven-api.version>
+        <maven-annotations.version>3.11.0</maven-annotations.version>
+        <maven-core.version>3.9.6</maven-core.version>
+
+        <spring.version>5.3.22</spring.version>
+
+        <jakarta.version>2.0.2</jakarta.version>
+        <jakarta-persistence.version>3.1.0</jakarta-persistence.version>
+        <jakarta-servlet.version>6.1.0-M1</jakarta-servlet.version>
+
+        <jackson.version>2.13.3</jackson.version>
+
+        <lombok.version>1.18.24</lombok.version>
+
+        <mapstruct.version>1.5.2.Final</mapstruct.version>
+
+        <freemarker.version>2.3.31</freemarker.version>
+
+        <junit.version>5.10.1</junit.version>
+        <hamcrest.version>2.2</hamcrest.version>
+        <mockito.version>5.7.0</mockito.version>
+    </properties>
 
     <modules>
         <module>bom</module>
@@ -49,38 +80,6 @@
         <module>spring-webmvc-test/spring-webmvc-test-annotation-processor</module>
         <module>commons/spring-web-processor-commons</module>
     </modules>
-
-    <packaging>pom</packaging>
-
-    <properties>
-        <maven.compiler.source>20</maven.compiler.source>
-        <maven.compiler.target>20</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <maven-plugin.version>3.11.0</maven-plugin.version>
-        <maven-compiler.version>3.10.1</maven-compiler.version>
-        <maven-api.version>3.9.6</maven-api.version>
-        <maven-annotations.version>3.11.0</maven-annotations.version>
-        <maven-core.version>3.9.6</maven-core.version>
-
-        <spring.version>5.3.22</spring.version>
-
-        <jakarta.version>2.0.2</jakarta.version>
-        <jakarta-persistence.version>3.1.0</jakarta-persistence.version>
-        <jakarta-servlet.version>6.1.0-M1</jakarta-servlet.version>
-
-        <jackson.version>2.13.3</jackson.version>
-
-        <lombok.version>1.18.24</lombok.version>
-
-        <mapstruct.version>1.5.2.Final</mapstruct.version>
-
-        <freemarker.version>2.3.31</freemarker.version>
-
-        <junit.version>5.10.1</junit.version>
-        <hamcrest.version>2.2</hamcrest.version>
-        <mockito.version>5.7.0</mockito.version>
-    </properties>
 
     <dependencyManagement>
         <dependencies>
