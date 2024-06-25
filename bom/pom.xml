@@ -100,6 +100,18 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <!-- AssertJ -->
+            <dependency>
+                <groupId>de.devx.project</groupId>
+                <artifactId>assertj-condition-generator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.devx.project</groupId>
+                <artifactId>assertj-condition-maven-plugin</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <!-- Spring WebMVC Test -->
             <dependency>
                 <groupId>de.devx.project</groupId>

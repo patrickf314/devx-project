@@ -24,7 +24,7 @@
         <module>commons/test-commons</module>
         <module>commons/typescript-client-commons</module>
 
-        <module>api-model/spring-web-annotation-processor</module>
+        <module>spring-web/spring-web-annotation-processor</module>
 
         <module>angular/angular-client-generator</module>
         <module>angular/angular-client-maven-plugin</module>
@@ -33,6 +33,9 @@
         <module>hamcrest/hamcrest-matcher-annotation-processor</module>
         <module>hamcrest/hamcrest-matcher-dto-maven-plugin</module>
         <module>hamcrest/hamcrest-matcher-entity-processor</module>
+
+        <module>assertj/assertj-condition-generator</module>
+        <module>assertj/assertj-condition-maven-plugin</module>
 
         <module>playwright/playwright-client-generator</module>
         <module>playwright/playwright-client-maven-plugin</module>

@@ -1,4 +1,4 @@
-package api.maven.plugin.processor.spring;
+package de.devx.project.spring.web.processor;
 
 import de.devx.project.commons.api.model.ApiModelConstants;
 import de.devx.project.commons.api.model.data.ApiModel;

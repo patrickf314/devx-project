@@ -1,4 +1,4 @@
-package api.maven.plugin.processor.spring;
+package de.devx.project.spring.web.processor;
 
 import de.devx.project.commons.api.model.data.*;
 import de.devx.project.commons.api.model.type.ApiMethodParameterType;
@@ -6,9 +6,10 @@ import de.devx.project.commons.api.model.type.ApiMethodResponseType;
 import de.devx.project.commons.api.model.type.ApiTypeType;
 import de.devx.project.commons.processor.spring.SpringAnnotations;
 import de.devx.project.commons.processor.spring.mapper.ParameterAnnotationMapper;
-import de.devx.project.commons.processor.spring.type.ParameterType;
 import de.devx.project.commons.processor.utils.AnnotationMirrorUtils;
 import de.devx.project.commons.processor.utils.TypeElementUtils;
+import de.devx.project.spring.web.processor.mapper.SpringParameterTypeMapper;
+import org.mapstruct.factory.Mappers;
 import org.springframework.http.HttpMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
@@ -28,6 +29,8 @@ import static de.devx.project.commons.processor.spring.mapper.RequestMappingAnno
 import static de.devx.project.commons.processor.utils.AnnotationMirrorUtils.findAnnotationMirror;
 
 public class SpringApiModelGenerator {
+
+    private static final SpringParameterTypeMapper TYPE_MAPPER = Mappers.getMapper(SpringParameterTypeMapper.class);
 
     private final ApiModel model = new ApiModel();
     private final Messager messager;
@@ -152,21 +155,12 @@ public class SpringApiModelGenerator {
         } else {
             var annotation = parameterAnnotations.get(0);
             parameterModel.setType(mapTypeMirror(element.asType(), annotation.getDefaultValue() == null && annotation.isRequired(), element.getAnnotationMirrors()));
-            parameterModel.setIn(mapMethodParameterType(annotation.getType()));
+            parameterModel.setIn(TYPE_MAPPER.mapParameterType(annotation.getType()));
             parameterModel.setDefaultValue(annotation.getDefaultValue());
             parameterModel.setParameterName(annotation.getName() == null ? parameterModel.getName() : annotation.getName());
         }
 
         return parameterModel;
-    }
-
-    private ApiMethodParameterType mapMethodParameterType(ParameterType type) {
-        return switch (type) {
-            case BODY -> ApiMethodParameterType.BODY;
-            case PATH -> ApiMethodParameterType.PATH;
-            case QUERY -> ApiMethodParameterType.QUERY;
-            case HEADER -> ApiMethodParameterType.HEADER;
-        };
     }
 
     private ApiTypeModel mapTypeMirror(TypeMirror typeMirror, boolean required, List<? extends AnnotationMirror> annotations) {
