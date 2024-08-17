@@ -28,7 +28,7 @@ public class ${condition.className}Condition${condition.generics} extends Condit
     }
 
     private ${condition.className}Condition(${condition.fields?map(field -> field.conditionType + " " + field.name)?join(", ")}) {
-        super(new JoinDescription("PostDTO[", "]", List.of(
+        super(new JoinDescription("${condition.className}[", "]", List.of(
             ${condition.fields?map(field -> "propertyDescription(\"" + field.name + "\", " + field.name + " == null ? null : " + field.name + ".description())")?join(",\n\t\t\t")}
         )));
     <#list condition.fields as field>

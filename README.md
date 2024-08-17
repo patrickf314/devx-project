@@ -39,7 +39,7 @@ In addition, there are maven plugins for creating matchers for DTOs using the AP
 
 ## Ideas
 
-I wouldn't the current state of the project as product ready. 
+I wouldn't call the current state of the project as product ready. 
 It works for my use-cases and is adjusted to my need.
 However, I am willing to develop this project towards more general usages.
 Thus, if you have a different use-case or just want to have some information about what is already supported, feel free
