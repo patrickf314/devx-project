@@ -3,6 +3,7 @@ package de.devx.project.spring.web.processor;
 import de.devx.project.commons.api.model.ApiModelConstants;
 import de.devx.project.commons.api.model.data.ApiModel;
 import de.devx.project.commons.api.model.io.ApiModelWriter;
+import de.devx.project.commons.processor.logging.JavaProcessorLogger;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -10,7 +11,6 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
-import javax.tools.Diagnostic;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.util.Set;
@@ -33,7 +33,8 @@ public class SpringAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
-        var generator = new SpringApiModelGenerator(processingEnv.getMessager());
+        var logger = new JavaProcessorLogger(processingEnv.getMessager());
+        var generator = new SpringApiModelGenerator(logger);
         for (var annotation : annotations) {
             generator.process(annotation, roundEnv.getElementsAnnotatedWith(annotation));
         }
@@ -41,7 +42,7 @@ public class SpringAnnotationProcessor extends AbstractProcessor {
         try {
             writeModel(generator.getModel());
         } catch (IOException e) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Failed to write api-model.json: " + e.getMessage());
+            logger.error("Failed to write api-model.json: " + e.getMessage());
         }
 
         return true;

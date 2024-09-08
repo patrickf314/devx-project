@@ -14,8 +14,8 @@ import javax.lang.model.type.TypeMirror;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 
+import static de.devx.project.commons.processor.utils.ExceptionUtils.unexpectedTypeMirrorException;
 import static de.devx.project.hamcrest.matcher.generator.data.HamcrestClassFieldTypeModel.*;
 
 public class HamcrestMatcherElementMapper {
@@ -103,22 +103,21 @@ public class HamcrestMatcherElementMapper {
     private HamcrestClassFieldModel mapField(ExecutableElement element) {
         var getter = element.getSimpleName().toString();
         var name = lowerFirstChar(getter.substring(getter.startsWith("is") ? 2 : 3));
-        return new HamcrestClassFieldModel(mapType(element.getReturnType()), name, getter);
+        return new HamcrestClassFieldModel(mapType(element, element.getReturnType()), name, getter);
     }
 
     private HamcrestClassFieldModel mapField(VariableElement element) {
         var name = element.getSimpleName().toString();
-        return new HamcrestClassFieldModel(mapType(element.asType()), name, name);
+        return new HamcrestClassFieldModel(mapType(element, element.asType()), name, name);
     }
 
-    private HamcrestClassFieldTypeModel mapType(TypeMirror type) {
+    private HamcrestClassFieldTypeModel mapType(Element element, TypeMirror type) {
         return switch (type.getKind()) {
             case INT, DOUBLE, FLOAT, BYTE, LONG, SHORT, BOOLEAN, VOID -> mapPrimaryType(type);
-            case ARRAY -> arrayType(mapType(((ArrayType) type).getComponentType()));
-            case DECLARED -> mapDeclaredType((DeclaredType) type);
+            case ARRAY -> arrayType(mapType(element, ((ArrayType) type).getComponentType()));
+            case DECLARED -> mapDeclaredType(element, (DeclaredType) type);
             case TYPEVAR -> genericType(type.toString());
-            default ->
-                    throw new IllegalArgumentException("Unexpected type mirror " + type + "(" + type.getClass().getName() + ")");
+            default -> throw unexpectedTypeMirrorException(logger, element, type);
         };
     }
 
@@ -127,17 +126,17 @@ public class HamcrestMatcherElementMapper {
         return primaryType(type.getKind().name().toLowerCase(Locale.ROOT), className);
     }
 
-    private HamcrestClassFieldTypeModel mapDeclaredType(DeclaredType type) {
-        if (!(type.asElement() instanceof TypeElement element)) {
-            throw new IllegalArgumentException("Unexpected type mirror " + type.getClass().getName() + ", asElement() does not return a TypeElement");
+    private HamcrestClassFieldTypeModel mapDeclaredType(Element element, DeclaredType type) {
+        if (!(type.asElement() instanceof TypeElement typeElement)) {
+            throw unexpectedTypeMirrorException(logger, element, type);
         }
 
         var generics = type.getTypeArguments()
                 .stream()
-                .map(this::mapType)
+                .map(typeArgument -> mapType(element, typeArgument))
                 .toList();
 
-        return objectType(TypeElementUtils.getPackageName(element), getClassName(element), generics);
+        return objectType(TypeElementUtils.getPackageName(typeElement), getClassName(typeElement), generics);
     }
 
     private String lowerFirstChar(String str) {

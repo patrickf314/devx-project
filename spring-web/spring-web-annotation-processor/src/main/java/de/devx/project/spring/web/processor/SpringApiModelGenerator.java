@@ -4,6 +4,7 @@ import de.devx.project.commons.api.model.data.*;
 import de.devx.project.commons.api.model.type.ApiMethodParameterType;
 import de.devx.project.commons.api.model.type.ApiMethodResponseType;
 import de.devx.project.commons.api.model.type.ApiTypeType;
+import de.devx.project.commons.generator.logging.Logger;
 import de.devx.project.commons.processor.spring.SpringAnnotations;
 import de.devx.project.commons.processor.spring.mapper.ParameterAnnotationMapper;
 import de.devx.project.commons.processor.spring.type.ParameterType;
@@ -14,26 +15,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import javax.annotation.processing.Messager;
 import javax.lang.model.element.*;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.tools.Diagnostic;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.devx.project.commons.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
 import static de.devx.project.commons.processor.utils.AnnotationMirrorUtils.findAnnotationMirror;
+import static de.devx.project.commons.processor.utils.ExceptionUtils.unexpectedTypeMirrorException;
 
 public class SpringApiModelGenerator {
 
     private final ApiModel model = new ApiModel();
-    private final Messager messager;
+    private final Logger logger;
 
-    public SpringApiModelGenerator(Messager messager) {
-        this.messager = messager;
+    public SpringApiModelGenerator(Logger logger) {
+        this.logger = logger;
     }
 
     public ApiModel getModel() {
@@ -50,8 +50,7 @@ public class SpringApiModelGenerator {
         switch (element.getKind()) {
             case INTERFACE, CLASS -> processClass(annotation, (TypeElement) element);
             case METHOD -> processMethod(annotation, (ExecutableElement) element);
-            default ->
-                    messager.printMessage(Diagnostic.Kind.ERROR, "Element of kind " + element.getKind() + " is not supported", element);
+            default -> logger.error("Element of kind " + element.getKind() + " is not supported", element);
         }
     }
 
@@ -69,7 +68,7 @@ public class SpringApiModelGenerator {
         var annotationMirror = findAnnotationMirror(element, annotation).orElseThrow(IllegalArgumentException::new);
         var requestMapping = mapAnnotationMirrorToRequestMapping(annotationMirror);
         if (!(element.getEnclosingElement() instanceof TypeElement enclosingElement)) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "Unexpected enclosing element for " + element.getSimpleName(), element);
+            logger.error("Unexpected enclosing element for " + element.getSimpleName(), element);
             return;
         }
 
@@ -78,7 +77,7 @@ public class SpringApiModelGenerator {
         var methodName = element.getSimpleName().toString();
         var methodModel = new ApiMethodModel(methodName);
 
-        setReturnType(methodModel, element.getReturnType(), element.getAnnotationMirrors());
+        setReturnType(methodModel, element, element.getReturnType(), element.getAnnotationMirrors());
 
         methodModel.setParameters(mapMethodParameters(element.getParameters()));
         methodModel.getHttpMethods().addAll(requestMapping.getRequestMethods());
@@ -87,19 +86,18 @@ public class SpringApiModelGenerator {
         endpointModel.addMethod(methodModel);
     }
 
-    private void setReturnType(ApiMethodModel model, TypeMirror typeMirror, List<? extends AnnotationMirror> annotations) {
+    private void setReturnType(ApiMethodModel model, Element methodElement, TypeMirror typeMirror, List<? extends AnnotationMirror> annotations) {
         if (!(typeMirror instanceof DeclaredType declaredType)) {
-            model.setReturnType(mapTypeMirror(typeMirror, true, annotations));
+            model.setReturnType(mapTypeMirror(methodElement, typeMirror, true, annotations));
             return;
         }
 
         if (!(declaredType.asElement() instanceof TypeElement element)) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "Unexpected type mirror " + declaredType.getClass().getName() + ", asElement() does not return a TypeElement");
-            return;
+            throw unexpectedTypeMirrorException(logger, methodElement, declaredType);
         }
 
         if (TypeElementUtils.isClass(element, ResponseEntity.class)) {
-            setReturnType(model, declaredType.getTypeArguments().get(0), annotations);
+            setReturnType(model, methodElement, declaredType.getTypeArguments().get(0), annotations);
         } else if (TypeElementUtils.isImplementationOf(declaredType, StreamingResponseBody.class)) {
             model.setReturnType(ApiTypeModel.UNKNOWN);
             model.setResponseType(ApiMethodResponseType.STREAM);
@@ -107,7 +105,7 @@ public class SpringApiModelGenerator {
             model.setReturnType(ApiTypeModel.UNKNOWN);
             model.setResponseType(ApiMethodResponseType.SERVER_SEND_EVENT);
         } else {
-            model.setReturnType(mapDeclaredTypeMirror(declaredType, true, annotations));
+            model.setReturnType(mapDeclaredTypeMirror(methodElement, declaredType, true, annotations));
         }
     }
 
@@ -125,8 +123,7 @@ public class SpringApiModelGenerator {
         }
 
         if (!(((DeclaredType) type).asElement() instanceof TypeElement typeElement)) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "Unexpected type mirror " + type.getClass().getName() + ", asElement() does not return a TypeElement");
-            return true;
+            throw unexpectedTypeMirrorException(logger, element, type);
         }
 
         return !TypeElementUtils.isImplementationOf(typeElement, HttpMessage.class)
@@ -147,11 +144,11 @@ public class SpringApiModelGenerator {
         }
 
         if (parameterAnnotations.isEmpty()) {
-            parameterModel.setType(mapTypeMirror(element.asType(), true, element.getAnnotationMirrors()));
+            parameterModel.setType(mapTypeMirror(element, element.asType(), true, element.getAnnotationMirrors()));
             parameterModel.setIn(ApiMethodParameterType.BODY);
         } else {
             var annotation = parameterAnnotations.get(0);
-            parameterModel.setType(mapTypeMirror(element.asType(), annotation.getDefaultValue() == null && annotation.isRequired(), element.getAnnotationMirrors()));
+            parameterModel.setType(mapTypeMirror(element, element.asType(), annotation.getDefaultValue() == null && annotation.isRequired(), element.getAnnotationMirrors()));
             parameterModel.setIn(mapParameterType(annotation.getType()));
             parameterModel.setDefaultValue(annotation.getDefaultValue());
             parameterModel.setParameterName(annotation.getName() == null ? parameterModel.getName() : annotation.getName());
@@ -160,71 +157,70 @@ public class SpringApiModelGenerator {
         return parameterModel;
     }
 
-    private ApiTypeModel mapTypeMirror(TypeMirror typeMirror, boolean required, List<? extends AnnotationMirror> annotations) {
+    private ApiTypeModel mapTypeMirror(Element element, TypeMirror typeMirror, boolean required, List<? extends AnnotationMirror> annotations) {
         return switch (typeMirror.getKind()) {
             case INT, DOUBLE, FLOAT, BYTE, LONG, SHORT, BOOLEAN, VOID -> new ApiTypeModel(
                     typeMirror.getKind().name().toLowerCase(Locale.ROOT),
                     ApiTypeType.JAVA_TYPE, null, true,
                     Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
-            case ARRAY -> mapArrayTypeMirror((ArrayType) typeMirror, annotations);
-            case DECLARED -> mapDeclaredTypeMirror((DeclaredType) typeMirror, required, annotations);
+            case ARRAY -> mapArrayTypeMirror(element, (ArrayType) typeMirror, annotations);
+            case DECLARED -> mapDeclaredTypeMirror(element, (DeclaredType) typeMirror, required, annotations);
             case TYPEVAR -> new ApiTypeModel(typeMirror.toString(), ApiTypeType.GENERIC_TYPE, null, required);
-            default ->
-                    throw new IllegalArgumentException("Unexpected type mirror " + typeMirror + "(" + typeMirror.getClass().getName() + ")");
+            default -> throw unexpectedTypeMirrorException(logger, element, typeMirror);
         };
     }
 
-    private ApiTypeModel mapArrayTypeMirror(ArrayType typeMirror, List<? extends AnnotationMirror> annotations) {
+    private ApiTypeModel mapArrayTypeMirror(Element element, ArrayType typeMirror, List<? extends AnnotationMirror> annotations) {
         var typeModel = new ApiTypeModel("array", ApiTypeType.JAVA_TYPE, null, true);
-        typeModel.setTypeArguments(List.of(mapTypeMirror(typeMirror.getComponentType(), true, Collections.emptyList())));
+        typeModel.setTypeArguments(List.of(mapTypeMirror(element, typeMirror.getComponentType(), true, Collections.emptyList())));
         typeModel.setAnnotations(mapAnnotations(annotations));
         return typeModel;
     }
 
-    private ApiTypeModel mapDeclaredTypeMirror(DeclaredType typeMirror, boolean required, List<? extends AnnotationMirror> annotations) {
-        if (!(typeMirror.asElement() instanceof TypeElement element)) {
-            throw new IllegalArgumentException("Unexpected type mirror " + typeMirror.getClass().getName() + ", asElement() does not return a TypeElement");
+    private ApiTypeModel mapDeclaredTypeMirror(Element element, DeclaredType typeMirror, boolean required, List<? extends AnnotationMirror> annotations) {
+        if (!(typeMirror.asElement() instanceof TypeElement typeElement)) {
+            throw unexpectedTypeMirrorException(logger, element, typeMirror);
         }
 
-        var className = element.getQualifiedName().toString();
+        var className = typeElement.getQualifiedName().toString();
         if (className.equals(String.class.getName())) {
             return new ApiTypeModel("string", ApiTypeType.JAVA_TYPE, String.class.getName(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
         }
 
-        if (TypeElementUtils.isExtensionOf(element, Number.class)) {
-            return new ApiTypeModel("number", ApiTypeType.JAVA_TYPE, element.getQualifiedName().toString(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
+        if (TypeElementUtils.isExtensionOf(typeElement, Number.class)) {
+            return new ApiTypeModel("number", ApiTypeType.JAVA_TYPE, typeElement.getQualifiedName().toString(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
         }
 
         var collection = TypeElementUtils.getInterfaceTypeMirror(typeMirror, Collection.class);
         if (collection.isPresent()) {
             var typeArgs = TypeElementUtils.getTypeArgumentsOfInterface(typeMirror, Collection.class)
                     .stream()
-                    .map(t -> this.mapTypeMirror(t, true, Collections.emptyList()))
+                    .map(t -> this.mapTypeMirror(element, t, true, Collections.emptyList()))
                     .toList();
             return new ApiTypeModel("collection", ApiTypeType.JAVA_TYPE, null, required, typeArgs, Collections.emptyList(), mapAnnotations(annotations));
         }
 
-        var map = TypeElementUtils.getInterfaceTypeMirror(element, Map.class);
+        var map = TypeElementUtils.getInterfaceTypeMirror(typeElement, Map.class);
         if (map.isPresent()) {
             var typeArgs = TypeElementUtils.getTypeArgumentsOfInterface(typeMirror, Map.class)
                     .stream()
-                    .map(t -> this.mapTypeMirror(t, true, Collections.emptyList()))
+                    .map(t -> this.mapTypeMirror(element, t, true, Collections.emptyList()))
                     .toList();
             return new ApiTypeModel("map", ApiTypeType.JAVA_TYPE, null, required, typeArgs, Collections.emptyList(), mapAnnotations(annotations));
         }
 
-        if (element.getKind() == ElementKind.ENUM) {
-            var enumModel = createEnumModel(element, className);
+        if (typeElement.getKind() == ElementKind.ENUM) {
+            var enumModel = createEnumModel(typeElement, className);
             return new ApiTypeModel(enumModel.getName(), ApiTypeType.ENUM, enumModel.getClassName(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
         }
 
         var typeArguments = typeMirror.getTypeArguments()
                 .stream()
-                .map(t -> this.mapTypeMirror(t, true, Collections.emptyList()))
+                .map(t -> this.mapTypeMirror(element, t, true, Collections.emptyList()))
                 .toList();
 
-        if (element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.RECORD) {
-            var dtoModel = createDTOModel(element, className);
+        if (typeElement.getKind() == ElementKind.CLASS || typeElement.getKind() == ElementKind.RECORD) {
+            var dtoModel = createDTOModel(typeElement, className);
             var nesting = new ArrayList<String>();
             if (dtoModel.getEnclosingDTO() != null) {
                 nesting.addAll(dtoModel.getEnclosingDTO().getNesting());
@@ -260,7 +256,7 @@ public class SpringApiModelGenerator {
             if (superElement.getKind() == ElementKind.CLASS && superElement instanceof TypeElement superTypeElement && !TypeElementUtils.isClass(superTypeElement, Record.class) && !TypeElementUtils.isClass(superTypeElement, Object.class)) {
                 var superClassName = superTypeElement.getQualifiedName().toString();
                 createDTOModel(superTypeElement, superClassName);
-                dtoModel.setExtendedDTO(mapDeclaredTypeMirror((DeclaredType) superClass, true, Collections.emptyList()));
+                dtoModel.setExtendedDTO(mapDeclaredTypeMirror(element, (DeclaredType) superClass, true, Collections.emptyList()));
             }
         }
 
@@ -271,8 +267,8 @@ public class SpringApiModelGenerator {
         dtoModel.setFields(TypeElementUtils.getNonStaticFields(element)
                 .stream()
                 .collect(Collectors.toMap(
-                        e -> e.getSimpleName().toString(),
-                        e -> mapTypeMirror(e.asType(), isRequiredDTOField(e), e.getAnnotationMirrors())
+                        variableElement -> variableElement.getSimpleName().toString(),
+                        variableElement -> mapTypeMirror(variableElement, variableElement.asType(), isRequiredDTOField(variableElement), variableElement.getAnnotationMirrors())
                 ))
         );
 

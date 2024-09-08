@@ -14,4 +14,7 @@ public class AssertjConditionModel {
     private String enclosingDTO;
     private List<AssertjClassFieldModel> fields = new ArrayList<>();
 
+    public void setFields(List<AssertjClassFieldModel> fields) {
+        this.fields = fields;
+    }
 }

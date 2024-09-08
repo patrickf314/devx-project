@@ -13,6 +13,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static de.devx.project.hamcrest.matcher.generator.data.HamcrestClassFieldTypeModel.*;
 import static java.util.Collections.emptyList;
@@ -54,25 +55,29 @@ public interface DTOHamcrestMatcherMapper {
 
     default List<HamcrestClassFieldModel> mapFields(ApiDTOModel dto, @Context ApiModel model, @Context List<HamcrestClassFieldTypeModel> typeArguments) {
         var typeArgumentsAliases = mapTypeArguments(dto, typeArguments);
+        var dtoFields = dto.getFields()
+                .entrySet()
+                .stream()
+                .map(fieldModel -> mapField(fieldModel, dto.isJavaRecord(), typeArgumentsAliases))
+                .toList();
 
-        var list = new ArrayList<HamcrestClassFieldModel>();
+        var dtoFieldNames = dtoFields.stream().map(HamcrestClassFieldModel::getName).collect(Collectors.toSet());
+
+        var list = new ArrayList<>(dtoFields);
         if (dto.getExtendedDTO() != null) {
             var extendedDTO = model.getDtos().get(dto.getExtendedDTO().getClassName());
-            list.addAll(mapFields(extendedDTO, model, dto.getExtendedDTO()
+            var extendedDTOTypeArgumentAliases = dto.getExtendedDTO()
                     .getTypeArguments()
                     .stream()
                     .map(type -> mapType(type, typeArgumentsAliases))
+                    .toList();
+
+            list.addAll(mapFields(extendedDTO, model, extendedDTOTypeArgumentAliases)
+                    .stream()
+                    .filter(field -> !dtoFieldNames.contains(field.getName()))
                     .toList()
-            ));
+            );
         }
-
-        var typeArgumentAliases = mapTypeArguments(dto, typeArguments);
-
-        list.addAll(dto.getFields()
-                .entrySet()
-                .stream()
-                .map(fieldModel -> mapField(fieldModel, dto.isJavaRecord(), typeArgumentAliases))
-                .toList());
 
         return list;
     }
