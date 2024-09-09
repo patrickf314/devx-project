@@ -1,4 +1,4 @@
-import { Observable, Subscriber } from 'rxjs';
+import {Observable, Subscriber} from 'rxjs';
 
 export interface ServerSentEvent {
 
@@ -18,7 +18,7 @@ export class ServerSendEventSource<T> extends Observable<T> {
             this.subscribers.push(subscriber);
         });
 
-        this.eventSource = new EventSource(url, { withCredentials: true });
+        this.eventSource = new EventSource(url, {withCredentials: true});
 
         this.eventSource.onmessage = message => {
             this.subscribers.forEach(subscriber => subscriber.next({
