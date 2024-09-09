@@ -29,7 +29,7 @@ public class AssertjConditionGenerator {
     }
 
     public void generate(AssertjConditionModel condition) throws IOException {
-        if(condition.getEnclosingDTO() != null) {
+        if (condition.getEnclosingDTO() != null) {
             return;
         }
 

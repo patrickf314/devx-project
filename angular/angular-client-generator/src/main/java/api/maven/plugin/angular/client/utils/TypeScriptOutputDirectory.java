@@ -19,6 +19,14 @@ public abstract class TypeScriptOutputDirectory {
         this.outputDirectory = ensureFolderExists(new File(outputDirectory), "output");
     }
 
+    private static String serviceFileName(String name) {
+        if (name.endsWith("ServiceAPI")) {
+            name = name.substring(0, name.length() - 10);
+        }
+
+        return TypeScriptUtils.toLowerCaseName(name) + ".service";
+    }
+
     public File commonsFolder() throws IOException {
         return ensureFolderExists(new File(outputDirectory, COMMONS_FOLDER_NAME), COMMONS_FOLDER_NAME);
     }
@@ -45,14 +53,6 @@ public abstract class TypeScriptOutputDirectory {
 
     public String serviceFileName(ApiServiceEndpointModel endpointModel) {
         return serviceFileName(endpointModel.getName());
-    }
-
-    private static String serviceFileName(String name) {
-        if (name.endsWith("ServiceAPI")) {
-            name = name.substring(0, name.length() - 10);
-        }
-
-        return TypeScriptUtils.toLowerCaseName(name) + ".service";
     }
 
     public File dtoFolder(String serviceName, ApiEnclosingDTOModel enclosingDTO) throws IOException {
@@ -164,19 +164,19 @@ public abstract class TypeScriptOutputDirectory {
     private String relativePath(String currentService, List<String> currentSubFolder, String targetService, List<String> targetSubFolder) {
         var builder = new StringBuilder();
         var depthDiff = currentSubFolder.size() - targetSubFolder.size();
-        if(depthDiff > 0) {
+        if (depthDiff > 0) {
             IntStream.range(0, depthDiff).mapToObj(i -> "../").forEach(builder::append);
             depthDiff = 0;
         }
 
         var parentFolderMissmatch = !targetService.equals(currentService);
-        for(var i = 0; i < targetSubFolder.size() + depthDiff; i ++) {
-            if(parentFolderMissmatch) {
+        for (var i = 0; i < targetSubFolder.size() + depthDiff; i++) {
+            if (parentFolderMissmatch) {
                 builder.append("../");
                 continue;
             }
 
-            if(!targetSubFolder.get(i).equals(currentSubFolder.get(i))) {
+            if (!targetSubFolder.get(i).equals(currentSubFolder.get(i))) {
                 builder.append("../");
                 parentFolderMissmatch = true;
             }
@@ -186,18 +186,18 @@ public abstract class TypeScriptOutputDirectory {
             builder.append("../").append(targetService).append("/");
         }
 
-        if(builder.isEmpty()) {
+        if (builder.isEmpty()) {
             builder.append("./");
         }
 
         parentFolderMissmatch = !targetService.equals(currentService);
-        for(var i = 0; i < targetSubFolder.size(); i ++) {
-            if(i >= currentSubFolder.size() || parentFolderMissmatch) {
+        for (var i = 0; i < targetSubFolder.size(); i++) {
+            if (i >= currentSubFolder.size() || parentFolderMissmatch) {
                 builder.append(targetSubFolder.get(i)).append("/");
                 continue;
             }
 
-            if(!currentSubFolder.get(i).equals(targetSubFolder.get(i))) {
+            if (!currentSubFolder.get(i).equals(targetSubFolder.get(i))) {
                 builder.append(targetSubFolder.get(i)).append("/");
                 parentFolderMissmatch = true;
             }

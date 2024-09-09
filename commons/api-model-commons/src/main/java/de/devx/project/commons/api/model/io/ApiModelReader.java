@@ -14,7 +14,7 @@ public class ApiModelReader implements AutoCloseable {
         this(new FileInputStream(file));
     }
 
-    public ApiModelReader(InputStream stream)  {
+    public ApiModelReader(InputStream stream) {
         this.mapper = new ObjectMapper();
         this.stream = stream;
     }

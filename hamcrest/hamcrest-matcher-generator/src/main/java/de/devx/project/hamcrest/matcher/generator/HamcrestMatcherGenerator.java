@@ -29,7 +29,7 @@ public class HamcrestMatcherGenerator {
     }
 
     public void generate(HamcrestMatcherModel matcher) throws IOException {
-        if(matcher.getEnclosingDTO() != null) {
+        if (matcher.getEnclosingDTO() != null) {
             return;
         }
 

@@ -26,6 +26,19 @@ public class HamcrestMatcherElementMapper {
         this.logger = logger;
     }
 
+    private static String getClassName(TypeElement element) {
+        if (element.getEnclosingElement() instanceof TypeElement enclosingTypeElement) {
+            return getClassName(enclosingTypeElement) + element.getSimpleName();
+        }
+
+        return element.getSimpleName().toString();
+    }
+
+    private static HamcrestClassFieldTypeModel mapPrimaryType(TypeMirror type) {
+        var className = type.getKind() == TypeKind.INT ? "Integer" : type.getKind().name().charAt(0) + type.getKind().name().substring(1).toLowerCase(Locale.ROOT);
+        return primaryType(type.getKind().name().toLowerCase(Locale.ROOT), className);
+    }
+
     public Optional<HamcrestMatcherModel> mapToMatcher(Element element) {
         if (element.getKind() == ElementKind.CLASS) {
             return mapClassToMatcher((TypeElement) element);
@@ -87,14 +100,6 @@ public class HamcrestMatcherElementMapper {
         return Optional.of(model);
     }
 
-    private static String getClassName(TypeElement element) {
-        if (element.getEnclosingElement() instanceof TypeElement enclosingTypeElement) {
-            return getClassName(enclosingTypeElement) + element.getSimpleName();
-        }
-
-        return element.getSimpleName().toString();
-    }
-
     private boolean isGetter(ExecutableElement element) {
         var getter = element.getSimpleName().toString();
         return getter.startsWith("get") || getter.startsWith("is");
@@ -119,11 +124,6 @@ public class HamcrestMatcherElementMapper {
             case TYPEVAR -> genericType(type.toString());
             default -> throw unexpectedTypeMirrorException(logger, element, type);
         };
-    }
-
-    private static HamcrestClassFieldTypeModel mapPrimaryType(TypeMirror type) {
-        var className = type.getKind() == TypeKind.INT ? "Integer" : type.getKind().name().charAt(0) + type.getKind().name().substring(1).toLowerCase(Locale.ROOT);
-        return primaryType(type.getKind().name().toLowerCase(Locale.ROOT), className);
     }
 
     private HamcrestClassFieldTypeModel mapDeclaredType(Element element, DeclaredType type) {

@@ -14,7 +14,7 @@ public class TypeScriptPathModel {
     private List<String> params;
 
     public TypeScriptPathModel replaceParamName(String target, String replacement) {
-        if(this.path == null) {
+        if (this.path == null) {
             return this;
         }
 

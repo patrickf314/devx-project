@@ -12,18 +12,18 @@ public interface TypeScriptPathMapper {
     Pattern PATH_VARIABLE_PATTERN = Pattern.compile("\\{([a-zA-Z]+)}");
 
     default TypeScriptPathModel mapPath(String pathStr) {
-        if("".equals(pathStr)) {
+        if ("".equals(pathStr)) {
             return new TypeScriptPathModel(null, Collections.emptyList());
         }
 
-        if(!pathStr.startsWith("/")) {
+        if (!pathStr.startsWith("/")) {
             pathStr = "/" + pathStr;
         }
 
         var pathMatcher = PATH_VARIABLE_PATTERN.matcher(pathStr);
         var params = new ArrayList<String>();
 
-        while(pathMatcher.find()) {
+        while (pathMatcher.find()) {
             params.add(pathMatcher.group(1));
         }
 

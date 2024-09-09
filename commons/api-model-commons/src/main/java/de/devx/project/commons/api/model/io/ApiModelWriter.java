@@ -11,7 +11,7 @@ public class ApiModelWriter implements AutoCloseable {
     private final ObjectMapper mapper;
     private final Writer delegate;
 
-    public ApiModelWriter(Writer delegate)  {
+    public ApiModelWriter(Writer delegate) {
         this.mapper = new ObjectMapper();
         this.delegate = delegate;
     }

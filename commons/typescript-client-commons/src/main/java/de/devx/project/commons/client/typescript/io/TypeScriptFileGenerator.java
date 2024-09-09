@@ -84,7 +84,7 @@ public class TypeScriptFileGenerator implements SourceFileGenerator {
     }
 
     private File packageDirectory(String packageName) throws IOException {
-        if(packageName.isEmpty()) {
+        if (packageName.isEmpty()) {
             return new File(outputDirectory);
         }
 

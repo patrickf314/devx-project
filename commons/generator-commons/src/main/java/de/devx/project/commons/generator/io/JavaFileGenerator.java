@@ -4,7 +4,7 @@ public interface JavaFileGenerator extends SourceFileGenerator {
 
     @Override
     default String fileName(String className, boolean withExtension) {
-        if(withExtension) {
+        if (withExtension) {
             return className + ".java";
         }
 

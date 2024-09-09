@@ -19,7 +19,7 @@ public final class TypeScriptMethodNameUtils {
         for (var model : models) {
             for (var httpMethod : model.getHttpMethods()) {
                 var paths = model.getPaths();
-                if(paths.isEmpty()) {
+                if (paths.isEmpty()) {
                     paths = List.of("");
                 }
 
@@ -37,18 +37,18 @@ public final class TypeScriptMethodNameUtils {
 
         public String lookupNameFor(String baseName, String httpMethod, String path) {
             var builder = new StringBuilder(baseName);
-            if(pathsByHttpMethod.size() > 1) {
+            if (pathsByHttpMethod.size() > 1) {
                 builder.append("Using").append(httpMethod);
             }
 
             var paths = pathsByHttpMethod.get(httpMethod);
-            if(paths == null) {
+            if (paths == null) {
                 throw new IllegalArgumentException("Unknown http method " + httpMethod + " for method " + baseName);
             }
 
-            if(paths.size() > 1) {
+            if (paths.size() > 1) {
                 var i = paths.indexOf(path);
-                if(i == -1) {
+                if (i == -1) {
                     throw new IllegalArgumentException("Unknown path " + path + " for method " + baseName);
                 }
 

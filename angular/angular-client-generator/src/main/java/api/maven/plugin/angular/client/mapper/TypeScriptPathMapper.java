@@ -16,20 +16,20 @@ public final class TypeScriptPathMapper {
     }
 
     public static TypeScriptPath mapPath(String pathStr) {
-        if("".equals(pathStr)) {
+        if ("".equals(pathStr)) {
             var tsPath = new TypeScriptPath();
             tsPath.setParams(Collections.emptyList());
             return tsPath;
         }
 
-        if(!pathStr.startsWith("/")) {
+        if (!pathStr.startsWith("/")) {
             pathStr = "/" + pathStr;
         }
 
         var pathMatcher = PATH_VARIABLE_PATTERN.matcher(pathStr);
         var params = new ArrayList<String>();
 
-        while(pathMatcher.find()) {
+        while (pathMatcher.find()) {
             params.add(pathMatcher.group(1));
         }
 

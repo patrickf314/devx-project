@@ -23,8 +23,8 @@ class HamcrestMatcherGeneratorTest {
     private static final HamcrestClassFieldTypeModel INT_TYPE = primaryType("int", "Integer");
     private static final HamcrestClassFieldTypeModel STRING_TYPE = objectType("java.lang", "String", emptyList());
     private static final HamcrestClassFieldTypeModel LIST_TYPE = objectType("java.util", "List", List.of(STRING_TYPE));
-    private static final HamcrestClassFieldTypeModel SET_TYPE = objectType("java.util", "Set", List.of(INT_TYPE));
     private static final HamcrestClassFieldTypeModel MAP_TYPE = objectType("java.util", "Map", List.of(INT_TYPE, LIST_TYPE));
+    private static final HamcrestClassFieldTypeModel SET_TYPE = objectType("java.util", "Set", List.of(INT_TYPE));
     private static final HamcrestClassFieldTypeModel OBJECT_TYPE = objectType("de.custom.app.data", "CustomObject", emptyList());
 
     private final TestSourceFileGenerator sourceFileGenerator = new TestSourceFileGenerator();
@@ -123,12 +123,12 @@ class HamcrestMatcherGeneratorTest {
         assertThat(generatedMatcher.isPresent(), is(true));
         assertThat(generatedMatcher.get(), is("""
                 package de.test.matcher;
-                
+                                
                 import org.hamcrest.Matcher;
                 import org.hamcrest.Description;
                 import org.hamcrest.TypeSafeMatcher;
                 import org.hamcrest.core.IsAnything;
-                
+                                
                 import static org.hamcrest.core.Is.is;
                                                                 
                 public class TestClassMatcher<T> extends TypeSafeMatcher<TestClass<T>> {

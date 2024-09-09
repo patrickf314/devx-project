@@ -56,7 +56,7 @@ public class SpringWebMvcMethodModel {
 
     public boolean isAsync() {
         var contentType = returnType;
-        if(returnType.isClass(ResponseEntity.class)) {
+        if (returnType.isClass(ResponseEntity.class)) {
             contentType = returnType.getGenerics().get(0);
         }
 

@@ -30,14 +30,6 @@ class TypeScriptFileGeneratorTest {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void testFileNames(String className, String expectedFileName) {
-        var actualFileName = generator.fileName(className);
-
-        assertThat(actualFileName, is(expectedFileName));
-    }
-
     static Stream<Arguments> testImportPaths() {
         return Stream.of(
                 Arguments.of("de.devx.project.test.service1", "de.devx.project.test.service1", "."),
@@ -50,6 +42,14 @@ class TypeScriptFileGeneratorTest {
                 Arguments.of("nested.package", "", "../.."),
                 Arguments.of("", "", ".")
         );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testFileNames(String className, String expectedFileName) {
+        var actualFileName = generator.fileName(className);
+
+        assertThat(actualFileName, is(expectedFileName));
     }
 
     @ParameterizedTest

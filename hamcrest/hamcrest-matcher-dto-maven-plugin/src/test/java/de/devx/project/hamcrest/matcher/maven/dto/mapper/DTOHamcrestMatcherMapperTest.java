@@ -28,7 +28,7 @@ class DTOHamcrestMatcherMapperTest {
         baseDto.setName("BaseDTO");
         baseDto.setTypeArguments(List.of("T"));
         baseDto.setFields(Map.of(
-                "field", new ApiTypeModel("collection",  ApiTypeType.JAVA_TYPE, null, true, List.of(new ApiTypeModel("T", ApiTypeType.GENERIC_TYPE, true)))
+                "field", new ApiTypeModel("collection", ApiTypeType.JAVA_TYPE, null, true, List.of(new ApiTypeModel("T", ApiTypeType.GENERIC_TYPE, true)))
         ));
 
         var testDto = new ApiDTOModel();

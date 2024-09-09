@@ -57,7 +57,7 @@ public class AssertjClassFieldTypeModel {
 
     @Override
     public String toString() {
-        if(kind == Kind.PRIMARY) {
+        if (kind == Kind.PRIMARY) {
             return primaryName;
         }
 

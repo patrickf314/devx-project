@@ -158,8 +158,8 @@ public final class TypeElementUtils {
 
     public static boolean isClass(TypeMirror typeMirror, String c) {
         return typeMirror instanceof DeclaredType declaredType
-                && declaredType.asElement() instanceof TypeElement element
-                && isClass(element, c);
+               && declaredType.asElement() instanceof TypeElement element
+               && isClass(element, c);
     }
 
     public static boolean isClass(TypeElement element, Class<?> c) {
@@ -210,11 +210,11 @@ public final class TypeElementUtils {
 
     public static String getPackageName(TypeElement typeElement) {
         var enclosingElement = typeElement.getEnclosingElement();
-        if(enclosingElement instanceof PackageElement packageElement) {
+        if (enclosingElement instanceof PackageElement packageElement) {
             return packageElement.getQualifiedName().toString();
         }
 
-        if(enclosingElement instanceof TypeElement enclosingTypeElement) {
+        if (enclosingElement instanceof TypeElement enclosingTypeElement) {
             return getPackageName(enclosingTypeElement);
         }
 

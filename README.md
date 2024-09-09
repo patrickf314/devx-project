@@ -8,13 +8,14 @@ Later, corresponding modules for React were added.
 If wanted, the project might be extended to other frameworks.
 
 At the moment, there are two main features:
+
 - The generation of frontend clients (in typescript) based on the java classes of the backend.
 - The generation of test utilities to simplify testing of a project.
 
 ## API Model
 
 A corresponding frontend client for a backend is an essential requirement for having a
-interaction between backend and frontend. 
+interaction between backend and frontend.
 Usually, one only want to modify the backend API and then automatically generate
 the client for a given framework in the frontend.
 The common practice for that is using the OpenAPI specification for documenting the backend
@@ -26,7 +27,8 @@ Thus, the project provides a richer API model which for example supports generic
 
 ### API Model Generation
 
-In the context of a spring boot API, there is the spring-web-annotation-processor, which processes the spring web annotations
+In the context of a spring boot API, there is the spring-web-annotation-processor, which processes the spring web
+annotations
 of the RestAPI and generates a `api-model.json` in the classpath.
 By adding the API module as a dependency and a client generator (e.g. react-client-api-maven-plugin) to the client, then
 the client for the API is generated during a `mvn install`.
@@ -39,7 +41,7 @@ In addition, there are maven plugins for creating matchers for DTOs using the AP
 
 ## Ideas
 
-I wouldn't call the current state of the project as product ready. 
+I wouldn't call the current state of the project as product ready.
 It works for my use-cases and is adjusted to my need.
 However, I am willing to develop this project towards more general usages.
 Thus, if you have a different use-case or just want to have some information about what is already supported, feel free

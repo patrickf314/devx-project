@@ -87,11 +87,11 @@ public class SpringWebMvcTypeModel {
     }
 
     public boolean isClass(Class<?> clazz) {
-        if(isArray()) {
+        if (isArray()) {
             return clazz.isArray() && generics.get(0).isClass(clazz.getComponentType());
         }
 
-        if(packageName == null) {
+        if (packageName == null) {
             return clazz.isPrimitive() && clazz.getName().equals(name);
         }
 

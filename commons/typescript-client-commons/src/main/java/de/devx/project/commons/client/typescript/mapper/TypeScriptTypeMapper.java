@@ -94,7 +94,7 @@ public interface TypeScriptTypeMapper {
 
     @Named("mapDTOType")
     default TypeScriptTypeModel mapDTOType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
-        if(model == null) {
+        if (model == null) {
             return null;
         }
 

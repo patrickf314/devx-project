@@ -68,8 +68,8 @@ public interface TypeScriptMapper {
             method.setBasePathParamNames(basePathParams.stream().map(map::get).toList());
 
             var path = method.getPath();
-            for(var entry : map.entrySet()) {
-                if(!Objects.equals(entry.getKey(), entry.getValue())) {
+            for (var entry : map.entrySet()) {
+                if (!Objects.equals(entry.getKey(), entry.getValue())) {
                     path = path.replaceParamName(entry.getKey(), entry.getValue());
                 }
             }
@@ -89,7 +89,7 @@ public interface TypeScriptMapper {
             method.setReturnTypeWrapper("ServerSendEventSource");
             method.setReturnType(TypeScriptType.SERVER_SEND_EVENT);
         } else {
-            if(method.getReturnType().getName().equals("string")) {
+            if (method.getReturnType().getName().equals("string")) {
                 method.setOptions("{responseType: 'text'}");
             }
             method.setReturnTypeWrapper("Promise");

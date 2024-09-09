@@ -22,7 +22,7 @@ public class MavenLogger implements Logger {
     }
 
     private String elementPrefix(Element element) {
-        if(element == null) {
+        if (element == null) {
             return "";
         }
 

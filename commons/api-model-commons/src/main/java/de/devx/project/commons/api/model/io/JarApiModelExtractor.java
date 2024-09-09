@@ -14,7 +14,7 @@ public class JarApiModelExtractor implements ApiModelExtractor {
     public Optional<ApiModel> extract(File file) {
         try (var classLoader = new URLClassLoader(new URL[]{file.toURI().toURL()})) {
             var inputStream = classLoader.getResourceAsStream(ApiModelConstants.FILE_NAME);
-            if(inputStream == null) {
+            if (inputStream == null) {
                 return Optional.empty();
             }
 

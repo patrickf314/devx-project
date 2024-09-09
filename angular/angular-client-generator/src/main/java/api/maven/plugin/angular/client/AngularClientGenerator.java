@@ -20,15 +20,15 @@ public class AngularClientGenerator extends TypeScriptClientGenerator {
     public AngularClientGenerator(String outputDirectory, List<TypeScriptTypeAlias> typeAliases) throws IOException {
         super(new TypeScriptOutputDirectory(outputDirectory) {
             @Override
-            protected String getServiceByClassName(String className)  {
+            protected String getServiceByClassName(String className) {
                 var i = className.indexOf(".service.");
-                if(i == -1) {
+                if (i == -1) {
                     return "commons";
                 }
 
                 i += 9;
                 var j = className.indexOf('.', i);
-                if(j == -1) {
+                if (j == -1) {
                     return "commons";
                 }
 

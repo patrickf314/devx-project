@@ -43,7 +43,7 @@ class SpringWebMvcTestGeneratorTest {
         assertThat(generatedTestBase.isPresent(), is(true));
         assertThat(generatedTestBase.get(), is("""
                 package de.test.spring.webmvc;
-                
+                                
                 import com.fasterxml.jackson.databind.ObjectMapper;
                 import org.junit.jupiter.api.BeforeEach;
                 import org.jeasy.random.EasyRandom;
@@ -59,48 +59,48 @@ class SpringWebMvcTestGeneratorTest {
                 import org.springframework.web.context.WebApplicationContext;
                 import de.test.spring.webmvc.rest.TestController;
                 import de.test.spring.webmvc.service.TestService;
-                
+                                
                 import static org.mockito.Mockito.when;
                 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
                 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
                 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-                
+                                
                 @WebMvcTest
                 @ActiveProfiles({"test"})
                 @ContextConfiguration(classes = {
                     TestController.class
                 })
                 public class TestControllerWebMvcTestBase {
-                
+                                
                     private final EasyRandom random;
-                
+                                
                     @Autowired
                     protected ObjectMapper objectMapper;
-                
+                                
                     @Autowired
                     protected WebApplicationContext webApplicationContext;
-                
+                                
                     @MockBean
                     protected TestService service;
-                
+                                
                     protected MockMvc mvc;
-                
+                                
                     protected TestControllerWebMvcTestBase(EasyRandom random) {
                         this.random = random;
                     }
-                
+                                
                     @BeforeEach
                     void init() {
                         mvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
                     }
-                
+                                
                     protected ResultActions getTestIds() {
-                
+                                
                     }
-                
+                                
                     protected ResultActions getTestIds(List<Integer> getTestIdsResult, int id) {
                         when(service.getTestIds(id)).thenReturn(getUsersResult);
-                
+                                
                         var result = mvc.perform(request(HttpMethod.GET, "/test-ids")
                                 .queryParam("id", String.valueOf(id))
                             )
@@ -108,7 +108,7 @@ class SpringWebMvcTestGeneratorTest {
                             .andExpect(content().json(objectMapper.writeValueAsString(getTestIdsResult)));
                         
                         verify(service).getTestIds(id);
-  
+                  
                         return result;
                     }
                 }
