@@ -44,7 +44,8 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
                 new TypeScriptDependency("mapVoidResponse", utilityPackage() + "/react-service-commons.ts"),
                 new TypeScriptDependency("mapStringResponse", utilityPackage() + "/react-service-commons.ts"),
                 new TypeScriptDependency("mapStreamingResponse", utilityPackage() + "/react-service-commons.ts"),
-                new TypeScriptDependency("DownloadStreamDTO", utilityPackage() + "/download-stream.dto.ts")
+                new TypeScriptDependency("DownloadStreamDTO", utilityPackage() + "/download-stream.dto.ts"),
+                properties.getReduxThunkConfig()
         );
 
         processTemplate("react-service-template.ts.ftl", packageName, model.getName(), Map.of(

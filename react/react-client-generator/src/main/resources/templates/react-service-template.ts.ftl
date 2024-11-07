@@ -45,7 +45,7 @@
 <#if method.parameters?has_content>{ ${method.parameters?map(param -> param.name + param.optional?then("?", "") + ": " + param.type.name + param.optional?then(" | undefined", ""))?join(", ")} }<#else>${emptyParameterType}</#if></#macro>
 <#-- -->
 <#-- -->
-import { createAsyncThunk } from '@reduxjs/toolkit';
+import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { useDispatch } from 'react-redux';
 import { useMemo } from 'react';
 <#list imports as import>
@@ -57,7 +57,7 @@ function baseUrl(state: State${model.basePaths[0].params?has_content?then(", ", 
 }
 <#list model.methods as method>
 
-export const ${method.name}Thunk = createAsyncThunk('${model.name}/${method.name}', async function(arg: <@methodParameterType method=method emptyParameterType="undefined"/>, thunkAPI): <#if method.returnTypeWrapper == 'Observable'>Promise<DownloadStreamDTO<Uint8Array>><#else>${method.returnTypeWrapper}<${method.returnType.name}></#if> {
+export const ${method.name}Thunk: AsyncThunk<<#if method.returnTypeWrapper == 'Observable'>DownloadStreamDTO<Uint8Array><#else>${method.returnType.name}</#if>, <@methodParameterType method=method emptyParameterType="undefined"/>, ThunkConfig> = createAsyncThunk('${model.name}/${method.name}', async function(arg: <@methodParameterType method=method emptyParameterType="undefined"/>, thunkAPI): <#if method.returnTypeWrapper == 'Observable'>Promise<DownloadStreamDTO<Uint8Array>><#else>${method.returnTypeWrapper}<${method.returnType.name}></#if> {
     <#if method.parameters?has_content>
     const { ${method.parameters?map(param -> param.name)?join(", ")} } = arg;
     </#if>
