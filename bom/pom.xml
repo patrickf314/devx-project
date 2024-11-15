@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.devx.project</groupId>
         <artifactId>devx-project</artifactId>
-        <version>1.4-SNAPSHOT</version>
+        <version>1.4</version>
     </parent>
 
     <artifactId>bom</artifactId>
@@ -222,6 +222,12 @@
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-core</artifactId>
                 <version>${hamcrest.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
