@@ -3,12 +3,12 @@ package de.devx.project.commons.processor.spring.mapper;
 import de.devx.project.commons.processor.spring.SpringAnnotations;
 import de.devx.project.commons.processor.spring.data.ParameterAnnotation;
 import de.devx.project.commons.processor.spring.type.ParameterType;
-import de.devx.project.commons.processor.utils.AnnotationMirrorUtils;
+import de.devx.project.commons.processor.utils.AnnotationElementUtils;
 import org.springframework.web.bind.annotation.ValueConstants;
 
 import javax.lang.model.element.AnnotationMirror;
 
-import static de.devx.project.commons.processor.utils.AnnotationMirrorUtils.extractFieldsFromAnnotationMirror;
+import static de.devx.project.commons.processor.utils.AnnotationElementUtils.extractFieldsFromAnnotationMirror;
 
 public final class ParameterAnnotationMapper {
 
@@ -39,7 +39,7 @@ public final class ParameterAnnotationMapper {
             parameter.setDefaultValue(null);
         }
 
-        var annotationName = AnnotationMirrorUtils.getAnnotationName(annotationMirror);
+        var annotationName = AnnotationElementUtils.getAnnotationName(annotationMirror);
         if (SpringAnnotations.REQUEST_PARAM.equals(annotationName)) {
             parameter.setType(ParameterType.QUERY);
         } else if (SpringAnnotations.PATH_VARIABLE.equals(annotationName)) {

@@ -1,7 +1,10 @@
 package de.devx.project.commons.processor.utils;
 
+import lombok.RequiredArgsConstructor;
+
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.util.Types;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -11,10 +14,11 @@ import java.util.stream.Stream;
 import static de.devx.project.commons.processor.utils.ExecutableElementUtils.areMethodsEqual;
 import static de.devx.project.commons.processor.utils.TypeElementUtils.isClass;
 
-public final class AnnotationMirrorUtils {
+@RequiredArgsConstructor
+public class AnnotationElementUtils {
 
-    private AnnotationMirrorUtils() {
-        // No instances
+    public static boolean isAnnotationPresent(Element element, String annotation) {
+        return findAnnotationMirror(element, annotation).isPresent();
     }
 
     public static Optional<AnnotationMirror> findAnyAnnotationMirror(Element element, Set<String> annotations) {
@@ -82,7 +86,7 @@ public final class AnnotationMirrorUtils {
         return findSourceMethod(targetMethod, type).flatMap(sourceMethod -> findAnnotationMirror(sourceMethod, annotation));
     }
 
-    private static Optional<ExecutableElement> findSourceMethod(ExecutableElement targetMethod, DeclaredType type) {
+    public static Optional<ExecutableElement> findSourceMethod(ExecutableElement targetMethod, DeclaredType type) {
         return type.asElement()
                 .getEnclosedElements()
                 .stream()
@@ -108,7 +112,7 @@ public final class AnnotationMirrorUtils {
         }
     }
 
-    private static Stream<DeclaredType> streamParentTypes(TypeElement classElement) {
+    public static Stream<DeclaredType> streamParentTypes(TypeElement classElement) {
         return Stream.concat(
                 classElement.getSuperclass() instanceof DeclaredType superClass ? Stream.of(superClass) : Stream.empty(),
                 classElement.getInterfaces()

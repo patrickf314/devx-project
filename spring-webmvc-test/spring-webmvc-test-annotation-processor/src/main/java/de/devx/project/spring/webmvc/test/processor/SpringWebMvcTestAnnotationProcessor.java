@@ -1,29 +1,29 @@
 package de.devx.project.spring.webmvc.test.processor;
 
 import de.devx.project.commons.generator.logging.Logger;
+import de.devx.project.commons.processor.ProcessorContext;
 import de.devx.project.commons.processor.io.ProcessorJavaFileGenerator;
-import de.devx.project.commons.processor.logging.JavaProcessorLogger;
+import de.devx.project.commons.processor.logging.ProcessorLogger;
 import de.devx.project.commons.processor.spring.SpringAnnotations;
+import de.devx.project.commons.processor.spring.data.ParameterAnnotation;
+import de.devx.project.commons.processor.spring.mapper.ParameterAnnotationMapper;
+import de.devx.project.commons.processor.spring.type.ParameterType;
 import de.devx.project.commons.processor.utils.TypeElementUtils;
 import de.devx.project.spring.webmvc.test.generator.SpringWebMvcTestGenerator;
 import de.devx.project.spring.webmvc.test.generator.data.*;
 import de.devx.project.spring.webmvc.test.processor.data.SpringWebMvcTestAnnotation;
 import org.springframework.http.HttpMessage;
 
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
+import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.type.*;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static de.devx.project.commons.processor.spring.SpringAnnotations.MAPPING_ANNOTATIONS;
 import static de.devx.project.commons.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
-import static de.devx.project.commons.processor.utils.AnnotationMirrorUtils.*;
+import static de.devx.project.commons.processor.utils.AnnotationElementUtils.*;
 import static de.devx.project.commons.processor.utils.ExecutableElementUtils.containsMethod;
 
 @SupportedAnnotationTypes(value = {
@@ -35,20 +35,14 @@ public class SpringWebMvcTestAnnotationProcessor extends AbstractProcessor {
     private Logger logger;
     private SpringWebMvcTestGenerator generator;
 
-    public Logger getLogger() {
-        if (logger == null) {
-            logger = new JavaProcessorLogger(processingEnv.getMessager());
-        }
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnv) {
+        super.init(processingEnv);
 
-        return logger;
-    }
+        logger = new ProcessorLogger(processingEnv.getMessager());
+        generator = new SpringWebMvcTestGenerator(new ProcessorJavaFileGenerator(processingEnv.getFiler()));
 
-    public SpringWebMvcTestGenerator getGenerator() {
-        if (generator == null) {
-            generator = new SpringWebMvcTestGenerator(new ProcessorJavaFileGenerator(processingEnv.getFiler()));
-        }
-
-        return generator;
+        ProcessorContext.init(processingEnv);
     }
 
     @Override
@@ -70,7 +64,7 @@ public class SpringWebMvcTestAnnotationProcessor extends AbstractProcessor {
 
     private void generateWebMvcTest(TypeElement annotationElement, Element element) {
         if (!(element instanceof TypeElement typeElement)) {
-            getLogger().error("SpringWebMvcTest annotation is not supported here.", element);
+            logger.error("SpringWebMvcTest annotation is not supported here.", element);
             return;
         }
 
@@ -79,21 +73,33 @@ public class SpringWebMvcTestAnnotationProcessor extends AbstractProcessor {
         var annotation = new SpringWebMvcTestAnnotation(annotationMirror);
 
         if (!(annotation.controller().asElement() instanceof TypeElement controllerType)) {
-            getLogger().error("Failed to generate spring webmvc test for controller of type " + annotation.controller().asElement().getClass().getName(), element);
+            logger.error("Failed to generate spring webmvc test for controller of type " + annotation.controller().asElement().getClass().getName(), element);
             return;
         }
 
         var basePath = getBasePath(annotation.controller());
         var model = createModelFromAnnotation(className, annotation);
 
+        var existingMethodNames = new HashMap<String, Integer>();
         for (var method : controllerType.getEnclosedElements()) {
-            createMethodModel(basePath, method, annotation.service()).ifPresent(model.getMethods()::add);
+            var m = createMethodModel(basePath, method, annotation.service()).orElse(null);
+            if (m == null) {
+                continue;
+            }
+
+            var number = existingMethodNames.getOrDefault(m.getName(), 0);
+            if(number != 0) {
+                m.setName(m.getName() + "$" + number);
+            }
+
+            model.getMethods().add(m);
+            existingMethodNames.put(m.getName(), number + 1);
         }
 
         try {
-            getGenerator().generate(model);
+            generator.generate(model);
         } catch (IOException e) {
-            getLogger().error("Failed to generate spring webmvc test: " + e.getMessage(), element);
+            logger.error("Failed to generate spring webmvc test: " + e.getMessage(), element);
         }
     }
 
@@ -111,6 +117,7 @@ public class SpringWebMvcTestAnnotationProcessor extends AbstractProcessor {
 
         var model = new SpringWebMvcMethodModel();
         model.setName(method.getSimpleName().toString());
+        model.setServiceMethodName(method.getSimpleName().toString());
         model.setPath(new SpringWebMvcPathModel(concatPathPattern(basePath, requestMapping.getPaths()), Collections.emptyList()));
         model.setReturnType(mapType(method.getReturnType()));
         model.setHttpMethod(requestMapping.getRequestMethods().get(0));
@@ -145,16 +152,31 @@ public class SpringWebMvcTestAnnotationProcessor extends AbstractProcessor {
     }
 
     private SpringWebMvcParameterModel createMethodParameterModel(VariableElement element) {
-        var in = SpringWebMvcParameterModel.Type.BODY;
-        if (findAnnotationMirror(element, SpringAnnotations.PATH_VARIABLE).isPresent()) {
-            in = SpringWebMvcParameterModel.Type.PATH;
-        } else if (findAnnotationMirror(element, SpringAnnotations.REQUEST_PARAM).isPresent()) {
-            in = SpringWebMvcParameterModel.Type.QUERY;
-        } else if (findAnnotationMirror(element, SpringAnnotations.REQUEST_HEADER).isPresent()) {
-            in = SpringWebMvcParameterModel.Type.HEADER;
-        }
+        var name = element.getSimpleName().toString();
+        var type = mapType(element.asType());
+        var parameterAnnotation = findParameterAnnotation(element);
+        return parameterAnnotation.map(annotation -> new SpringWebMvcParameterModel(
+                name,
+                annotation.getName(),
+                mapParameterType(annotation.getType()),
+                type
+        )).orElseGet(() -> new SpringWebMvcParameterModel(name, null, SpringWebMvcParameterModel.Type.BODY, type));
+    }
 
-        return new SpringWebMvcParameterModel(element.getSimpleName().toString(), in, mapType(element.asType()));
+    private SpringWebMvcParameterModel.Type mapParameterType(ParameterType type) {
+        return switch (type) {
+            case HEADER -> SpringWebMvcParameterModel.Type.HEADER;
+            case BODY -> SpringWebMvcParameterModel.Type.BODY;
+            case QUERY -> SpringWebMvcParameterModel.Type.QUERY;
+            case PATH -> SpringWebMvcParameterModel.Type.PATH;
+        };
+    }
+
+    private Optional<ParameterAnnotation> findParameterAnnotation(VariableElement element) {
+        return findAnnotationMirror(element, SpringAnnotations.PATH_VARIABLE)
+                .or(() -> findAnnotationMirror(element, SpringAnnotations.REQUEST_PARAM))
+                .or(() -> findAnnotationMirror(element, SpringAnnotations.REQUEST_HEADER))
+                .map(ParameterAnnotationMapper::mapAnnotationMirrorToParameterAnnotation);
     }
 
     private String getBasePath(DeclaredType type) {

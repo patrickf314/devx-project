@@ -8,7 +8,7 @@ import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 
 @RequiredArgsConstructor
-public class JavaProcessorLogger implements Logger {
+public class ProcessorLogger implements Logger {
 
     private final Messager messager;
 

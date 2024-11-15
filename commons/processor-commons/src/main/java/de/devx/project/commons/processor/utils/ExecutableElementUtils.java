@@ -29,7 +29,7 @@ public final class ExecutableElementUtils {
         }
 
         var methodType = (ExecutableType) method.asType();
-        return methodType.getParameterTypes().equals(parameterTypes);
+        return TypeElementUtils.checkTypeMirrorsEquality(methodType.getParameterTypes(), parameterTypes);
     }
 
     public static boolean containsMethod(DeclaredType type, ExecutableElement method) {
@@ -51,5 +51,4 @@ public final class ExecutableElementUtils {
 
         return false;
     }
-
 }

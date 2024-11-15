@@ -11,6 +11,7 @@ import java.util.Objects;
 public class SpringWebMvcParameterModel {
 
     private String name;
+    private String httpName;
     private Type in;
     private SpringWebMvcTypeModel type;
 
@@ -24,6 +25,10 @@ public class SpringWebMvcParameterModel {
 
     public boolean isMultipartFile() {
         return type.isMultipartFile();
+    }
+
+    public String getHttpName() {
+        return httpName == null ? name : httpName;
     }
 
     public enum Type {

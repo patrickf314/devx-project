@@ -8,7 +8,7 @@ import de.devx.project.commons.generator.logging.Logger;
 import de.devx.project.commons.processor.spring.SpringAnnotations;
 import de.devx.project.commons.processor.spring.mapper.ParameterAnnotationMapper;
 import de.devx.project.commons.processor.spring.type.ParameterType;
-import de.devx.project.commons.processor.utils.AnnotationMirrorUtils;
+import de.devx.project.commons.processor.utils.AnnotationElementUtils;
 import de.devx.project.commons.processor.utils.TypeElementUtils;
 import org.springframework.http.HttpMessage;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.devx.project.commons.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
-import static de.devx.project.commons.processor.utils.AnnotationMirrorUtils.findAnnotationMirror;
+import static de.devx.project.commons.processor.utils.AnnotationElementUtils.findAnnotationMirror;
 import static de.devx.project.commons.processor.utils.ExceptionUtils.unexpectedTypeMirrorException;
 
 public class SpringApiModelGenerator {
@@ -135,7 +135,7 @@ public class SpringApiModelGenerator {
         var parameterModel = new ApiMethodParameterModel(element.getSimpleName().toString());
         var parameterAnnotations = element.getAnnotationMirrors()
                 .stream()
-                .filter(mirror -> SpringAnnotations.PARAMETER_ANNOTATIONS.contains(AnnotationMirrorUtils.getAnnotationName(mirror)))
+                .filter(mirror -> SpringAnnotations.PARAMETER_ANNOTATIONS.contains(AnnotationElementUtils.getAnnotationName(mirror)))
                 .map(ParameterAnnotationMapper::mapAnnotationMirrorToParameterAnnotation)
                 .toList();
 
@@ -276,8 +276,8 @@ public class SpringApiModelGenerator {
     }
 
     private boolean isRequiredDTOField(VariableElement element) {
-        if (TypeElementUtils.isAnnotationPresent(element, "javax.validation.constraints.NotNull")
-            || TypeElementUtils.isAnnotationPresent(element, "jakarta.validation.constraints.NotNull")) {
+        if (AnnotationElementUtils.isAnnotationPresent(element, "javax.validation.constraints.NotNull")
+            || AnnotationElementUtils.isAnnotationPresent(element, "jakarta.validation.constraints.NotNull")) {
             return true;
         }
 
@@ -321,7 +321,7 @@ public class SpringApiModelGenerator {
     }
 
     private String mapAnnotation(AnnotationMirror annotation) {
-        return AnnotationMirrorUtils.getAnnotationName(annotation);
+        return AnnotationElementUtils.getAnnotationName(annotation);
     }
 
     private ApiMethodParameterType mapParameterType(ParameterType type) {

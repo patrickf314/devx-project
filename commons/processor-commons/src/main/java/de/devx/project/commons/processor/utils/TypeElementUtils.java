@@ -1,14 +1,14 @@
 package de.devx.project.commons.processor.utils;
 
+import de.devx.project.commons.processor.ProcessorContext;
+
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static java.util.function.Predicate.not;
 
@@ -55,7 +55,6 @@ public final class TypeElementUtils {
             return Optional.of(typeElement.asType());
         }
 
-
         var optional = typeElement.getInterfaces()
                 .stream()
                 .filter(mirror -> isClass(mirror, i))
@@ -74,13 +73,13 @@ public final class TypeElementUtils {
         return Optional.empty();
     }
 
-    public static List<? extends TypeMirror> getTypeArgumentsOfInterface(TypeMirror typeMirror, Class<?> i) {
+    public static List<TypeMirror> getTypeArgumentsOfInterface(TypeMirror typeMirror, Class<?> i) {
         if (!(typeMirror instanceof DeclaredType declaredType)) {
             throw new IllegalArgumentException("Type mirror of type " + typeMirror.getClass().getName() + " cannot have type arguments");
         }
 
         if (isClass(typeMirror, i)) {
-            return declaredType.getTypeArguments();
+            return new ArrayList<>(declaredType.getTypeArguments());
         }
 
         if (!(declaredType.asElement() instanceof TypeElement element)) {
@@ -194,20 +193,6 @@ public final class TypeElementUtils {
         return element.getModifiers().contains(Modifier.STATIC);
     }
 
-    public static boolean isAnnotationPresent(Element element, Class<? extends Annotation> annotation) {
-        return isAnnotationPresent(element, annotation.getName());
-    }
-
-    public static boolean isAnnotationPresent(Element element, String annotation) {
-        return element.getAnnotationMirrors()
-                .stream()
-                .map(AnnotationMirror::getAnnotationType)
-                .map(TypeElementUtils::mapToTypeElement)
-                .map(TypeElement::getQualifiedName)
-                .map(Name::toString)
-                .anyMatch(annotation::equals);
-    }
-
     public static String getPackageName(TypeElement typeElement) {
         var enclosingElement = typeElement.getEnclosingElement();
         if (enclosingElement instanceof PackageElement packageElement) {
@@ -219,6 +204,24 @@ public final class TypeElementUtils {
         }
 
         throw new IllegalArgumentException("Failed to get package name for type element " + typeElement.getQualifiedName());
+    }
+
+    public static boolean checkTypeMirrorsEquality(List<? extends TypeMirror> typeMirrorsA, List<? extends TypeMirror> typeMirrorsB) {
+        if(typeMirrorsA.size() != typeMirrorsB.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < typeMirrorsA.size(); i++) {
+            if(!checkTypeMirrorEquality(typeMirrorsA.get(i), typeMirrorsB.get(i))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static boolean checkTypeMirrorEquality(TypeMirror typeMirrorA, TypeMirror typeMirrorB) {
+        return ProcessorContext.getProcessingEnvironment().getTypeUtils().isSameType(typeMirrorA, typeMirrorB);
     }
 
     private static TypeElement mapInterfaceMirrorToTypeElement(TypeMirror mirror) {

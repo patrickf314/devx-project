@@ -16,6 +16,7 @@ public class SpringWebMvcMethodModel {
     private SpringWebMvcTypeModel returnType;
     private String httpMethod;
     private boolean defaultServiceCall;
+    private String serviceMethodName;
 
     // All parameters
     private List<SpringWebMvcParameterModel> parameters = new ArrayList<>();

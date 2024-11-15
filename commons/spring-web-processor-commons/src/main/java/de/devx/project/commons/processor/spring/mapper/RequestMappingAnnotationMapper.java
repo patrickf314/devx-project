@@ -2,13 +2,13 @@ package de.devx.project.commons.processor.spring.mapper;
 
 import de.devx.project.commons.processor.spring.SpringAnnotations;
 import de.devx.project.commons.processor.spring.data.RequestMappingAnnotation;
-import de.devx.project.commons.processor.utils.AnnotationMirrorUtils;
+import de.devx.project.commons.processor.utils.AnnotationElementUtils;
 
 import javax.lang.model.element.AnnotationMirror;
 import java.util.Collections;
 import java.util.List;
 
-import static de.devx.project.commons.processor.utils.AnnotationMirrorUtils.extractFieldsFromAnnotationMirror;
+import static de.devx.project.commons.processor.utils.AnnotationElementUtils.extractFieldsFromAnnotationMirror;
 
 public final class RequestMappingAnnotationMapper {
 
@@ -32,7 +32,7 @@ public final class RequestMappingAnnotationMapper {
             requestMapping.setPaths(Collections.emptyList());
         }
 
-        var annotationName = AnnotationMirrorUtils.getAnnotationName(annotationMirror);
+        var annotationName = AnnotationElementUtils.getAnnotationName(annotationMirror);
         if (SpringAnnotations.GET_MAPPING.equals(annotationName)) {
             requestMapping.setRequestMethods(List.of("GET"));
         } else if (SpringAnnotations.POST_MAPPING.equals(annotationName)) {

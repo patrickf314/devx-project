@@ -28,7 +28,7 @@
 
         <jackson.version>2.13.3</jackson.version>
 
-        <lombok.version>1.18.24</lombok.version>
+        <lombok.version>1.18.34</lombok.version>
 
         <mapstruct.version>1.5.2.Final</mapstruct.version>
 
@@ -36,6 +36,7 @@
 
         <junit.version>5.10.1</junit.version>
         <hamcrest.version>2.2</hamcrest.version>
+        <assertj.version>3.26.3</assertj.version>
         <mockito.version>5.7.0</mockito.version>
     </properties>
 

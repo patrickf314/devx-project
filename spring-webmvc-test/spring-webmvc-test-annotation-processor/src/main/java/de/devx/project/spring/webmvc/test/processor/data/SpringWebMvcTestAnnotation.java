@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static de.devx.project.commons.processor.utils.AnnotationMirrorUtils.extractFieldsFromAnnotationMirror;
+import static de.devx.project.commons.processor.utils.AnnotationElementUtils.extractFieldsFromAnnotationMirror;
 
 public class SpringWebMvcTestAnnotation {
 
