@@ -106,6 +106,16 @@
             <!-- AssertJ -->
             <dependency>
                 <groupId>de.devx.project</groupId>
+                <artifactId>assertj-assertion-generator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.devx.project</groupId>
+                <artifactId>assertj-assertion-maven-plugin</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.devx.project</groupId>
                 <artifactId>assertj-condition-generator</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -203,6 +213,17 @@
                 <groupId>org.freemarker</groupId>
                 <artifactId>freemarker</artifactId>
                 <version>${freemarker.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-core</artifactId>
+                <version>${javaparser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-symbol-solver-core</artifactId>
+                <version>${javaparser.version}</version>
             </dependency>
 
             <!-- Tests -->

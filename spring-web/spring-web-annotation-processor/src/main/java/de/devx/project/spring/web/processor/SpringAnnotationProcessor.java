@@ -6,7 +6,6 @@ import de.devx.project.commons.api.model.io.ApiModelWriter;
 import de.devx.project.commons.generator.logging.Logger;
 import de.devx.project.commons.processor.ProcessorContext;
 import de.devx.project.commons.processor.logging.ProcessorLogger;
-import de.devx.project.commons.processor.utils.AnnotationElementUtils;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;

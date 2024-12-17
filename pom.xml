@@ -34,6 +34,8 @@
 
         <freemarker.version>2.3.31</freemarker.version>
 
+        <javaparser.version>3.26.2</javaparser.version>
+
         <junit.version>5.10.1</junit.version>
         <hamcrest.version>2.2</hamcrest.version>
         <assertj.version>3.26.3</assertj.version>
@@ -73,8 +75,8 @@
         <module>hamcrest/hamcrest-matcher-dto-maven-plugin</module>
         <module>hamcrest/hamcrest-matcher-entity-processor</module>
 
-        <module>assertj/assertj-condition-generator</module>
-        <module>assertj/assertj-condition-maven-plugin</module>
+        <module>assertj/assertj-assertion-generator</module>
+        <module>assertj/assertj-assertion-maven-plugin</module>
 
         <module>playwright/playwright-client-generator</module>
         <module>playwright/playwright-client-maven-plugin</module>

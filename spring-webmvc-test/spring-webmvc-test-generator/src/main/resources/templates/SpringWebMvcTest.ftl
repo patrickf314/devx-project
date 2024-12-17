@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.jeasy.random.EasyRandom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpMethod;<#if test.activeProfile?has_content>
 import org.springframework.test.context.ActiveProfiles;</#if>
 import org.springframework.test.context.ContextConfiguration;
@@ -45,7 +45,7 @@ public class ${test.name} {
     @Autowired
     protected WebApplicationContext webApplicationContext;
 
-    @MockBean
+    @MockitoBean
     protected ${test.service.mockName} service;
 
     protected MockMvc mvc;

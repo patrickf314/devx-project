@@ -23,6 +23,7 @@ import javax.lang.model.type.TypeMirror;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static de.devx.project.commons.generator.utils.ClassUtils.extractSimpleClassName;
 import static de.devx.project.commons.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
 import static de.devx.project.commons.processor.utils.AnnotationElementUtils.findAnnotationMirror;
 import static de.devx.project.commons.processor.utils.ExceptionUtils.unexpectedTypeMirrorException;
@@ -184,20 +185,20 @@ public class SpringApiModelGenerator {
 
         var className = typeElement.getQualifiedName().toString();
         if (className.equals(String.class.getName())) {
-            return new ApiTypeModel("string", ApiTypeType.JAVA_TYPE, String.class.getName(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
+            return new ApiTypeModel("string", ApiTypeType.JAVA_TYPE, className, required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
         }
 
         if (TypeElementUtils.isExtensionOf(typeElement, Number.class)) {
-            return new ApiTypeModel("number", ApiTypeType.JAVA_TYPE, typeElement.getQualifiedName().toString(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
+            return new ApiTypeModel("number", ApiTypeType.JAVA_TYPE, className, required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
         }
 
-        var collection = TypeElementUtils.getInterfaceTypeMirror(typeMirror, Collection.class);
+        var collection = TypeElementUtils.getInterfaceTypeMirror(typeElement, Collection.class);
         if (collection.isPresent()) {
             var typeArgs = TypeElementUtils.getTypeArgumentsOfInterface(typeMirror, Collection.class)
                     .stream()
                     .map(t -> this.mapTypeMirror(element, t, true, Collections.emptyList()))
                     .toList();
-            return new ApiTypeModel("collection", ApiTypeType.JAVA_TYPE, null, required, typeArgs, Collections.emptyList(), mapAnnotations(annotations));
+            return new ApiTypeModel("collection", ApiTypeType.JAVA_TYPE, className, required, typeArgs, Collections.emptyList(), mapAnnotations(annotations));
         }
 
         var map = TypeElementUtils.getInterfaceTypeMirror(typeElement, Map.class);
@@ -206,7 +207,7 @@ public class SpringApiModelGenerator {
                     .stream()
                     .map(t -> this.mapTypeMirror(element, t, true, Collections.emptyList()))
                     .toList();
-            return new ApiTypeModel("map", ApiTypeType.JAVA_TYPE, null, required, typeArgs, Collections.emptyList(), mapAnnotations(annotations));
+            return new ApiTypeModel("map", ApiTypeType.JAVA_TYPE, className, required, typeArgs, Collections.emptyList(), mapAnnotations(annotations));
         }
 
         if (typeElement.getKind() == ElementKind.ENUM) {
@@ -218,6 +219,17 @@ public class SpringApiModelGenerator {
                 .stream()
                 .map(t -> this.mapTypeMirror(element, t, true, Collections.emptyList()))
                 .toList();
+
+        if (className.startsWith("java.")) {
+            return new ApiTypeModel(
+                    extractSimpleClassName(className),
+                    ApiTypeType.DTO,
+                    className, required,
+                    typeArguments,
+                    Collections.emptyList(),
+                    mapAnnotations(annotations)
+            );
+        }
 
         if (typeElement.getKind() == ElementKind.CLASS || typeElement.getKind() == ElementKind.RECORD) {
             var dtoModel = createDTOModel(typeElement, className);
@@ -253,7 +265,11 @@ public class SpringApiModelGenerator {
 
         if (superClass.getKind() == TypeKind.DECLARED) {
             var superElement = ((DeclaredType) superClass).asElement();
-            if (superElement.getKind() == ElementKind.CLASS && superElement instanceof TypeElement superTypeElement && !TypeElementUtils.isClass(superTypeElement, Record.class) && !TypeElementUtils.isClass(superTypeElement, Object.class)) {
+            if (superElement.getKind() == ElementKind.CLASS
+                && superElement instanceof TypeElement superTypeElement
+                && !TypeElementUtils.isClass(superTypeElement, Record.class)
+                && !TypeElementUtils.isClass(superTypeElement, Object.class)) {
+
                 var superClassName = superTypeElement.getQualifiedName().toString();
                 createDTOModel(superTypeElement, superClassName);
                 dtoModel.setExtendedDTO(mapDeclaredTypeMirror(element, (DeclaredType) superClass, true, Collections.emptyList()));

@@ -57,8 +57,14 @@ public final class TypeElementUtils {
 
         var optional = typeElement.getInterfaces()
                 .stream()
-                .filter(mirror -> isClass(mirror, i))
-                .map(TypeMirror.class::cast)
+                .map(mirror -> {
+                    if(isClass(mirror, i)) {
+                        return Optional.<TypeMirror>of(mirror);
+                    }else{
+                        return getInterfaceTypeMirror(mirror, i);
+                    }
+                })
+                .flatMap(Optional::stream)
                 .findAny();
 
         if (optional.isPresent()) {
@@ -100,13 +106,12 @@ public final class TypeElementUtils {
     private static List<TypeMirror> getTypeArgumentsOfInterface(TypeElement element, Class<?> i, Map<String, TypeMirror> aliases) {
         var optional = element.getInterfaces()
                 .stream()
-                .filter(mirror -> isClass(mapInterfaceMirrorToTypeElement(mirror), i))
+                .filter(mirror -> isImplementationOf(mirror, i))
                 .findAny()
                 .map(DeclaredType.class::cast);
 
         if (optional.isPresent()) {
-            return optional.get()
-                    .getTypeArguments()
+            return getTypeArgumentsOfInterface(optional.get(), i)
                     .stream()
                     .map(e -> mapTypeArgument(aliases, e))
                     .toList();

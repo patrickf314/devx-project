@@ -10,7 +10,7 @@ import de.devx.project.commons.client.typescript.mapper.TypeScriptServiceMapper;
 import de.devx.project.commons.client.typescript.properties.TypeScriptDependency;
 import de.devx.project.commons.client.typescript.properties.TypeScriptPackageAlias;
 import de.devx.project.commons.client.typescript.properties.TypeScriptTypeAlias;
-import de.devx.project.commons.maven.model.ApiModelResolver;
+import de.devx.project.commons.maven.parser.MavenApiModelParser;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -71,7 +71,7 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
         getLog().info("Starting generation of API clients...");
         getLog().debug("Searing for api model definition in dependencies...");
 
-        var apiModelResolver = new ApiModelResolver(getLog(), apiModelJson, mavenProject);
+        var apiModelResolver = new MavenApiModelParser(getLog(), apiModelJson, mavenProject);
         var apiModels = apiModelResolver.requireApiModels();
 
         getLog().debug("Start client generation...");

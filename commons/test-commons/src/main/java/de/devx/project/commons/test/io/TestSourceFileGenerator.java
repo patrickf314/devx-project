@@ -7,6 +7,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public class TestSourceFileGenerator implements SourceFileGenerator {
 
@@ -31,4 +32,13 @@ public class TestSourceFileGenerator implements SourceFileGenerator {
         return Optional.ofNullable(sourceFiles.get(packageName + "." + className))
                 .map(StringWriter::toString);
     }
+
+    public Set<String> getCreatedSourceFileNames() {
+        return sourceFiles.keySet();
+    }
+
+    public void reset() {
+        sourceFiles.clear();
+    }
+
 }
