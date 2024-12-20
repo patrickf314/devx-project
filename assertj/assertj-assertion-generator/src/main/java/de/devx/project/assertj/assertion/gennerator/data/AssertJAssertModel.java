@@ -1,11 +1,13 @@
 package de.devx.project.assertj.assertion.gennerator.data;
 
 import de.devx.project.commons.generator.model.JavaTypeArgumentModel;
+import de.devx.project.commons.generator.model.JavaTypeModel;
 import de.devx.project.commons.generator.utils.ImportUtils;
 import lombok.Data;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Data
 public class AssertJAssertModel {
@@ -13,7 +15,7 @@ public class AssertJAssertModel {
     private String packageName;
     /**
      * The simple name of the class for which this model represents the Assert.
-     * The Asserts will have the name Abstract{name}Assert and {name}Assert.
+     * The Asserts will have the name Abstract{assertName} and {assertName}.
      */
     private String name;
 
@@ -23,24 +25,32 @@ public class AssertJAssertModel {
 
     private boolean javaRecord;
 
+    private JavaTypeModel extendedAbstractAssertModel;
+
     /**
-     * Getter for the name as type.
-     * For root level classes this is equal to {@link #getName()}.
-     * However, for nested classes the name contains $ signs, whereas
-     * the type name contains points.
+     * Getter for the name of the assert class.
+     * For root level classes this is equal to {@link #getName()} + "Assert".
+     * However, for nested classes the assert name contains $ signs, whereas
+     * the name contains points.
      * <p>
-     * E.g.: getName(): TestEntity$NestedEntity
-     * getTypeName(): TestEntity.NestedEntity
+     * E.g.: getAssertName(): TestEntity$NestedEntityAssert
+     * getName(): TestEntity.NestedEntity
      *
-     * @return the type name
+     * @return the assert name
      */
-    public String getTypeName() {
-        return name.replace('$', '.');
+    public String getAssertName() {
+        return name.replace('.', '$') + "Assert";
     }
 
-    public Optional<String> asJavaImport(String currentPackage) {
-        var i = name.indexOf('$');
+    public Stream<String> asJavaImport(String currentPackage) {
+        var i = name.indexOf('.');
         var rootName = i == -1 ? name : name.substring(0, i);
-        return ImportUtils.asJavaImport(currentPackage, packageName, rootName);
+        return Stream.concat(
+                ImportUtils.asJavaImport(currentPackage, packageName, rootName).stream(),
+                Stream.concat(
+                        typeArguments.stream().flatMap(t -> t.streamImports(currentPackage)),
+                        extendedAbstractAssertModel.streamImports(currentPackage)
+                )
+        );
     }
 }

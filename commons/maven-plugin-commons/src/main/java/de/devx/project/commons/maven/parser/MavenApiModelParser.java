@@ -5,7 +5,6 @@ import de.devx.project.commons.api.model.data.ApiModel;
 import de.devx.project.commons.api.model.data.ApiTypeModel;
 import de.devx.project.commons.api.model.io.ApiModelFileExtractor;
 import de.devx.project.commons.api.model.io.JarApiModelExtractor;
-import de.devx.project.commons.generator.utils.ClassUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -26,27 +25,32 @@ public class MavenApiModelParser {
 
     public static String extractPackageName(ApiDTOModel apiModel) {
         if (apiModel.getEnclosingDTO() != null) {
-            return ClassUtils.extractPackageName(apiModel.getEnclosingDTO().getClassName());
+            return extractPackageName(apiModel.getEnclosingDTO().getClassName());
         } else {
-            return ClassUtils.extractPackageName(apiModel.getClassName());
+            return extractPackageName(apiModel.getClassName());
         }
+    }
+
+    private static String extractPackageName(String fullyQualifiedClassName) {
+        var i = fullyQualifiedClassName.lastIndexOf('.');
+        if (i == -1 || i == 0 || i == fullyQualifiedClassName.length() - 1) {
+            throw new IllegalArgumentException("String " + fullyQualifiedClassName + " is not a valid fully qualified class name");
+        }
+        return fullyQualifiedClassName.substring(0, i);
     }
 
     public static String extractSimpleClassName(ApiDTOModel apiModel) {
-        var simpleName = ClassUtils.extractSimpleClassName(apiModel.getClassName());
-        if (apiModel.getEnclosingDTO() != null) {
-            return ClassUtils.extractSimpleClassName(apiModel.getEnclosingDTO().getClassName()) + "$" + simpleName;
-        } else {
-            return simpleName;
-        }
+        var packageName = extractPackageName(apiModel);
+        return apiModel.getClassName().substring(packageName.length() + 1);
     }
 
     public static String extractPackageName(ApiTypeModel apiModel) {
-        return ClassUtils.extractPackageName(apiModel.getClassName());
+        return extractPackageName(apiModel.getClassName());
     }
 
     public static String extractSimpleClassName(ApiTypeModel apiModel) {
-        return ClassUtils.extractSimpleClassName(apiModel.getClassName());
+        var packageName = extractPackageName(apiModel);
+        return apiModel.getClassName().substring(packageName.length() + 1);
     }
 
     /**

@@ -3,6 +3,7 @@ package de.devx.project.assertj.assertion.maven;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertFieldModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
+import de.devx.project.assertj.assertion.gennerator.mapper.AssertJAssertMapper;
 import de.devx.project.commons.api.model.data.ApiDTOModel;
 import de.devx.project.commons.api.model.data.ApiTypeModel;
 import de.devx.project.commons.generator.model.JavaTypeArgumentModel;
@@ -13,10 +14,12 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.mapstruct.factory.Mappers;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static de.devx.project.commons.generator.model.JavaTypeModel.genericTemplateType;
 import static de.devx.project.commons.generator.model.JavaTypeModel.objectType;
@@ -31,6 +34,8 @@ import static de.devx.project.commons.maven.parser.MavenApiModelParser.extractSi
         threadSafe = true
 )
 public class AssertJApiModelAssertionsMojo extends AbstractAssertJAssertionsMojo {
+
+    private static final AssertJAssertMapper MAPPER = Mappers.getMapper(AssertJAssertMapper.class);
 
     @Parameter(property = "apiModelAssertions.apiModelJson")
     private File apiModelJson;
@@ -63,7 +68,18 @@ public class AssertJApiModelAssertionsMojo extends AbstractAssertJAssertionsMojo
         model.setTypeArguments(apiModel.getTypeArguments().stream()
                 .map(JavaTypeArgumentModel::new).toList());
         model.setJavaRecord(apiModel.isJavaRecord());
+        model.setExtendedAbstractAssertModel(mapSuperClass(apiModel.getExtendedDTO()));
         return model;
+    }
+
+    private JavaTypeModel mapSuperClass(ApiTypeModel model) {
+        if(model == null) {
+            return AssertJAssertMapper.ABSTRACT_ASSERT;
+        }
+
+        var packageName = extractPackageName(model);
+        var className = extractSimpleClassName(model);
+        return MAPPER.mapToExtendedAbstractAssertModel(packageName, className, model.getTypeArguments().stream().map(ApiTypeModel::getName).toList());
     }
 
     private AssertJAssertFieldModel mapToModel(String name, ApiTypeModel type) {

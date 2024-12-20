@@ -1,6 +1,7 @@
 package de.devx.project.commons.maven.mapper;
 
 import com.github.javaparser.ast.AccessSpecifier;
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import com.github.javaparser.resolution.declarations.*;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
@@ -20,29 +21,34 @@ public final class MavenClassMapper {
     }
 
     public static JavaClassModel mapToClassModel(ResolvedReferenceTypeDeclaration type) {
-        return new JavaClassModel(
-                extractPackageName(type),
-                extractClassName(type),
-                type.getTypeParameters().stream()
-                        .map(MavenClassMapper::mapToTypeArgumentModel)
-                        .toList(),
-                type.getAncestors()
-                        .stream()
-                        .filter(ancestor -> ancestor.getTypeDeclaration().filter(ResolvedTypeDeclaration::isClass).isPresent())
-                        .findFirst()
-                        .map(MavenClassMapper::mapToTypeModel)
-                        .orElse(null),
-                type.getDeclaredFields().stream()
-                        .map(MavenClassMapper::mapToFieldModel)
-                        .toList(),
-                type.getDeclaredMethods().stream()
-                        .map(MavenClassMapper::mapToMethodModel)
-                        .toList(),
-                type.getDeclaredAnnotations().stream()
-                        .map(MavenClassMapper::mapToAnnotation)
-                        .toList(),
-                type.isRecord()
-        );
+        try {
+            return new JavaClassModel(
+                    extractPackageName(type),
+                    extractClassName(type),
+                    type.getTypeParameters().stream()
+                            .map(MavenClassMapper::mapToTypeArgumentModel)
+                            .toList(),
+                    type.getAncestors()
+                            .stream()
+                            .filter(ancestor -> ancestor.getTypeDeclaration().filter(ResolvedTypeDeclaration::isClass).isPresent())
+                            .findFirst()
+                            .map(MavenClassMapper::mapToTypeModel)
+                            .orElse(null),
+                    type.getDeclaredFields().stream()
+                            .map(MavenClassMapper::mapToFieldModel)
+                            .toList(),
+                    type.getDeclaredMethods().stream()
+                            .map(MavenClassMapper::mapToMethodModel)
+                            .toList(),
+                    type.getDeclaredAnnotations().stream()
+                            .map(MavenClassMapper::mapToAnnotation)
+                            .toList(),
+                    type.isRecord()
+            );
+        } catch (UnsolvedSymbolException | IllegalArgumentException ignore) {
+            // The class could not be resolved correctly. We ignore it
+            return null;
+        }
     }
 
     private static JavaClassFieldModel mapToFieldModel(ResolvedFieldDeclaration field) {
@@ -107,7 +113,7 @@ public final class MavenClassMapper {
     private static JavaTypeModel mapToTypeModel(ResolvedType type) {
         if (type.isPrimitive()) {
             var primitive = type.asPrimitive();
-            return JavaTypeModel.primitiveType(primitive.name().toLowerCase(Locale.ROOT), ClassUtils.extractSimpleClassName(primitive.getBoxTypeQName()));
+            return JavaTypeModel.primitiveType(primitive.name().toLowerCase(Locale.ROOT), ClassUtils.extractSimpleClassName(primitive.getBoxTypeClass()));
         }
 
         if (type.isArray()) {
@@ -147,7 +153,7 @@ public final class MavenClassMapper {
     private static String extractPackageName(ResolvedReferenceType type) {
         return type.getTypeDeclaration()
                 .map(MavenClassMapper::extractPackageName)
-                .orElse(ClassUtils.extractPackageName(type.getQualifiedName()));
+                .orElseThrow();
     }
 
     private static String extractPackageName(ResolvedReferenceTypeDeclaration typeDeclaration) {
@@ -155,15 +161,12 @@ public final class MavenClassMapper {
     }
 
     private static String extractClassName(ResolvedReferenceType type) {
-        return type.getTypeDeclaration()
-                .map(MavenClassMapper::extractClassName)
-                .orElse(ClassUtils.extractSimpleClassName(type.getQualifiedName()));
+        var packageName = extractPackageName(type);
+        return type.getQualifiedName().substring(packageName.length() + 1);
     }
 
     private static String extractClassName(ResolvedReferenceTypeDeclaration typeDeclaration) {
-        var qualifiedName = typeDeclaration.getQualifiedName();
-        var packageName = typeDeclaration.getPackageName();
-
-        return qualifiedName.substring(packageName.length() + 1).replace('.', '$');
+        var packageName = extractPackageName(typeDeclaration);
+        return typeDeclaration.getQualifiedName().substring(packageName.length() + 1);
     }
 }

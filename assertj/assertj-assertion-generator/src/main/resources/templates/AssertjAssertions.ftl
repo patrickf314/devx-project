@@ -14,25 +14,25 @@ public class ${model.name} extends Assertions {
 <#list model.asserts as assert>
 
     /**
-     * Factory method for an assert of a {@link ${assert.typeName}}.
+     * Factory method for an assert of a {@link ${assert.name}}.
      *
      * @param actual the actual object
      * @return the typed assert
      */
-    public static<#if assert.typeArguments?has_content> <${assert.typeArguments?join(", ")}></#if> ${assert.name}Assert<#if assert.typeArguments?has_content><${assert.typeArguments?join(", ")}></#if> assertThat(${assert.typeName}<#if assert.typeArguments?has_content><${assert.typeArguments?join(", ")}></#if> actual) {
-        return new ${assert.name}Assert<#if assert.typeArguments?has_content><></#if>(actual);
+    public static<#if assert.typeArguments?has_content> <${assert.typeArguments?map(typeArgument -> typeArgument.definition)?join(", ")}></#if> ${assert.assertName}<#if assert.typeArguments?has_content><${assert.typeArguments?map(typeArgument -> typeArgument.definition)?join(", ")}></#if> assertThat(${assert.name}<#if assert.typeArguments?has_content><${assert.typeArguments?map(typeArgument -> typeArgument.definition)?join(", ")}></#if> actual) {
+        return new ${assert.assertName}<#if assert.typeArguments?has_content><></#if>(actual);
     }
 </#list>
 <#list model.assertThatMethods as assertThatMethod>
 
     /**
-    * Transitive method for {@link ${assertThatMethod.name}#assertThat(${assertThatMethod.type.qualifiedTypeName})}.
+    * Transitive method for {@link ${assertThatMethod.assertionClass.name}#assertThat(${assertThatMethod.type.qualifiedTypeName})}.
     *
     * @param actual the actual object
     * @return the typed assert
     */
-    public static<#if assert.typeArguments?has_content> <${assert.typeArguments?join(", ")}></#if> ${assertThatMethod.assertType.qualifiedTypeName} assertThat(${assertThatMethod.type.qualifiedTypeName} actual) {
-        return ${assertThatMethod.name}.assertThat(actual);
+    public static<#if assertThatMethod.typeArguments?has_content> <${assertThatMethod.typeArguments?map(typeArgument -> typeArgument.definition)?join(", ")}></#if> ${assertThatMethod.assertType.qualifiedTypeName} ${assertThatMethod.name}(${assertThatMethod.type.qualifiedTypeName} actual) {
+        return ${assertThatMethod.assertionClass.name}.${assertThatMethod.name}(actual);
     }
 </#list>
 }

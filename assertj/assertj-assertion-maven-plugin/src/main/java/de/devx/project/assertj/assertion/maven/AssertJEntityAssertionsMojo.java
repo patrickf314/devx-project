@@ -1,10 +1,5 @@
 package de.devx.project.assertj.assertion.maven;
 
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.resolution.declarations.ResolvedFieldDeclaration;
-import com.github.javaparser.resolution.declarations.ResolvedTypeParameterDeclaration;
-import com.github.javaparser.resolution.types.ResolvedType;
-import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertFieldModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
 import de.devx.project.assertj.assertion.gennerator.mapper.AssertJAssertMapper;
@@ -18,6 +13,7 @@ import org.mapstruct.factory.Mappers;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Mojo(
         name = "generate-assertj-entity-assertions",
@@ -34,15 +30,14 @@ public class AssertJEntityAssertionsMojo extends AbstractAssertJAssertionsMojo {
 
         try {
             var parser = new MavenSourceFileParser(project);
-            return parser.getClassesAnnotatedWith("Entity")
-                    .stream()
+            return Stream.concat(
+                            parser.getClassesAnnotatedWith("MappedSuperclass").stream(),
+                            parser.getClassesAnnotatedWith("Entity").stream()
+                    )
                     .map(MAPPER::mapToAssert)
                     .toList();
         } catch (IOException ex) {
             throw new MojoExecutionException("Failed to create assert models.", ex);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            return Collections.emptyList();
         }
     }
 

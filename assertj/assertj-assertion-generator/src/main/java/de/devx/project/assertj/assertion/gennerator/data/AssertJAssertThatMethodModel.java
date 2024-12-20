@@ -11,6 +11,9 @@ import java.util.List;
 public class AssertJAssertThatMethodModel {
 
     private JavaClassModel assertionClass;
+
+    private String name;
+
     /**
      * The type of the asserted object
      */

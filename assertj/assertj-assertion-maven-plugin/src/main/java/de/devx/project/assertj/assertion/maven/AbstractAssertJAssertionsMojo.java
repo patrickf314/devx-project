@@ -28,16 +28,21 @@ public abstract class AbstractAssertJAssertionsMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        getLog().info("Starting generation of assertJ assertions...");
+        try {
+            getLog().info("Starting generation of assertJ assertions...");
 
-        var model = new AssertJAssertionModel();
-        model.setPackageName(packageName);
-        model.setName(name);
-        model.setAsserts(createAssertModels());
-        model.setAssertThatMethods(createAssertThatMethodModels());
+            var model = new AssertJAssertionModel();
+            model.setPackageName(packageName);
+            model.setName(name);
+            model.setAsserts(createAssertModels());
+            model.setAssertThatMethods(createAssertThatMethodModels());
 
-        generateAssertions(model);
-        getLog().info("Generation of assertJ assertions completed.");
+            generateAssertions(model);
+            getLog().info("Generation of assertJ assertions completed.");
+        }catch (RuntimeException e) {
+            e.printStackTrace();
+            throw new MojoExecutionException("Failed to execute AssertJ mojo.", e);
+        }
     }
 
     protected abstract List<AssertJAssertModel> createAssertModels() throws MojoExecutionException;

@@ -19,7 +19,7 @@ public final class JavaClassMapper {
     public static JavaClassModel mapToClassModel(Class<?> c) {
         return new JavaClassModel(
                 c.getPackageName(),
-                ClassUtils.extractSimpleClassName(c.getName()),
+                extractSimpleClassName(c),
                 Arrays.stream(c.getTypeParameters())
                         .map(JavaClassMapper::mapToTypeArgumentModel)
                         .toList(),
@@ -80,15 +80,15 @@ public final class JavaClassMapper {
 
         var bound = bounds[0];
         if (bound.getTypeName().equals("java.lang.Object")) {
-            return new JavaTypeArgumentModel(c.getName());
+            return new JavaTypeArgumentModel(c.getTypeName());
         } else {
-            return new JavaTypeArgumentModel(c.getName(), mapToTypeModel(bound));
+            return new JavaTypeArgumentModel(c.getTypeName(), mapToTypeModel(bound));
         }
     }
 
     private static JavaTypeModel mapToTypeModel(Type type) {
         if (type instanceof TypeVariable<?> typeVariable) {
-            return JavaTypeModel.genericTemplateType(typeVariable.getName());
+            return JavaTypeModel.genericTemplateType(typeVariable.getTypeName());
         }
 
         if (type instanceof ParameterizedType parameterizedType) {
@@ -115,7 +115,10 @@ public final class JavaClassMapper {
                 return JavaTypeModel.primitiveType(name, boxedType.getSimpleName());
             }
 
-            return JavaTypeModel.objectType(classType.getPackageName(), ClassUtils.extractSimpleClassName(classType.getName()));
+            var packageName = classType.getPackageName();
+            var className = extractSimpleClassName(classType);
+
+            return JavaTypeModel.objectType(packageName, className);
         }
 
         throw new IllegalArgumentException("Mapping of type " + type + " is not supported");
@@ -139,5 +142,13 @@ public final class JavaClassMapper {
             accessModifiers.add(JavaAccessModifierType.FINAL);
         }
         return accessModifiers;
+    }
+
+    private static String extractSimpleClassName(Class<?> c) {
+        var simpleName = c.getSimpleName();
+        if(c.getEnclosingClass() != null) {
+            return extractSimpleClassName(c.getEnclosingClass()) + "." + simpleName;
+        }
+        return simpleName;
     }
 }

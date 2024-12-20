@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class MavenSourceFileParser {
@@ -59,11 +61,10 @@ public class MavenSourceFileParser {
                 .toList();
     }
 
-    public JavaClassModel getClass(String className) {
+    public Optional<JavaClassModel> getClass(String className) {
         return streamAllClasses()
                 .filter(model -> model.getFullyQualifiedName().equals(className))
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("Class not found: " + className));
+                .findAny();
     }
 
     private Stream<JavaClassModel> streamAllClasses() {
@@ -73,7 +74,8 @@ public class MavenSourceFileParser {
                 )
                 .flatMap(this::streamClassDeclarations)
                 .map(ClassOrInterfaceDeclaration::resolve)
-                .map(MavenClassMapper::mapToClassModel);
+                .map(MavenClassMapper::mapToClassModel)
+                .filter(Objects::nonNull);
     }
 
     private Stream<ClassOrInterfaceDeclaration> streamClassDeclarations(String srcDir) {

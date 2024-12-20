@@ -15,20 +15,9 @@ public final class ClassUtils {
             "double", Double.class
     );
 
-    public static String extractPackageName(String fullyQualifiedClassName) {
-        var i = fullyQualifiedClassName.lastIndexOf('.');
-        if (i == -1 || i == 0 || i == fullyQualifiedClassName.length() - 1) {
-            throw new IllegalArgumentException("String " + fullyQualifiedClassName + " is not a valid fully qualified class name");
-        }
-        return fullyQualifiedClassName.substring(0, i);
-    }
-
-    public static String extractSimpleClassName(String fullyQualifiedClassName) {
-        var i = fullyQualifiedClassName.lastIndexOf('.');
-        if (i == -1 || i == 0 || i == fullyQualifiedClassName.length() - 1) {
-            throw new IllegalArgumentException("String " + fullyQualifiedClassName + " is not a valid fully qualified class name");
-        }
-        return fullyQualifiedClassName.substring(i + 1);
+    public static String extractSimpleClassName(Class<?> c) {
+        var packageName = c.getPackage().getName();
+        return c.getName().substring(packageName.length() + 1);
     }
 
     public static Class<?> toBoxedType(String primitiveName) {

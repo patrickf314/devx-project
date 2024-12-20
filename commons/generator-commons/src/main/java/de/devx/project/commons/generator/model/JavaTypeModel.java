@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -112,7 +113,7 @@ public class JavaTypeModel {
     }
 
     public boolean isWildcard() {
-        return packageName == null && className == null;
+        return packageName == null && className == null && "?".equals(name);
     }
 
     public boolean isPrimitive() {
@@ -124,11 +125,13 @@ public class JavaTypeModel {
             return Stream.empty();
         }
 
-        var i = name.indexOf('$');
-        var rootClassName = i == -1 ? name : name.substring(0, i);
         return Stream.concat(
-                asJavaImport(currentPackageName, packageName, rootClassName).stream(),
+                asJavaImport(currentPackageName, packageName, name).stream(),
                 typeArguments.stream().flatMap(type -> type.streamImports(currentPackageName))
         );
+    }
+
+    public boolean isObjectType(String packageName, String className) {
+        return Objects.equals(this.packageName, packageName) && Objects.equals(this.className, className) && typeArguments.isEmpty();
     }
 }

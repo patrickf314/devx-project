@@ -62,6 +62,12 @@ public class JavaClassModel {
     }
 
     public boolean isAnnotationPresent(String fullyQualifiedName) {
-        return annotations.stream().anyMatch(annotation -> fullyQualifiedName.equals(annotation.getType().getQualifiedTypeName()));
+        return getAnnotation(fullyQualifiedName).isPresent();
+    }
+
+    public Optional<JavaAnnotationModel> getAnnotation(String fullyQualifiedName) {
+        return annotations.stream()
+                .filter(annotation -> fullyQualifiedName.equals(annotation.getType().getQualifiedTypeName()))
+                .findAny();
     }
 }

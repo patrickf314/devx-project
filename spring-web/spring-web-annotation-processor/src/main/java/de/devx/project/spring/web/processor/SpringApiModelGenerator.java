@@ -23,7 +23,6 @@ import javax.lang.model.type.TypeMirror;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static de.devx.project.commons.generator.utils.ClassUtils.extractSimpleClassName;
 import static de.devx.project.commons.processor.spring.mapper.RequestMappingAnnotationMapper.mapAnnotationMirrorToRequestMapping;
 import static de.devx.project.commons.processor.utils.AnnotationElementUtils.findAnnotationMirror;
 import static de.devx.project.commons.processor.utils.ExceptionUtils.unexpectedTypeMirrorException;
@@ -224,7 +223,8 @@ public class SpringApiModelGenerator {
             return new ApiTypeModel(
                     extractSimpleClassName(className),
                     ApiTypeType.DTO,
-                    className, required,
+                    className,
+                    required,
                     typeArguments,
                     Collections.emptyList(),
                     mapAnnotations(annotations)
@@ -347,5 +347,10 @@ public class SpringApiModelGenerator {
             case QUERY -> ApiMethodParameterType.QUERY;
             case HEADER -> ApiMethodParameterType.HEADER;
         };
+    }
+
+    private String extractSimpleClassName(String className) {
+        var i = className.lastIndexOf('.');
+        return className.substring(i + 1);
     }
 }

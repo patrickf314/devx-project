@@ -14,6 +14,7 @@ import java.util.List;
 
 import static de.devx.project.commons.generator.model.JavaTypeModel.*;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -193,7 +194,7 @@ class AssertJAssertionGeneratorTest {
     void testAbstractAssertGeneration() throws IOException {
         var model = assertModel("TestEntity");
 
-        sut.generateAbstractAssert(model);
+        sut.generateAbstractAssert(emptyMap(), model);
 
         assertThat(sourceFileGenerator.getFileContent("de.devx.project.assertj.assertion.test", "AbstractTestEntityAssert"))
                 .isPresent()
@@ -357,7 +358,7 @@ class AssertJAssertionGeneratorTest {
     void testAbstractAssertGenerationOfGenericModel() throws IOException {
         var model = genericAssertModel();
 
-        sut.generateAbstractAssert(model);
+        sut.generateAbstractAssert(emptyMap(), model);
 
         assertThat(sourceFileGenerator.getFileContent("de.devx.project.assertj.assertion.test", "AbstractTestEntityAssert"))
                 .isPresent()
@@ -428,7 +429,7 @@ class AssertJAssertionGeneratorTest {
         var model = assertModel("TestEntity");
         model.setJavaRecord(true);
 
-        sut.generateAbstractAssert(model);
+        sut.generateAbstractAssert(emptyMap(), model);
 
         assertThat(sourceFileGenerator.getFileContent("de.devx.project.assertj.assertion.test", "AbstractTestEntityAssert"))
                 .isPresent()

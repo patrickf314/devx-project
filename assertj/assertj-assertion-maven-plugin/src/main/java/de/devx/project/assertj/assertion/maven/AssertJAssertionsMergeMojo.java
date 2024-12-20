@@ -4,6 +4,7 @@ import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
 import de.devx.project.commons.generator.model.JavaClassMethodModel;
 import de.devx.project.commons.generator.model.JavaClassModel;
+import de.devx.project.commons.maven.parser.MavenProjectClassLoader;
 import de.devx.project.commons.maven.parser.MavenSourceFileParser;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -37,35 +38,35 @@ public class AssertJAssertionsMergeMojo extends AbstractAssertJAssertionsMojo {
         try {
             var models = new ArrayList<AssertJAssertThatMethodModel>();
             var parser = new MavenSourceFileParser(project);
+            var classLoader = new MavenProjectClassLoader(project);
             for (var assertion : assertions) {
-                models.addAll(createAssertThatMethodModels(assertion, parser));
+                models.addAll(createAssertThatMethodModels(assertion, parser, classLoader));
             }
             return models;
         } catch (IOException e) {
             throw new MojoExecutionException("Failed to initialize java parser", e);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return Collections.emptyList();
         }
     }
 
-    private List<AssertJAssertThatMethodModel> createAssertThatMethodModels(String assertion, MavenSourceFileParser parser) throws MojoExecutionException {
-        var assertionClass = parser.getClass(assertion);
+    private List<AssertJAssertThatMethodModel> createAssertThatMethodModels(String assertion, MavenSourceFileParser parser, MavenProjectClassLoader classLoader) {
+        var assertionClass = parser.getClass(assertion)
+                .orElseGet(() -> classLoader.getClass(assertion));
 
         return assertionClass.getMethods()
                 .stream()
                 .filter(JavaClassMethodModel::isStatic)
-                .filter(m -> m.getName().equals("assertThat") && m.getParameterCount() == 1)
+                .filter(m -> m.getName().startsWith("assert") && m.getParameterCount() == 1)
                 .map(m -> mapToModel(assertionClass, m))
                 .toList();
     }
 
     private AssertJAssertThatMethodModel mapToModel(JavaClassModel assertionClass, JavaClassMethodModel methodDeclaration) {
         var model = new AssertJAssertThatMethodModel();
+        model.setName(methodDeclaration.getName());
         model.setAssertionClass(assertionClass);
         model.setType(methodDeclaration.getParameters().get(0).getType());
         model.setAssertType(methodDeclaration.getReturnType());
-        model.setTypeArguments(model.getTypeArguments());
+        model.setTypeArguments(methodDeclaration.getTypeArguments());
         return model;
     }
 }
