@@ -6,7 +6,7 @@
 
     <groupId>de.devx.project</groupId>
     <artifactId>devx-project</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.5</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -30,7 +30,7 @@
 
         <lombok.version>1.18.34</lombok.version>
 
-        <mapstruct.version>1.5.2.Final</mapstruct.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
 
         <freemarker.version>2.3.31</freemarker.version>
 
@@ -89,6 +89,7 @@
         <module>spring-webmvc-test/spring-webmvc-test-generator</module>
         <module>spring-webmvc-test/spring-webmvc-test-annotation-processor</module>
         <module>commons/spring-web-processor-commons</module>
+        <module>spring-webmvc-test/spring-webmvc-test-maven-plugin</module>
     </modules>
 
     <build>

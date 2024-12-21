@@ -6,7 +6,8 @@
     <parent>
         <groupId>de.devx.project</groupId>
         <artifactId>devx-project</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.5</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>assertj-assertion-maven-plugin</artifactId>

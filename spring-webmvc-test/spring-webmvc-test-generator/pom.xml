@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.devx.project</groupId>
         <artifactId>devx-project</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.5</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -67,6 +67,10 @@
             <groupId>de.devx.project</groupId>
             <artifactId>test-commons</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
         </dependency>
     </dependencies>
 </project>
