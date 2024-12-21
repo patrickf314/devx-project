@@ -4,9 +4,7 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,7 +20,6 @@ public class JavaTypeModel {
 
     private static final String JAVA_LANG_PACKAGE = "java.lang";
     public static final JavaTypeModel VOID = primitiveType("void", "Void");
-    public static final JavaTypeModel WILDCARD = new JavaTypeModel(null, "?", null, emptyList(), false);
     public static final JavaTypeModel BOOLEAN = primitiveType("boolean", "Boolean");
 
     /**
@@ -43,20 +40,28 @@ public class JavaTypeModel {
      */
     private final String className;
     /**
-     * A list of generics
-     */
-    private final List<JavaTypeModel> typeArguments;
-    /**
      * A flag indicating if this type is an array
      */
     private final boolean array;
 
+    /**
+     * A list of generics
+     */
+    private List<JavaTypeModel> typeArguments = Collections.emptyList();
+
+    /**
+     * Constraint of the type, only allowed for generics and wildcards.
+     */
+    private JavaTypeModel typeConstraint;
+
     public static JavaTypeModel primitiveType(String name, String className) {
-        return new JavaTypeModel(JAVA_LANG_PACKAGE, name, className, emptyList(), false);
+        return new JavaTypeModel(JAVA_LANG_PACKAGE, name, className, false);
     }
 
     public static JavaTypeModel arrayType(JavaTypeModel componentType) {
-        return new JavaTypeModel(componentType.packageName, componentType.name, componentType.className, componentType.typeArguments, true);
+        var type = new JavaTypeModel(componentType.packageName, componentType.name, componentType.className, true);
+        type.setTypeArguments(componentType.typeArguments);
+        return type;
     }
 
     public static JavaTypeModel objectType(String packageName, String className) {
@@ -64,11 +69,17 @@ public class JavaTypeModel {
     }
 
     public static JavaTypeModel objectType(String packageName, String className, List<JavaTypeModel> typeArguments) {
-        return new JavaTypeModel(packageName, className, className, typeArguments, false);
+        var type = new JavaTypeModel(packageName, className, className, false);
+        type.setTypeArguments(typeArguments);
+        return type;
     }
 
     public static JavaTypeModel genericTemplateType(String name) {
-        return new JavaTypeModel(null, name, null, emptyList(), false);
+        return new JavaTypeModel(null, name, null, false);
+    }
+
+    public static JavaTypeModel wildcardType() {
+        return new JavaTypeModel(null, "?", null, false);
     }
 
     public Optional<String> getPackageName() {
@@ -121,14 +132,26 @@ public class JavaTypeModel {
     }
 
     public Stream<String> streamImports(String currentPackageName) {
-        if (packageName == null) {
+        return streamImports(currentPackageName, new HashSet<>());
+    }
+
+    private Stream<String> streamImports(String currentPackageName, Set<JavaTypeModel> containedTypes) {
+        if (packageName == null || containedTypes.contains(this)) {
             return Stream.empty();
         }
 
+        containedTypes.add(this);
         return Stream.concat(
                 asJavaImport(currentPackageName, packageName, name).stream(),
-                typeArguments.stream().flatMap(type -> type.streamImports(currentPackageName))
+                Stream.concat(
+                        typeArguments.stream().flatMap(type -> type.streamImports(currentPackageName, containedTypes)),
+                        getTypeConstraint().stream().flatMap(type -> type.streamImports(currentPackageName, containedTypes))
+                )
         );
+    }
+
+    public Optional<JavaTypeModel> getTypeConstraint() {
+        return Optional.ofNullable(typeConstraint);
     }
 
     public boolean isObjectType(String packageName, String className) {

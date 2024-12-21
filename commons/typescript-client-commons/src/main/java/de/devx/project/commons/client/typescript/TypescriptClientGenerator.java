@@ -135,7 +135,6 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
 
         var importPath = fileGenerator.importPath(currentPackage, targetPackage);
         var fileName = fileGenerator.fileName(name);
-        fileName = fileName.substring(0, fileName.lastIndexOf('.'));
         return new TypeScriptImportModel(importPath + "/" + fileName, Set.of(name));
     }
 

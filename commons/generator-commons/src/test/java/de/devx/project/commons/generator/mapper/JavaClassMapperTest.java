@@ -29,8 +29,8 @@ class JavaClassMapperTest {
         var model = JavaClassMapper.mapToClassModel(SimpleTestDTO.class);
 
         assertThat(model.getPackageName()).isEqualTo("de.devx.project.commons.generator.mapper");
-        assertThat(model.getName()).isEqualTo("JavaClassMapperTest$SimpleTestDTO");
-        assertThat(model.getDeclaration()).isEqualTo("JavaClassMapperTest$SimpleTestDTO");
+        assertThat(model.getName()).isEqualTo("JavaClassMapperTest.SimpleTestDTO");
+        assertThat(model.getDeclaration()).isEqualTo("JavaClassMapperTest.SimpleTestDTO");
         assertThat(model.getFields())
                 .hasSize(1)
                 .first()
@@ -48,7 +48,7 @@ class JavaClassMapperTest {
                 })
                 .satisfiesOnlyOnce(method -> {
                     assertThat(method.getName()).isEqualTo("create");
-                    assertThat(method.getReturnType().getQualifiedTypeName()).isEqualTo("JavaClassMapperTest$SimpleTestDTO");
+                    assertThat(method.getReturnType().getQualifiedTypeName()).isEqualTo("JavaClassMapperTest.SimpleTestDTO");
                     assertThat(method.getAccessModifiers()).containsOnly(JavaAccessModifierType.PUBLIC, JavaAccessModifierType.STATIC);
                     assertThat(method.getParameters())
                             .hasSize(1)

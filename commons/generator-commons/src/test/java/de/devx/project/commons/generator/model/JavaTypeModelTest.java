@@ -76,12 +76,12 @@ class JavaTypeModelTest {
 
     @Test
     void testNestedType() {
-        var type = objectType("some.test.package", "Entity$NestedEntity");
+        var type = objectType("some.test.package", "Entity.NestedEntity");
 
         assertThat(type.getQualifiedTypeName()).isEqualTo("Entity.NestedEntity");
         assertThat(type.streamImports("some.other.package"))
                 .hasSize(1)
                 .first()
-                .isEqualTo("some.test.package.Entity");
+                .isEqualTo("some.test.package.Entity.NestedEntity");
     }
 }

@@ -3,6 +3,7 @@ package de.devx.project.assertj.assertion.gennerator;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertFieldModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertionModel;
+import de.devx.project.assertj.assertion.gennerator.mapper.AssertJAssertMapper;
 import de.devx.project.commons.generator.model.JavaTypeArgumentModel;
 import de.devx.project.commons.generator.model.JavaTypeModel;
 import de.devx.project.commons.test.io.TestSourceFileGenerator;
@@ -612,6 +613,7 @@ class AssertJAssertionGeneratorTest {
         model.setName(TestEntity);
         model.setFields(fields);
         model.setTypeArguments(typeParameters);
+        model.setExtendedAbstractAssertModel(AssertJAssertMapper.ABSTRACT_ASSERT);
         return model;
     }
 

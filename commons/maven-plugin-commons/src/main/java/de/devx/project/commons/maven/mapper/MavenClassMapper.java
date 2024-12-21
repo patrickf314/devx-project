@@ -144,7 +144,7 @@ public final class MavenClassMapper {
         }
 
         if (type.isWildcard()) {
-            return JavaTypeModel.WILDCARD;
+            return JavaTypeModel.wildcardType();
         }
 
         throw new IllegalArgumentException("Unsupported type: " + type.getClass().getSimpleName());

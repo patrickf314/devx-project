@@ -6,7 +6,6 @@ import de.devx.project.commons.generator.utils.ImportUtils;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 @Data
@@ -47,10 +46,7 @@ public class AssertJAssertModel {
         var rootName = i == -1 ? name : name.substring(0, i);
         return Stream.concat(
                 ImportUtils.asJavaImport(currentPackage, packageName, rootName).stream(),
-                Stream.concat(
-                        typeArguments.stream().flatMap(t -> t.streamImports(currentPackage)),
-                        extendedAbstractAssertModel.streamImports(currentPackage)
-                )
+                typeArguments.stream().flatMap(t -> t.streamImports(currentPackage))
         );
     }
 }

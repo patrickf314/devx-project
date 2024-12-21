@@ -5,6 +5,7 @@ import java.util.Map;
 public final class ClassUtils {
 
     private static final Map<String, Class<?>> BOXED_TYPES = Map.of(
+            "void", Void.class,
             "byte", Byte.class,
             "short", Short.class,
             "char", Character.class,

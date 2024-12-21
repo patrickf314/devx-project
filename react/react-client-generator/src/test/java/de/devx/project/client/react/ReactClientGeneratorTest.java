@@ -46,18 +46,20 @@ class ReactClientGeneratorTest {
         var generatedService = fileGenerator.getFileContent("de.test.typescript.client.type", "TestServiceAPI");
         assertThat(generatedService.isPresent(), is(true));
         assertThat(generatedService.get(), is("""
-                import { createAsyncThunk } from '@reduxjs/toolkit';
+                import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
                 import { useDispatch } from 'react-redux';
                 import { useMemo } from 'react';
                 import { State, ThunkOptions, Dispatch } from 'commons/thunk-options';
                 import { mapJsonResponse, mapVoidResponse, mapStreamingResponse, url, mapStringResponse } from 'commons/react-service-commons';
+                import { DownloadStreamDTO } from 'commons/download-stream.dto';
+                import { testThunkConfig } from 'commons/service-commons';
                 import { testPrepareHeaders } from 'auth/user-authenticator';
 
                 function baseUrl(state: State): string {
                     return `http://localhost:8080/api/test`;
                 }
 
-                export const testThunk = createAsyncThunk('TestServiceAPI/test', async function(arg: undefined, thunkAPI): Promise<string> {
+                export const testThunk: AsyncThunk<string, undefined, ThunkConfig> = createAsyncThunk('TestServiceAPI/test', async function(arg: undefined, thunkAPI): Promise<string> {
 
                     const headers = new Headers();
                     testPrepareHeaders(headers, thunkAPI.getState());
@@ -132,8 +134,7 @@ class ReactClientGeneratorTest {
         assertThat(generatedServiceCommons.isPresent(), is(true));
         assertThat(generatedServiceCommons.get(), is("""
                 import { type DownloadStreamDTO } from './download-stream.dto';
-                import { type State } from './thunk-options';
-                import { testErrorSerializer } from 'commons/service-commons';
+                import { testErrorMapper } from 'commons/service-commons';
 
                 export function url(pathname: string, searchParams: Record<string, string | number | boolean | undefined | null | {
                     toString: () => string

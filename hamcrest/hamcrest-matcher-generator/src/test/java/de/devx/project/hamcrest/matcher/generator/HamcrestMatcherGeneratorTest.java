@@ -164,7 +164,7 @@ class HamcrestMatcherGeneratorTest {
                     }
                              
                     public TestClassMatcher<T> withTestField(Matcher<T> testField) {
-                        return new TestClassMatcherTestClass(testField);
+                        return new TestClassMatcher<T>(testField);
                     }
                 }"""));
     }

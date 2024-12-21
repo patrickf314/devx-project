@@ -6,9 +6,7 @@ import de.devx.project.commons.generator.utils.ClassUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.*;
 
 public final class JavaClassMapper {
 
@@ -61,7 +59,7 @@ public final class JavaClassMapper {
 
     private static JavaAnnotationModel mapToAnnotationModel(Annotation annotation) {
         return new JavaAnnotationModel(
-            mapToTypeModel(annotation.annotationType())
+                mapToTypeModel(annotation.annotationType())
         );
     }
 
@@ -87,26 +85,48 @@ public final class JavaClassMapper {
     }
 
     private static JavaTypeModel mapToTypeModel(Type type) {
+        return mapToTypeModel(type, new HashMap<>());
+    }
+
+    private static JavaTypeModel mapToTypeModel(Type type, Map<Type, JavaTypeModel> typeContext) {
+        if (type == null) {
+            return null;
+        }
+
+        var modelFromContext = typeContext.get(type);
+        if (modelFromContext != null) {
+            return modelFromContext;
+        }
+
         if (type instanceof TypeVariable<?> typeVariable) {
-            return JavaTypeModel.genericTemplateType(typeVariable.getTypeName());
+            var model = JavaTypeModel.genericTemplateType(typeVariable.getTypeName());
+            typeContext.put(type, model);
+
+            var bounds = typeVariable.getBounds();
+            if (bounds.length > 1) {
+                model.setTypeConstraint(mapToTypeModel(bounds[0], typeContext));
+            }
+
+            return model;
         }
 
         if (type instanceof ParameterizedType parameterizedType) {
-            var typeArguments = Arrays.stream(parameterizedType.getActualTypeArguments())
-                    .map(JavaClassMapper::mapToTypeModel)
-                    .toList();
-
-            var rawType = mapToTypeModel(parameterizedType.getRawType());
-            return JavaTypeModel.objectType(
+            var rawType = mapToTypeModel(parameterizedType.getRawType(), typeContext);
+            var model = JavaTypeModel.objectType(
                     rawType.getPackageName().orElseThrow(),
-                    rawType.getName(),
-                    typeArguments
-            );
+                    rawType.getName());
+            typeContext.put(type, model);
+
+            model.setTypeArguments(Arrays.stream(parameterizedType.getActualTypeArguments())
+                    .map(typeArgument -> JavaClassMapper.mapToTypeModel(typeArgument, typeContext))
+                    .toList());
+
+            return model;
         }
 
         if (type instanceof Class<?> classType) {
             if (classType.isArray()) {
-                return JavaTypeModel.arrayType(mapToTypeModel(classType.getComponentType()));
+                return JavaTypeModel.arrayType(mapToTypeModel(classType.getComponentType(), typeContext));
             }
 
             if (classType.isPrimitive()) {
@@ -119,6 +139,21 @@ public final class JavaClassMapper {
             var className = extractSimpleClassName(classType);
 
             return JavaTypeModel.objectType(packageName, className);
+        }
+
+        if (type instanceof WildcardType wildcardType) {
+            var model = JavaTypeModel.wildcardType();
+
+            var bounds = wildcardType.getUpperBounds();
+            if (bounds.length > 1) {
+                model.setTypeConstraint(mapToTypeModel(bounds[0], typeContext));
+            }
+
+            return model;
+        }
+
+        if (type instanceof GenericArrayType genericArrayType) {
+            return JavaTypeModel.arrayType(mapToTypeModel(genericArrayType.getGenericComponentType(), typeContext));
         }
 
         throw new IllegalArgumentException("Mapping of type " + type + " is not supported");
@@ -146,7 +181,7 @@ public final class JavaClassMapper {
 
     private static String extractSimpleClassName(Class<?> c) {
         var simpleName = c.getSimpleName();
-        if(c.getEnclosingClass() != null) {
+        if (c.getEnclosingClass() != null) {
             return extractSimpleClassName(c.getEnclosingClass()) + "." + simpleName;
         }
         return simpleName;
