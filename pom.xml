@@ -6,7 +6,7 @@
 
     <groupId>de.devx.project</groupId>
     <artifactId>devx-project</artifactId>
-    <version>1.6-SNAPSHOT</version>
+    <version>1.6</version>
     <packaging>pom</packaging>
 
     <properties>
