@@ -40,7 +40,6 @@ public abstract class AbstractAssertJAssertionsMojo extends AbstractMojo {
             generateAssertions(model);
             getLog().info("Generation of assertJ assertions completed.");
         }catch (RuntimeException e) {
-            e.printStackTrace();
             throw new MojoExecutionException("Failed to execute AssertJ mojo.", e);
         }
     }

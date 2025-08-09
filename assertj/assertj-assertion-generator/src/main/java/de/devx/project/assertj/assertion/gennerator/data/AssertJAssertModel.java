@@ -6,6 +6,7 @@ import de.devx.project.commons.generator.utils.ImportUtils;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 @Data
@@ -48,5 +49,11 @@ public class AssertJAssertModel {
                 ImportUtils.asJavaImport(currentPackage, packageName, rootName).stream(),
                 typeArguments.stream().flatMap(t -> t.streamImports(currentPackage))
         );
+    }
+
+    public String getFactoryName() {
+        return name.replace('.', '$')
+                .replaceAll("([a-z])([A-Z])", "$1_$2")
+                .toUpperCase(Locale.ROOT);
     }
 }

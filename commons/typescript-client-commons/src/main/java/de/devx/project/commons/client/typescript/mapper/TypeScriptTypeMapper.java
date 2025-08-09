@@ -70,18 +70,18 @@ public interface TypeScriptTypeMapper {
     }
 
     default TypeScriptTypeModel mapMapType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
-        var keyType = mapType(model.getTypeArguments().get(0), typeAliases).getName();
+        var keyType = mapType(model.getTypeArguments().get(0), typeAliases);
         var valueType = mapType(model.getTypeArguments().get(1), typeAliases);
+        var isEnum = model.getTypeArguments().get(0).getType() == ApiTypeType.ENUM;
 
-        if (model.getTypeArguments().get(0).getType() == ApiTypeType.ENUM) {
-            keyType = "string";
+        if (!keyType.getName().equals("number") && !keyType.getName().equals("string") && !isEnum) {
+            throw new IllegalArgumentException("Invalid map type: key type must be string, number or an enum, but was " + keyType);
         }
 
-        if (!keyType.equals("number") && !keyType.equals("string")) {
-            throw new IllegalArgumentException("Invalid map type: key type must be string or number, but was " + keyType);
-        }
-
-        return createTypeScriptType("Record<" + keyType + ", " + valueType.getName() + " | undefined>", false, valueType.getDependentClassNames());
+        return createTypeScriptType("Record<" + keyType.getName() + ", " + valueType.getName() + " | undefined>", false, Stream.concat(
+                keyType.getDependentClassNames().stream(),
+                valueType.getDependentClassNames().stream()
+        ).collect(Collectors.toSet()));
     }
 
     default TypeScriptTypeModel mapUnknownType() {

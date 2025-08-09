@@ -11,6 +11,13 @@ import ${import};
  * allowing for typed asserts of objects
  */
 public class ${model.name} extends Assertions {
+<#list model.asserts?filter(assert -> !assert.typeArguments?has_content) as assert>
+
+    /**
+     *
+     */
+    public static final InstanceOfAssertFactory<${assert.name}, ${assert.assertName}> ${assert.factoryName} = new InstanceOfAssertFactory<>(${assert.name}.class, ${model.name}::assertThat);
+</#list>
 <#list model.asserts as assert>
 
     /**
@@ -26,7 +33,7 @@ public class ${model.name} extends Assertions {
 <#list model.assertThatMethods as assertThatMethod>
 
     /**
-    * Transitive method for {@link ${assertThatMethod.assertionClass.name}#assertThat(${assertThatMethod.type.qualifiedTypeName})}.
+    * Transitive method for {@link ${assertThatMethod.assertionClass.name}#${assertThatMethod.name}(${assertThatMethod.type.qualifiedTypeName})}.
     *
     * @param actual the actual object
     * @return the typed assert

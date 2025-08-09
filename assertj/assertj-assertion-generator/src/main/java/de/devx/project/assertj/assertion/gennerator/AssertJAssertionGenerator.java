@@ -48,7 +48,8 @@ public class AssertJAssertionGenerator {
 
         try (var writer = fileGenerator.createSourceFile(model.getPackageName(), model.getName())) {
             var imports = getImports(model, Stream.of(
-                    "org.assertj.core.api.Assertions"
+                    "org.assertj.core.api.Assertions",
+                    "org.assertj.core.api.InstanceOfAssertFactory"
             ));
             configuration.getTemplate("AssertjAssertions.ftl").process(Map.of(
                     "model", model,
@@ -86,12 +87,12 @@ public class AssertJAssertionGenerator {
                             .filter(field -> {
                                 var extended = model.getExtendedAbstractAssertModel();
                                 var packageName = extended.getPackageName();
-                                if(packageName.isEmpty()) {
+                                if (packageName.isEmpty()) {
                                     return true;
                                 }
 
                                 var extendedModel = models.get(packageName.get() + "." + extended.getName());
-                                if(extendedModel == null) {
+                                if (extendedModel == null) {
                                     return true;
                                 }
 
