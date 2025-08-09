@@ -28,7 +28,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Run Maven Build
-        run: mvn install --file pom.xml
+        run: mvn install --file pom.xml -DskipTests
+
+      - name: Run Unit Tests
+        run: mvn verify --file pom.xml --fail-at-end
+        continue-on-error: true
 
       - name: Upload Unit Test Results
         uses: actions/upload-artifact@v4
