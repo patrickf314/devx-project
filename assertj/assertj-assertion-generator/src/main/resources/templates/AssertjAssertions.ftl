@@ -14,7 +14,7 @@ public class ${model.name} extends Assertions {
 <#list model.asserts?filter(assert -> !assert.typeArguments?has_content) as assert>
 
     /**
-     *
+     * {@link InstanceOfAssertFactory} for a {@link ${assert.name}}.
      */
     public static final InstanceOfAssertFactory<${assert.name}, ${assert.assertName}> ${assert.factoryName} = new InstanceOfAssertFactory<>(${assert.name}.class, ${model.name}::assertThat);
 </#list>

@@ -47,10 +47,13 @@ public class AssertJAssertionGenerator {
         }
 
         try (var writer = fileGenerator.createSourceFile(model.getPackageName(), model.getName())) {
-            var imports = getImports(model, Stream.of(
-                    "org.assertj.core.api.Assertions",
-                    "org.assertj.core.api.InstanceOfAssertFactory"
-            ));
+            var additionalImports = Stream.of("org.assertj.core.api.Assertions");
+
+            if(model.getAsserts().stream().anyMatch(a -> a.getTypeArguments().isEmpty())) {
+                additionalImports = Stream.concat(additionalImports, Stream.of("org.assertj.core.api.InstanceOfAssertFactory"));
+            }
+
+            var imports = getImports(model, additionalImports);
             configuration.getTemplate("AssertjAssertions.ftl").process(Map.of(
                     "model", model,
                     "imports", imports
