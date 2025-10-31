@@ -10,15 +10,17 @@
     <packaging>pom</packaging>
 
     <properties>
-        <maven.compiler.source>20</maven.compiler.source>
-        <maven.compiler.target>20</maven.compiler.target>
+        <java.version>25</java.version>
+
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <maven-plugin.version>3.11.0</maven-plugin.version>
-        <maven-compiler.version>3.10.1</maven-compiler.version>
-        <maven-api.version>3.9.6</maven-api.version>
-        <maven-annotations.version>3.11.0</maven-annotations.version>
-        <maven-core.version>3.9.6</maven-core.version>
+        <maven-plugin.version>3.15.2</maven-plugin.version>
+        <maven-compiler.version>3.14.1</maven-compiler.version>
+        <maven-api.version>3.9.11</maven-api.version>
+        <maven-annotations.version>3.15.2</maven-annotations.version>
+        <maven-core.version>3.9.11</maven-core.version>
 
         <spring.version>5.3.22</spring.version>
 
@@ -28,13 +30,13 @@
 
         <jackson.version>2.13.3</jackson.version>
 
-        <lombok.version>1.18.34</lombok.version>
+        <lombok.version>1.18.42</lombok.version>
 
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <freemarker.version>2.3.31</freemarker.version>
 
-        <javaparser.version>3.26.2</javaparser.version>
+        <javaparser.version>3.27.1</javaparser.version>
 
         <junit.version>5.10.1</junit.version>
         <hamcrest.version>2.2</hamcrest.version>
