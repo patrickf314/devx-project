@@ -3,6 +3,7 @@ package de.devx.project.commons.maven.parser;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
@@ -10,8 +11,10 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import de.devx.project.commons.generator.model.JavaClassModel;
 import de.devx.project.commons.maven.mapper.MavenClassMapper;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.project.MavenProject;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,11 +28,13 @@ public class MavenSourceFileParser {
     private final MavenProject project;
     private final JavaParser parser;
 
-    public MavenSourceFileParser(MavenProject project) throws IOException {
+    private final JavaSymbolSolver symbolSolver;
+
+    public MavenSourceFileParser(MavenProject project) throws IOException, DependencyResolutionRequiredException {
         this.project = project;
 
         var typeSolver = new CombinedTypeSolver();
-        typeSolver.add(new ReflectionTypeSolver());
+        typeSolver.add(new ReflectionTypeSolver(false));
 
         for (var srcDir : project.getCompileSourceRoots()) {
             typeSolver.add(new JavaParserTypeSolver(srcDir));
@@ -39,17 +44,21 @@ public class MavenSourceFileParser {
             typeSolver.add(new JavaParserTypeSolver(srcDir));
         }
 
-        for (var artifact : project.getArtifacts()) {
-            var file = artifact.getFile();
-            if (file != null && file.exists()) {
-                typeSolver.add(new JarTypeSolver(file));
+        for (var path : project.getCompileClasspathElements()) {
+            var file = new File(path);
+            if (file.isDirectory()) {
+                // Add compiled classes directory
+                typeSolver.add(new JavaParserTypeSolver(file.toPath()));
+            } else if (path.endsWith(".jar")) {
+                // Add dependency JARs
+                typeSolver.add(new JarTypeSolver(path));
             }
         }
 
-        var symbolSolver = new JavaSymbolSolver(typeSolver);
+        symbolSolver = new JavaSymbolSolver(typeSolver);
 
         var configuration = new ParserConfiguration();
-        configuration.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_17);
+        configuration.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
         configuration.setSymbolResolver(symbolSolver);
 
         parser = new JavaParser(configuration);
@@ -65,6 +74,8 @@ public class MavenSourceFileParser {
         return streamAllClasses()
                 .filter(model -> model.getFullyQualifiedName().equals(className))
                 .findAny();
+
+
     }
 
     private Stream<JavaClassModel> streamAllClasses() {
@@ -73,7 +84,13 @@ public class MavenSourceFileParser {
                         project.getTestCompileSourceRoots().stream()
                 )
                 .flatMap(this::streamClassDeclarations)
-                .map(ClassOrInterfaceDeclaration::resolve)
+                .map(declaration -> {
+                    try {
+                        return symbolSolver.resolveDeclaration(declaration, ResolvedReferenceTypeDeclaration.class);
+                    }catch (IllegalStateException e){
+                        throw new IllegalStateException("Failed to resolve class declaration: " + declaration.getNameAsString(), e);
+                    }
+                })
                 .map(MavenClassMapper::mapToClassModel)
                 .filter(Objects::nonNull);
     }

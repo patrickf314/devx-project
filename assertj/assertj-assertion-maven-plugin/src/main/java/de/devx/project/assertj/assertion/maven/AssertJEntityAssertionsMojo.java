@@ -4,6 +4,7 @@ import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
 import de.devx.project.assertj.assertion.gennerator.mapper.AssertJAssertMapper;
 import de.devx.project.commons.maven.parser.MavenSourceFileParser;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -36,7 +37,7 @@ public class AssertJEntityAssertionsMojo extends AbstractAssertJAssertionsMojo {
                     )
                     .map(MAPPER::mapToAssert)
                     .toList();
-        } catch (IOException ex) {
+        } catch (IOException | DependencyResolutionRequiredException ex) {
             throw new MojoExecutionException("Failed to create assert models.", ex);
         }
     }

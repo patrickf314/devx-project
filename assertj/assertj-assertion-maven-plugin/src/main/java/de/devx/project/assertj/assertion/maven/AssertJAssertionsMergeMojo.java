@@ -6,6 +6,7 @@ import de.devx.project.commons.generator.model.JavaClassMethodModel;
 import de.devx.project.commons.generator.model.JavaClassModel;
 import de.devx.project.commons.maven.parser.MavenProjectClassLoader;
 import de.devx.project.commons.maven.parser.MavenSourceFileParser;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -43,7 +44,7 @@ public class AssertJAssertionsMergeMojo extends AbstractAssertJAssertionsMojo {
                 models.addAll(createAssertThatMethodModels(assertion, parser, classLoader));
             }
             return models;
-        } catch (IOException e) {
+        } catch (IOException | DependencyResolutionRequiredException e) {
             throw new MojoExecutionException("Failed to initialize java parser", e);
         }
     }
