@@ -9,6 +9,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import de.devx.project.commons.generator.logging.Logger;
 import de.devx.project.commons.generator.model.JavaClassModel;
 import de.devx.project.commons.maven.mapper.MavenClassMapper;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
@@ -28,10 +29,12 @@ public class MavenSourceFileParser {
     private final MavenProject project;
     private final JavaParser parser;
 
+    private final MavenClassMapper classMapper;
     private final JavaSymbolSolver symbolSolver;
 
-    public MavenSourceFileParser(MavenProject project) throws IOException, DependencyResolutionRequiredException {
+    public MavenSourceFileParser(MavenProject project, Logger log) throws IOException, DependencyResolutionRequiredException {
         this.project = project;
+        this.classMapper = new MavenClassMapper(log);
 
         var typeSolver = new CombinedTypeSolver();
         typeSolver.add(new ReflectionTypeSolver(false));
@@ -91,7 +94,7 @@ public class MavenSourceFileParser {
                         throw new IllegalStateException("Failed to resolve class declaration: " + declaration.getNameAsString(), e);
                     }
                 })
-                .map(MavenClassMapper::mapToClassModel)
+                .map(classMapper::mapToClassModel)
                 .filter(Objects::nonNull);
     }
 

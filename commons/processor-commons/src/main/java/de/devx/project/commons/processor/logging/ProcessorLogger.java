@@ -22,4 +22,9 @@ public class ProcessorLogger implements Logger {
     public void warn(String message, Element element) {
         messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING, message, element);
     }
+
+    @Override
+    public void info(String message, Element element) {
+        messager.printMessage(Diagnostic.Kind.NOTE, message, element);
+    }
 }

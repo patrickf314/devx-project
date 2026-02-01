@@ -2,6 +2,7 @@ package de.devx.project.spring.webmvc.test.maven;
 
 import de.devx.project.commons.generator.model.JavaClassModel;
 import de.devx.project.commons.maven.io.MavenJavaFileGenerator;
+import de.devx.project.commons.maven.logging.MavenLogger;
 import de.devx.project.commons.maven.parser.MavenSourceFileParser;
 import de.devx.project.spring.webmvc.test.generator.SpringWebMvcTestGenerator;
 import de.devx.project.spring.webmvc.test.generator.data.SpringWebMvcTestModel;
@@ -48,7 +49,7 @@ public class SpringWebMvcTestMojo extends AbstractMojo {
 
     private List<SpringWebMvcTestModel> createModels() throws MojoExecutionException {
         try {
-            var parser = new MavenSourceFileParser(project);
+            var parser = new MavenSourceFileParser(project, new MavenLogger(getLog()));
             return parser.getClassesAnnotatedWith("SpringWebMvcTest")
                     .stream()
                     .map(this::mapToModel)

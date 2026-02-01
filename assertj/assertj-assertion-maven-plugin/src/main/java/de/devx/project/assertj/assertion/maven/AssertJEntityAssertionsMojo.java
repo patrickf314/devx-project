@@ -3,6 +3,7 @@ package de.devx.project.assertj.assertion.maven;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
 import de.devx.project.assertj.assertion.gennerator.mapper.AssertJAssertMapper;
+import de.devx.project.commons.maven.logging.MavenLogger;
 import de.devx.project.commons.maven.parser.MavenSourceFileParser;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -30,7 +31,7 @@ public class AssertJEntityAssertionsMojo extends AbstractAssertJAssertionsMojo {
         getLog().debug("Creating assert models...");
 
         try {
-            var parser = new MavenSourceFileParser(project);
+            var parser = new MavenSourceFileParser(project, new MavenLogger(getLog()));
             return Stream.concat(
                             parser.getClassesAnnotatedWith("MappedSuperclass").stream(),
                             parser.getClassesAnnotatedWith("Entity").stream()

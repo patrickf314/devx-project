@@ -4,6 +4,7 @@ import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
 import de.devx.project.commons.generator.model.JavaClassMethodModel;
 import de.devx.project.commons.generator.model.JavaClassModel;
+import de.devx.project.commons.maven.logging.MavenLogger;
 import de.devx.project.commons.maven.parser.MavenProjectClassLoader;
 import de.devx.project.commons.maven.parser.MavenSourceFileParser;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
@@ -38,7 +39,7 @@ public class AssertJAssertionsMergeMojo extends AbstractAssertJAssertionsMojo {
     protected List<AssertJAssertThatMethodModel> createAssertThatMethodModels() throws MojoExecutionException {
         try {
             var models = new ArrayList<AssertJAssertThatMethodModel>();
-            var parser = new MavenSourceFileParser(project);
+            var parser = new MavenSourceFileParser(project, new MavenLogger(getLog()));
             var classLoader = new MavenProjectClassLoader(project);
             for (var assertion : assertions) {
                 models.addAll(createAssertThatMethodModels(assertion, parser, classLoader));

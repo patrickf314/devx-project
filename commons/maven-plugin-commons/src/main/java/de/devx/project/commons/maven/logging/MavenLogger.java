@@ -21,6 +21,11 @@ public class MavenLogger implements Logger {
         log.warn(elementPrefix(element) + message);
     }
 
+    @Override
+    public void info(String message, Element element) {
+        log.info(elementPrefix(element) + message);
+    }
+
     private String elementPrefix(Element element) {
         if (element == null) {
             return "";

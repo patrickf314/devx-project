@@ -15,4 +15,10 @@ public interface Logger {
     }
 
     void warn(String message, Element element);
+
+    default void info(String message) {
+        info(message, null);
+    }
+
+    void info(String message, Element element);
 }

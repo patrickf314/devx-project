@@ -55,35 +55,43 @@ public class SpringApiModelGenerator {
     }
 
     private void processClass(TypeElement annotation, TypeElement element) {
-        var className = element.getQualifiedName().toString();
-        var endpointModel = requireEndpointModel(className, element.getSimpleName().toString());
+        try {
+            var className = element.getQualifiedName().toString();
+            var endpointModel = requireEndpointModel(className, element.getSimpleName().toString());
 
-        var annotationMirror = findAnnotationMirror(element, annotation).orElseThrow(IllegalArgumentException::new);
-        var requestMapping = mapAnnotationMirrorToRequestMapping(annotationMirror);
+            var annotationMirror = findAnnotationMirror(element, annotation).orElseThrow(IllegalArgumentException::new);
+            var requestMapping = mapAnnotationMirrorToRequestMapping(annotationMirror);
 
-        endpointModel.getBasePaths().addAll(requestMapping.getPaths());
+            endpointModel.getBasePaths().addAll(requestMapping.getPaths());
+        }catch (IllegalArgumentException e) {
+            logger.error("Failed to process class " + element.getSimpleName() + ": " + e.getMessage(), element);
+        }
     }
 
     private void processMethod(TypeElement annotation, ExecutableElement element) {
-        var annotationMirror = findAnnotationMirror(element, annotation).orElseThrow(IllegalArgumentException::new);
-        var requestMapping = mapAnnotationMirrorToRequestMapping(annotationMirror);
-        if (!(element.getEnclosingElement() instanceof TypeElement enclosingElement)) {
-            logger.error("Unexpected enclosing element for " + element.getSimpleName(), element);
-            return;
+        try {
+            var annotationMirror = findAnnotationMirror(element, annotation).orElseThrow(IllegalArgumentException::new);
+            var requestMapping = mapAnnotationMirrorToRequestMapping(annotationMirror);
+            if (!(element.getEnclosingElement() instanceof TypeElement enclosingElement)) {
+                logger.error("Unexpected enclosing element for " + element.getSimpleName(), element);
+                return;
+            }
+
+            var className = enclosingElement.getQualifiedName().toString();
+            var endpointModel = requireEndpointModel(className, enclosingElement.getSimpleName().toString());
+            var methodName = element.getSimpleName().toString();
+            var methodModel = new ApiMethodModel(methodName);
+
+            setReturnType(methodModel, element, element.getReturnType(), element.getAnnotationMirrors());
+
+            methodModel.setParameters(mapMethodParameters(element.getParameters()));
+            methodModel.getHttpMethods().addAll(requestMapping.getRequestMethods());
+            methodModel.getPaths().addAll(requestMapping.getPaths());
+
+            endpointModel.addMethod(methodModel);
+        }catch (IllegalArgumentException e) {
+            logger.error("Failed to process method " + element.getSimpleName() + ": " + e.getMessage(), element);
         }
-
-        var className = enclosingElement.getQualifiedName().toString();
-        var endpointModel = requireEndpointModel(className, enclosingElement.getSimpleName().toString());
-        var methodName = element.getSimpleName().toString();
-        var methodModel = new ApiMethodModel(methodName);
-
-        setReturnType(methodModel, element, element.getReturnType(), element.getAnnotationMirrors());
-
-        methodModel.setParameters(mapMethodParameters(element.getParameters()));
-        methodModel.getHttpMethods().addAll(requestMapping.getRequestMethods());
-        methodModel.getPaths().addAll(requestMapping.getPaths());
-
-        endpointModel.addMethod(methodModel);
     }
 
     private void setReturnType(ApiMethodModel model, Element methodElement, TypeMirror typeMirror, List<? extends AnnotationMirror> annotations) {

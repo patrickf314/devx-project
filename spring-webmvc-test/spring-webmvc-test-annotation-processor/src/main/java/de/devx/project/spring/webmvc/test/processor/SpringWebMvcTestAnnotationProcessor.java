@@ -29,7 +29,7 @@ import static de.devx.project.commons.processor.utils.ExecutableElementUtils.con
 @SupportedAnnotationTypes(value = {
         "de.devx.project.annotations.SpringWebMvcTest"
 })
-@SupportedSourceVersion(SourceVersion.RELEASE_20)
+@SupportedSourceVersion(SourceVersion.RELEASE_23)
 public class SpringWebMvcTestAnnotationProcessor extends AbstractProcessor {
 
     private Logger logger;
