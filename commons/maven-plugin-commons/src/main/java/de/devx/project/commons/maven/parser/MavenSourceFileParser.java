@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,7 +49,9 @@ public class MavenSourceFileParser {
             typeSolver.add(new JavaParserTypeSolver(srcDir));
         }
 
-        for (var path : project.getCompileClasspathElements()) {
+        var dependencies = new HashSet<>(project.getRuntimeClasspathElements());
+        dependencies.addAll(project.getTestClasspathElements());
+        for (var path : dependencies) {
             var file = new File(path);
             if (file.isDirectory()) {
                 // Add compiled classes directory
