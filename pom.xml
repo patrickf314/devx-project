@@ -22,7 +22,7 @@
         <maven-annotations.version>3.15.2</maven-annotations.version>
         <maven-core.version>3.9.11</maven-core.version>
 
-        <spring.version>5.3.22</spring.version>
+        <spring.version>7.0.3</spring.version>
 
         <jakarta.version>2.0.2</jakarta.version>
         <jakarta-persistence.version>3.1.0</jakarta-persistence.version>
