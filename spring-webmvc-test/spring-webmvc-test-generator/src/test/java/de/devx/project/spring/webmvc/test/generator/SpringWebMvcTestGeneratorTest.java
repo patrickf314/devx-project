@@ -44,11 +44,11 @@ class SpringWebMvcTestGeneratorTest {
         assertThat(generatedTestBase.get(), is("""
                 package de.test.spring.webmvc;
                 
-                import com.fasterxml.jackson.databind.ObjectMapper;
+                import tools.jackson.databind.json.JsonMapper;
                 import org.junit.jupiter.api.BeforeEach;
                 import org.jeasy.random.EasyRandom;
                 import org.springframework.beans.factory.annotation.Autowired;
-                import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+                import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
                 import org.springframework.test.context.bean.override.mockito.MockitoBean;
                 import org.springframework.http.HttpMethod;
                 import org.springframework.test.context.ActiveProfiles;
@@ -77,7 +77,7 @@ class SpringWebMvcTestGeneratorTest {
                     protected final EasyRandom random;
                 
                     @Autowired
-                    protected ObjectMapper objectMapper;
+                    protected JsonMapper objectMapper;
                 
                     @Autowired
                     protected WebApplicationContext webApplicationContext;
