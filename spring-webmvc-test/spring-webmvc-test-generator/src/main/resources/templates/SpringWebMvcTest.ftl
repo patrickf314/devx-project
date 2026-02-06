@@ -3,11 +3,11 @@
 <#-- @ftlvariable name="randomFunctions" type="de.devx.project.spring.webmvc.test.generator.data.SpringWebMvcRandomFunctionsModel" -->
 package ${test.packageName};
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.jeasy.random.EasyRandom;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpMethod;<#if test.activeProfile?has_content>
 import org.springframework.test.context.ActiveProfiles;</#if>
@@ -40,7 +40,7 @@ public class ${test.name} {
     protected final EasyRandom random;
 
     @Autowired
-    protected ObjectMapper objectMapper;
+    protected JsonMapper objectMapper;
 
     @Autowired
     protected WebApplicationContext webApplicationContext;
