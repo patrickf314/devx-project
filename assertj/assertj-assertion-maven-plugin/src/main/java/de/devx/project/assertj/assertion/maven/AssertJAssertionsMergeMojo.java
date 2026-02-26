@@ -42,7 +42,10 @@ public class AssertJAssertionsMergeMojo extends AbstractAssertJAssertionsMojo {
             var parser = new MavenSourceFileParser(project, new MavenLogger(getLog()));
             var classLoader = new MavenProjectClassLoader(project);
             for (var assertion : assertions) {
-                models.addAll(createAssertThatMethodModels(assertion, parser, classLoader));
+                getLog().info("Loading assertion: " + assertion);
+                var childModels = createAssertThatMethodModels(assertion, parser, classLoader);
+                models.addAll(childModels);
+                getLog().debug("Found " + childModels.size() + " assert functions:");
             }
             return models;
         } catch (IOException | DependencyResolutionRequiredException e) {

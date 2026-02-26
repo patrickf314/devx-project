@@ -9,6 +9,7 @@ import de.devx.project.commons.api.model.data.ApiTypeModel;
 import de.devx.project.commons.generator.model.JavaTypeArgumentModel;
 import de.devx.project.commons.generator.model.JavaTypeModel;
 import de.devx.project.commons.maven.parser.MavenApiModelParser;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -40,9 +41,12 @@ public class AssertJApiModelAssertionsMojo extends AbstractAssertJAssertionsMojo
     @Parameter(property = "apiModelAssertions.apiModelJson")
     private File apiModelJson;
 
+    @Parameter
+    private List<String> artifactIds = Collections.emptyList();
+
     @Override
     protected List<AssertJAssertModel> createAssertModels() throws MojoExecutionException {
-        var parser = new MavenApiModelParser(getLog(), apiModelJson, project);
+        var parser = new MavenApiModelParser(getLog(), apiModelJson, project, this::isArtifactIncluded);
         return parser.requireApiModels()
                 .stream()
                 .flatMap(model -> model.getDtos().values().stream())
@@ -123,5 +127,15 @@ public class AssertJApiModelAssertionsMojo extends AbstractAssertJAssertionsMojo
                 );
             }
         };
+    }
+
+    private boolean isArtifactIncluded(Artifact artifact) {
+        if(artifactIds.isEmpty() || artifactIds.contains(artifact.getArtifactId())){
+            getLog().debug("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " included.");
+            return true;
+        }else{
+            getLog().debug("Artifact " + artifact.getGroupId() + ":" + artifact.getArtifactId() + " excluded.");
+            return false;
+        }
     }
 }

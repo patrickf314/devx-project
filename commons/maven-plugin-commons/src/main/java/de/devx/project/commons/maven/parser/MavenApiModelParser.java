@@ -14,6 +14,7 @@ import org.apache.maven.project.MavenProject;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public class MavenApiModelParser {
     private final Log log;
     private final File apiModelJson;
     private final MavenProject mavenProject;
+    private final Predicate<Artifact> artifactFilter;
 
     public static String extractPackageName(ApiDTOModel apiModel) {
         if (apiModel.getEnclosingDTO() != null) {
@@ -83,6 +85,7 @@ public class MavenApiModelParser {
         log.debug("Searching api model json in artifacts...");
         return mavenProject.getArtifacts()
                 .stream()
+                .filter(artifactFilter)
                 .map(Artifact::getFile);
     }
 

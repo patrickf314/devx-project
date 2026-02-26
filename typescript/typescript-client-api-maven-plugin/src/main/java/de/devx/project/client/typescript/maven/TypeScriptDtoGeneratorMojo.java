@@ -56,7 +56,7 @@ public class TypeScriptDtoGeneratorMojo extends AbstractMojo {
         getLog().info("Starting generation of typescript DTO interfaces...");
         getLog().debug("Searing for api model definition in dependencies...");
 
-        var apiModelResolver = new MavenApiModelParser(getLog(), apiModelJson, mavenProject);
+        var apiModelResolver = new MavenApiModelParser(getLog(), apiModelJson, mavenProject, _ -> true);
         var apiModels = apiModelResolver.requireApiModels();
 
         try {

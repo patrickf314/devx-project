@@ -71,7 +71,7 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
         getLog().info("Starting generation of API clients...");
         getLog().debug("Searing for api model definition in dependencies...");
 
-        var apiModelResolver = new MavenApiModelParser(getLog(), apiModelJson, mavenProject);
+        var apiModelResolver = new MavenApiModelParser(getLog(), apiModelJson, mavenProject, _ -> true);
         var apiModels = apiModelResolver.requireApiModels();
 
         getLog().debug("Start client generation...");
