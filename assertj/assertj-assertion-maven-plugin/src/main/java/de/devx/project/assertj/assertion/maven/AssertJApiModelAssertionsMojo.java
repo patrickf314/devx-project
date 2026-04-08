@@ -101,7 +101,7 @@ public class AssertJApiModelAssertionsMojo extends AbstractAssertJAssertionsMojo
                     extractPackageName(apiModel),
                     extractSimpleClassName(apiModel)
             );
-            case DTO -> objectType(
+            case BRANDED_TYPE, DTO -> objectType(
                     extractPackageName(apiModel),
                     extractSimpleClassName(apiModel),
                     apiModel.getTypeArguments().stream().map(this::mapToModel).toList()

@@ -13,6 +13,7 @@ public class ApiModel {
     private final Map<String, ApiServiceEndpointModel> endpoints = new HashMap<>();
     private final Map<String, ApiDTOModel> dtos = new HashMap<>();
     private final Map<String, ApiEnumModel> enums = new HashMap<>();
+    private final Map<String, ApiBrandedTypeModel> brandedTypes = new HashMap<>();
 
     public void addEndpoint(ApiServiceEndpointModel model) {
         this.endpoints.put(model.getClassName(), model);
@@ -24,5 +25,9 @@ public class ApiModel {
 
     public void addEnum(ApiEnumModel model) {
         this.enums.put(model.getClassName(), model);
+    }
+
+    public void addBrandedType(ApiBrandedTypeModel model) {
+        this.brandedTypes.put(model.getClassName(), model);
     }
 }

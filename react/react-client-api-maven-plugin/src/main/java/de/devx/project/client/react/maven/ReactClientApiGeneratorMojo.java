@@ -4,6 +4,7 @@ import de.devx.project.client.react.ReactClientGenerator;
 import de.devx.project.client.react.properties.ReactClientGeneratorProperties;
 import de.devx.project.commons.api.model.data.ApiModel;
 import de.devx.project.commons.client.typescript.io.TypeScriptFileGenerator;
+import de.devx.project.commons.client.typescript.mapper.TypeScriptBrandedTypeMapper;
 import de.devx.project.commons.client.typescript.mapper.TypeScriptDTOMapper;
 import de.devx.project.commons.client.typescript.mapper.TypeScriptEnumMapper;
 import de.devx.project.commons.client.typescript.mapper.TypeScriptServiceMapper;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 )
 public class ReactClientApiGeneratorMojo extends AbstractMojo {
 
+    private static final TypeScriptBrandedTypeMapper BRANDED_TYPE_MAPPER = Mappers.getMapper(TypeScriptBrandedTypeMapper.class);
     private static final TypeScriptDTOMapper DTO_MAPPER = Mappers.getMapper(TypeScriptDTOMapper.class);
     private static final TypeScriptEnumMapper ENUM_MAPPER = Mappers.getMapper(TypeScriptEnumMapper.class);
     private static final TypeScriptServiceMapper SERVICE_MAPPER = Mappers.getMapper(TypeScriptServiceMapper.class);
@@ -65,6 +67,8 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
     private TypeScriptDependency backendUrlGetter;
     @Parameter
     private String backendUrl;
+    @Parameter(defaultValue = "false")
+    private boolean generateZodSchemas;
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -86,12 +90,17 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
         var generator = new ReactClientGenerator(fileGenerator, properties());
 
         for (var apiModel : apiModels) {
+            var brandedTypes = apiModel.getBrandedTypes().values().stream().map(BRANDED_TYPE_MAPPER::mapBrandedType).toList();
             var services = apiModel.getEndpoints().values().stream().map(service -> SERVICE_MAPPER.mapService(service, typeAliasMap)).toList();
             var dtos = apiModel.getDtos().values().stream()
                     .filter(dto -> !typeAliasMap.containsKey(dto.getClassName()))
                     .map(dto -> DTO_MAPPER.mapDTO(dto, typeAliasMap))
                     .toList();
             var enums = apiModel.getEnums().values().stream().map(ENUM_MAPPER::mapEnum).toList();
+
+            for (var brandedType : brandedTypes) {
+                generateFileFor(brandedType.getClassName(), () -> generator.generateBrandedType(brandedType));
+            }
 
             for (var service : services) {
                 generateFileFor(service.getClassName(), () -> generator.generateService(service));
@@ -119,7 +128,7 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
     }
 
     private ReactClientGeneratorProperties properties() {
-        return new ReactClientGeneratorProperties(
+        var properties = new ReactClientGeneratorProperties(
                 typeAliases == null ? Collections.emptyList() : typeAliases,
                 packageAliases == null ? Collections.emptyList() : packageAliases,
                 defaultPackageAlias,
@@ -130,6 +139,8 @@ public class ReactClientApiGeneratorMojo extends AbstractMojo {
                 backendUrlGetter,
                 backendUrl
         );
+        properties.setGenerateZodSchemas(generateZodSchemas);
+        return properties;
     }
 
     interface FileGenerator {

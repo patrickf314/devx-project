@@ -13,4 +13,5 @@ public class TypeScriptTypeModel {
     private boolean optional;
 
     private Set<String> dependentClassNames;
+    private String zodSchema;
 }

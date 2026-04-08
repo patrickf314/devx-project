@@ -3,6 +3,7 @@
 <#-- @ftlvariable name="imports" type="java.util.Collection<de.devx.project.commons.client.typescript.data.TypeScriptImportModel>" -->
 <#-- @ftlvariable name="prepareHeadersIdentifier" type="java.lang.String" -->
 <#-- @ftlvariable name="testContextIdentifier" type="java.lang.String" -->
+<#-- @ftlvariable name="generateZodSchemas" type="java.lang.Boolean" -->
 <#-- -->
 <#macro setHeaderParam param>
 <#-- @ftlvariable name="param" type="de.devx.project.commons.client.typescript.data.TypeScriptServiceMethodParameterModel" -->
@@ -30,6 +31,10 @@
 <#else>formData.append('${param.parameterName}', ${param.name}.toString());
 </#if>
 </#macro>
+<#-- -->
+<#-- -->
+<#macro mapResponse method>
+<#t><#if method.returnTypeWrapper == 'Observable'>mapStreamingResponse(res)<#elseif method.returnType.name == 'void'>mapVoidResponse(res)<#elseif method.returnType.name == 'string'>mapStringResponse(res)<#elseif method.returnType.name == 'DownloadInfo'>mapStreamingResponse(res)<#elseif generateZodSchemas && method.returnType.zodSchema?? && !method.returnType.zodSchema?starts_with("z.")>mapJsonResponse(res, ${method.returnType.zodSchema})<#else>mapJsonResponse<${method.returnType.name}>(res)</#if></#macro>
 <#-- -->
 <#-- -->
 <#macro url method>
@@ -108,7 +113,7 @@ export class ${model.name} {
             headers<#if method.formData || method.bodyParameter?has_content>,
             data: <#if method.bodyParameter?has_content && !method.formData>JSON.stringify(${method.bodyParameter})<#else>formData</#if>
         </#if>
-        }).then(res => map<#if method.returnTypeWrapper == 'Observable'>StreamingResponse<#else><#switch method.returnType.name><#case 'void'>VoidResponse<#break><#case 'string'>StringResponse<#break><#case 'DownloadInfo'>StreamingResponse<#break><#default>JsonResponse<${method.returnType.name}></#switch></#if>(res));
+        }).then(res => <@mapResponse method=method/>);
     }
     </#list>
 }

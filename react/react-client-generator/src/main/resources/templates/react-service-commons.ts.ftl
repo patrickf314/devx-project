@@ -1,6 +1,7 @@
 <#ftl output_format="JavaScript">
 <#-- @ftlvariable name="imports" type="java.util.List<de.devx.project.commons.client.typescript.data.TypeScriptImportModel>" -->
 <#-- @ftlvariable name="errorMapperIdentifier" type="java.lang.String" -->
+<#-- @ftlvariable name="generateZodSchemas" type="java.lang.Boolean" -->
 import { type DownloadStreamDTO } from './download-stream.dto';
 <#list imports as import>
 import { ${import.identifiers?join(", ")} } from '${import.path}';
@@ -27,7 +28,7 @@ export function url(pathname: string, searchParams: Record<string, string | numb
     return result;
 }
 
-export async function mapJsonResponse<T>(res: Response): Promise<T> {
+export async function mapJsonResponse<T>(res: Response<#if generateZodSchemas>, schema?: { parse: (data: unknown) => T }</#if>): Promise<T> {
     if (res.status !== 200) {
         throw await ${errorMapperIdentifier}(res);
     }
@@ -37,7 +38,8 @@ export async function mapJsonResponse<T>(res: Response): Promise<T> {
         throw invalidResponseBodyError(contentType);
     }
 
-    return await res.json() as T;
+    <#if generateZodSchemas>const data = await res.json();
+    return schema ? schema.parse(data) : data as T;<#else>return await res.json() as T;</#if>
 }
 
 export async function mapVoidResponse(res: Response): Promise<void> {

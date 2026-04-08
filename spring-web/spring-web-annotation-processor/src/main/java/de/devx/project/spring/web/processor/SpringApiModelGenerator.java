@@ -239,6 +239,12 @@ public class SpringApiModelGenerator {
             );
         }
 
+        var brandedTypeUnderlying = TypeElementUtils.getBrandedTypeUnderlyingMirror(typeElement);
+        if (brandedTypeUnderlying.isPresent()) {
+            var brandedTypeModel = createBrandedTypeModel(typeElement, className, element, brandedTypeUnderlying.get());
+            return new ApiTypeModel(brandedTypeModel.getName(), ApiTypeType.BRANDED_TYPE, brandedTypeModel.getClassName(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
+        }
+
         if (typeElement.getKind() == ElementKind.CLASS || typeElement.getKind() == ElementKind.RECORD) {
             var dtoModel = createDTOModel(typeElement, className);
             var nesting = new ArrayList<String>();
@@ -315,6 +321,19 @@ public class SpringApiModelGenerator {
         }
 
         return false;
+    }
+
+    private ApiBrandedTypeModel createBrandedTypeModel(TypeElement element, String className, Element context, TypeMirror underlyingMirror) {
+        if (model.getBrandedTypes().containsKey(className)) {
+            return model.getBrandedTypes().get(className);
+        }
+
+        var underlyingType = mapTypeMirror(context, underlyingMirror, true, Collections.emptyList());
+        var brandedTypeModel = new ApiBrandedTypeModel(className, element.getSimpleName().toString(), underlyingType);
+
+        model.addBrandedType(brandedTypeModel);
+
+        return brandedTypeModel;
     }
 
     private ApiEnumModel createEnumModel(TypeElement element, String className) {

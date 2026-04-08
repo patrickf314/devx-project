@@ -157,7 +157,7 @@ public abstract class TypeScriptClientGenerator {
         if (alias == null || (alias.getAnnotation() != null && !returnOrParamType.getAnnotations().contains(alias.getAnnotation()))) {
             switch (returnOrParamType.getType()) {
                 case JAVA_TYPE -> addJavaTypeDependencies(endpointModel, returnOrParamType, dependencies);
-                case ENUM, DTO -> addEnumOrDTOTypeDependencies(endpointModel, returnOrParamType, dependencies);
+                case ENUM, DTO, BRANDED_TYPE -> addEnumOrDTOTypeDependencies(endpointModel, returnOrParamType, dependencies);
             }
 
             return;
@@ -175,7 +175,7 @@ public abstract class TypeScriptClientGenerator {
         if (alias == null || (alias.getAnnotation() != null && !fieldType.getAnnotations().contains(alias.getAnnotation()))) {
             switch (fieldType.getType()) {
                 case JAVA_TYPE -> addJavaTypeDependencies(dtoModel, fieldType, dependencies);
-                case ENUM, DTO -> addEnumOrDTOTypeDependencies(dtoModel, fieldType, dependencies);
+                case ENUM, DTO, BRANDED_TYPE -> addEnumOrDTOTypeDependencies(dtoModel, fieldType, dependencies);
             }
 
             return;

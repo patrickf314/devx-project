@@ -36,6 +36,7 @@ public final class TypeScriptTypeMapper {
             case UNKNOWN -> mapUnknownType();
             case JAVA_TYPE -> mapJavaType(model, typeAliases);
             case GENERIC_TYPE -> mapGenericType(model);
+            case BRANDED_TYPE -> mapBrandedType(model);
         };
     }
 
@@ -84,6 +85,10 @@ public final class TypeScriptTypeMapper {
     }
 
     private static TypeScriptType mapEnumType(ApiTypeModel model) {
+        return createTypeScriptType(model.getName(), !model.isRequired());
+    }
+
+    private static TypeScriptType mapBrandedType(ApiTypeModel model) {
         return createTypeScriptType(model.getName(), !model.isRequired());
     }
 

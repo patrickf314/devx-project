@@ -2,14 +2,24 @@ package de.devx.project.commons.processor.utils;
 
 import de.devx.project.commons.processor.ProcessorContext;
 
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.RecordComponentElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
-import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+import static de.devx.project.commons.processor.utils.AnnotationElementUtils.isAnnotationPresent;
 import static java.util.function.Predicate.not;
 
 public final class TypeElementUtils {
@@ -72,7 +82,7 @@ public final class TypeElementUtils {
         }
 
         var superClass = typeElement.getSuperclass();
-        if (superClass != null) {
+        if (!(superClass instanceof NoType)) {
             return getInterfaceTypeMirror(superClass, i);
         }
 
@@ -118,7 +128,7 @@ public final class TypeElementUtils {
         }
 
         var superClass = element.getSuperclass();
-        if (superClass != null) {
+        if (!(superClass instanceof NoType)) {
             return getTypeArgumentsOfInterface(superClass, i).stream()
                     .map(e -> mapTypeArgument(aliases, e))
                     .toList();
@@ -174,6 +184,38 @@ public final class TypeElementUtils {
         return c.equals(element.getQualifiedName().toString());
     }
 
+    public static boolean isBrandedType(TypeElement element) {
+        return isAnnotationPresent(element, "de.devx.project.annotations.BrandedType");
+    }
+
+    /**
+     * Returns the underlying {@link TypeMirror} of a branded type — the single field or record
+     * component that the branded type wraps. Returns {@link Optional#empty()} if the element is
+     * not annotated with {@code @BrandedType} or does not have exactly one non-static field.
+     */
+    public static Optional<TypeMirror> getBrandedTypeUnderlyingMirror(TypeElement element) {
+        if (!isBrandedType(element)) {
+            return Optional.empty();
+        }
+
+        List<VariableElement> components;
+        if (element.getKind() == ElementKind.RECORD) {
+            components = element.getEnclosedElements().stream()
+                    .filter(e -> e.getKind() == ElementKind.RECORD_COMPONENT)
+                    .filter(VariableElement.class::isInstance)
+                    .map(VariableElement.class::cast)
+                    .toList();
+        } else {
+            components = getNonStaticFields(element);
+        }
+
+        if (components.size() != 1) {
+            return Optional.empty();
+        }
+
+        return Optional.of(components.getFirst().asType());
+    }
+
     public static List<VariableElement> getNonStaticFields(TypeElement element) {
         return element.getEnclosedElements()
                 .stream()
@@ -227,21 +269,5 @@ public final class TypeElementUtils {
 
     public static boolean checkTypeMirrorEquality(TypeMirror typeMirrorA, TypeMirror typeMirrorB) {
         return ProcessorContext.getProcessingEnvironment().getTypeUtils().isSameType(typeMirrorA, typeMirrorB);
-    }
-
-    private static TypeElement mapInterfaceMirrorToTypeElement(TypeMirror mirror) {
-        if (!(mirror instanceof DeclaredType)) {
-            throw new IllegalArgumentException("Invalid interface type mirror " + mirror);
-        }
-
-        return mapToTypeElement((DeclaredType) mirror);
-    }
-
-    private static TypeElement mapToTypeElement(DeclaredType mirror) {
-        var element = mirror.asElement();
-        if (!(element instanceof TypeElement)) {
-            throw new IllegalArgumentException("Unexpected return type of DeclaredType#asElement from for declared type " + mirror);
-        }
-        return (TypeElement) element;
     }
 }

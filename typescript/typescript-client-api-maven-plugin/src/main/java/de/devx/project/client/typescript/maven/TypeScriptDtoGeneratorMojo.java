@@ -3,6 +3,7 @@ package de.devx.project.client.typescript.maven;
 import de.devx.project.commons.api.model.data.ApiModel;
 import de.devx.project.commons.client.typescript.TypescriptClientGenerator;
 import de.devx.project.commons.client.typescript.io.TypeScriptFileGenerator;
+import de.devx.project.commons.client.typescript.mapper.TypeScriptBrandedTypeMapper;
 import de.devx.project.commons.client.typescript.mapper.TypeScriptDTOMapper;
 import de.devx.project.commons.client.typescript.mapper.TypeScriptEnumMapper;
 import de.devx.project.commons.client.typescript.properties.TypeScriptClientGeneratorProperties;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 )
 public class TypeScriptDtoGeneratorMojo extends AbstractMojo {
 
+    private static final TypeScriptBrandedTypeMapper BRANDED_TYPE_MAPPER = Mappers.getMapper(TypeScriptBrandedTypeMapper.class);
     private static final TypeScriptDTOMapper DTO_MAPPER = Mappers.getMapper(TypeScriptDTOMapper.class);
     private static final TypeScriptEnumMapper ENUM_MAPPER = Mappers.getMapper(TypeScriptEnumMapper.class);
 
@@ -50,6 +52,8 @@ public class TypeScriptDtoGeneratorMojo extends AbstractMojo {
     private List<TypeScriptPackageAlias> packageAliases;
     @Parameter
     private String defaultPackageAlias;
+    @Parameter(defaultValue = "false")
+    private boolean generateZodSchemas;
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -74,11 +78,16 @@ public class TypeScriptDtoGeneratorMojo extends AbstractMojo {
         var generator = new TypescriptClientGenerator<>(fileGenerator, properties());
 
         for (var apiModel : apiModels) {
+            var brandedTypes = apiModel.getBrandedTypes().values().stream().map(BRANDED_TYPE_MAPPER::mapBrandedType).toList();
             var dtos = apiModel.getDtos().values().stream()
                     .filter(dto -> !typeAliases.containsKey(dto.getClassName()))
                     .map(dto -> DTO_MAPPER.mapDTO(dto, typeAliases))
                     .toList();
             var enums = apiModel.getEnums().values().stream().map(ENUM_MAPPER::mapEnum).toList();
+
+            for (var brandedType : brandedTypes) {
+                generator.generateBrandedType(brandedType);
+            }
 
             for (var dto : dtos) {
                 generator.generateDTO(dto);
@@ -91,6 +100,8 @@ public class TypeScriptDtoGeneratorMojo extends AbstractMojo {
     }
 
     private TypeScriptClientGeneratorProperties properties() {
-        return new TypeScriptClientGeneratorProperties(typeAliases, packageAliases, defaultPackageAlias);
+        var properties = new TypeScriptClientGeneratorProperties(typeAliases, packageAliases, defaultPackageAlias);
+        properties.setGenerateZodSchemas(generateZodSchemas);
+        return properties;
     }
 }

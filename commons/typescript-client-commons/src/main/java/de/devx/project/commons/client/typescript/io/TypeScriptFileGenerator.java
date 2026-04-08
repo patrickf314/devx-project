@@ -33,12 +33,24 @@ public class TypeScriptFileGenerator implements SourceFileGenerator {
             return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 10)) + ".service" + extension;
         }
 
+        if (className.endsWith("DTOSchema") || className.endsWith("DtoSchema")) {
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 9)) + ".dto.schema" + extension;
+        }
+
         if (className.endsWith("DTO") || className.endsWith("Dto")) {
             return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 3)) + ".dto" + extension;
         }
 
+        if (className.endsWith("TypeSchema")) {
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 10)) + ".type.schema" + extension;
+        }
+
         if (className.endsWith("Type")) {
             return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 4)) + ".type" + extension;
+        }
+
+        if (className.endsWith("Schema")) {
+            return TypeScriptUtils.toLowerCaseName(className.substring(0, className.length() - 6)) + ".schema" + extension;
         }
 
         return TypeScriptUtils.toLowerCaseName(className) + extension;

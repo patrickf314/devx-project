@@ -1,5 +1,6 @@
 package de.devx.project.commons.client.typescript.properties;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -7,11 +8,13 @@ import java.util.List;
 
 @Data
 @RequiredArgsConstructor
+@AllArgsConstructor
 public class TypeScriptClientGeneratorProperties {
 
     private final List<TypeScriptTypeAlias> typeAliases;
     private final List<TypeScriptPackageAlias> packageAliases;
     private final String defaultPackageAlias;
+    private boolean generateZodSchemas;
 
     public String getPackageNameForClass(String className) {
         var i = className.lastIndexOf('.');

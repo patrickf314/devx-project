@@ -1,4 +1,5 @@
 <#ftl output_format="JavaScript">
+<#-- @ftlvariable name="generateZodSchemas" type="java.lang.Boolean" -->
 import { APIResponse } from '@playwright/test';
 
 export function url(pathname: string, searchParams: Record<string, string | number | boolean | undefined | null | {
@@ -22,7 +23,7 @@ export function url(pathname: string, searchParams: Record<string, string | numb
     return result.toString();
 }
 
-export async function mapJsonResponse<T>(res: APIResponse): Promise<T> {
+export async function mapJsonResponse<T>(res: APIResponse<#if generateZodSchemas>, schema?: { parse: (data: unknown) => T }</#if>): Promise<T> {
     if (res.status() !== 200) {
         throw new Error('http error response: ' + res.status());
     }
@@ -32,7 +33,8 @@ export async function mapJsonResponse<T>(res: APIResponse): Promise<T> {
         throw invalidResponseBodyError(contentType);
     }
 
-    return await res.json() as T;
+    <#if generateZodSchemas>const data = await res.json();
+    return schema ? schema.parse(data) : data as T;<#else>return await res.json() as T;</#if>
 }
 
 export async function mapVoidResponse(res: APIResponse): Promise<void> {

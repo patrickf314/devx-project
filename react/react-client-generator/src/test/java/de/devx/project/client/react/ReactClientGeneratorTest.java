@@ -277,7 +277,7 @@ class ReactClientGeneratorTest {
     private TypeScriptServiceMethodModel method(String name, String returnType) {
         var model = new TypeScriptServiceMethodModel();
         model.setName(name);
-        model.setReturnType(new TypeScriptTypeModel(returnType, false, Collections.emptySet()));
+        model.setReturnType(new TypeScriptTypeModel(returnType, false, Collections.emptySet(), null));
         model.setHttpMethod("GET");
         model.setPath(new TypeScriptPathModel("/" + name, Collections.emptyList()));
         model.setReturnTypeWrapper("Promise");

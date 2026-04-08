@@ -24,9 +24,14 @@ class TypeScriptFileGeneratorTest {
                 Arguments.of("SecondTestServiceApi", "second-test.service.ts"),
                 Arguments.of("TestDTO", "test.dto.ts"),
                 Arguments.of("SecondTestDto", "second-test.dto.ts"),
+                Arguments.of("TestDTOSchema", "test.dto.schema.ts"),
+                Arguments.of("SecondTestDtoSchema", "second-test.dto.schema.ts"),
                 Arguments.of("TestType", "test.type.ts"),
                 Arguments.of("SecondTestType", "second-test.type.ts"),
-                Arguments.of("CustomData", "custom-data.ts")
+                Arguments.of("TestTypeSchema", "test.type.schema.ts"),
+                Arguments.of("SecondTestTypeSchema", "second-test.type.schema.ts"),
+                Arguments.of("CustomData", "custom-data.ts"),
+                Arguments.of("CustomDataSchema", "custom-data.schema.ts")
         );
     }
 

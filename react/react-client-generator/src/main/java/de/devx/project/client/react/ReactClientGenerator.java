@@ -35,7 +35,8 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
         generatedClasses.add(model.getClassName());
 
         var packageName = properties.getPackageNameForClass(model.getClassName());
-        var imports = resolveImports(packageName, model, properties.getBackendUrlGetter(), properties.getHttpHeaderCustomizer(),
+        var importMap = new HashMap<String, TypeScriptImportModel>();
+        resolveImports(packageName, model, properties.getBackendUrlGetter(), properties.getHttpHeaderCustomizer(),
                 new TypeScriptDependency("State", utilityPackage() + "/thunk-options.ts"),
                 new TypeScriptDependency("ThunkOptions", utilityPackage() + "/thunk-options.ts"),
                 new TypeScriptDependency("Dispatch", utilityPackage() + "/thunk-options.ts"),
@@ -46,14 +47,19 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
                 new TypeScriptDependency("mapStreamingResponse", utilityPackage() + "/react-service-commons.ts"),
                 new TypeScriptDependency("DownloadStreamDTO", utilityPackage() + "/download-stream.dto.ts"),
                 properties.getReduxThunkConfig()
-        );
+        ).forEach(i -> addImport(i, importMap));
+
+        if (properties.isGenerateZodSchemas()) {
+            resolveZodImportsForService(packageName, model).forEach(i -> addImport(i, importMap));
+        }
 
         processTemplate("react-service-template.ts.ftl", packageName, model.getName(), Map.of(
                 "model", model,
-                "imports", imports,
+                "imports", importMap.values(),
                 "backendUrl", properties.getBackendUrl() == null ? "" : properties.getBackendUrl(),
                 "backendUrlGetterIdentifier", properties.getBackendUrlGetter() == null ? "" : properties.getBackendUrlGetter().getIdentifier(),
-                "prepareHeadersIdentifier", properties.getHttpHeaderCustomizer() == null ? "" : properties.getHttpHeaderCustomizer().getIdentifier()
+                "prepareHeadersIdentifier", properties.getHttpHeaderCustomizer() == null ? "" : properties.getHttpHeaderCustomizer().getIdentifier(),
+                "generateZodSchemas", properties.isGenerateZodSchemas()
         ));
     }
 
@@ -77,7 +83,8 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
             generatedClasses.add(packageName + "." + SERVICE_COMMONS);
             processTemplate("react-service-commons.ts.ftl", packageName, SERVICE_COMMONS, Map.of(
                     "imports", resolveImports(packageName, properties.getErrorMapper()),
-                    "errorMapperIdentifier", properties.getErrorMapper().getIdentifier()
+                    "errorMapperIdentifier", properties.getErrorMapper().getIdentifier(),
+                    "generateZodSchemas", properties.isGenerateZodSchemas()
             ));
         }
     }

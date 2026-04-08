@@ -131,6 +131,11 @@ public class HamcrestMatcherElementMapper {
             throw unexpectedTypeMirrorException(logger, element, type);
         }
 
+        var brandedTypeUnderlying = TypeElementUtils.getBrandedTypeUnderlyingMirror(typeElement);
+        if (brandedTypeUnderlying.isPresent()) {
+            return mapType(element, brandedTypeUnderlying.get());
+        }
+
         var generics = type.getTypeArguments()
                 .stream()
                 .map(typeArgument -> mapType(element, typeArgument))

@@ -34,19 +34,25 @@ public class PlaywrightClientGenerator extends TypescriptClientGenerator<Playwri
         generatedClasses.add(model.getClassName());
 
         var packageName = properties.getPackageNameForClass(model.getClassName());
-        var imports = resolveImports(packageName, model, properties.getHttpHeaderCustomizer(), properties.getTestContext(),
+        var importMap = new HashMap<String, TypeScriptImportModel>();
+        resolveImports(packageName, model, properties.getHttpHeaderCustomizer(), properties.getTestContext(),
                 new TypeScriptDependency("url", utilityPackage() + "/playwright-service-commons.ts"),
                 new TypeScriptDependency("mapJsonResponse", utilityPackage() + "/playwright-service-commons.ts"),
                 new TypeScriptDependency("mapVoidResponse", utilityPackage() + "/playwright-service-commons.ts"),
                 new TypeScriptDependency("mapStringResponse", utilityPackage() + "/playwright-service-commons.ts"),
                 new TypeScriptDependency("mapStreamingResponse", utilityPackage() + "/playwright-service-commons.ts")
-        );
+        ).forEach(i -> addImport(i, importMap));
+
+        if (properties.isGenerateZodSchemas()) {
+            resolveZodImportsForService(packageName, model).forEach(i -> addImport(i, importMap));
+        }
 
         processTemplate("playwright-service-template.ts.ftl", packageName, model.getName(), Map.of(
                 "model", model,
-                "imports", imports,
+                "imports", importMap.values(),
                 "testContextIdentifier", properties.getTestContext() == null ? "" : properties.getTestContext().getIdentifier(),
-                "prepareHeadersIdentifier", properties.getHttpHeaderCustomizer() == null ? "" : properties.getHttpHeaderCustomizer().getIdentifier()
+                "prepareHeadersIdentifier", properties.getHttpHeaderCustomizer() == null ? "" : properties.getHttpHeaderCustomizer().getIdentifier(),
+                "generateZodSchemas", properties.isGenerateZodSchemas()
         ));
     }
 
@@ -54,7 +60,9 @@ public class PlaywrightClientGenerator extends TypescriptClientGenerator<Playwri
         var packageName = utilityPackage().replace('/', '.');
         if (!generatedClasses.contains(packageName + "." + SERVICE_COMMONS)) {
             generatedClasses.add(packageName + "." + SERVICE_COMMONS);
-            processTemplate("playwright-service-commons.ts.ftl", packageName, SERVICE_COMMONS, Map.of());
+            processTemplate("playwright-service-commons.ts.ftl", packageName, SERVICE_COMMONS, Map.of(
+                    "generateZodSchemas", properties.isGenerateZodSchemas()
+            ));
         }
     }
 
