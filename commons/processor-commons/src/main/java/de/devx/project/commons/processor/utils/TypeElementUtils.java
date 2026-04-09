@@ -189,32 +189,26 @@ public final class TypeElementUtils {
     }
 
     /**
-     * Returns the underlying {@link TypeMirror} of a branded type — the single field or record
-     * component that the branded type wraps. Returns {@link Optional#empty()} if the element is
-     * not annotated with {@code @BrandedType} or does not have exactly one non-static field.
+     * Returns the explicit underlying type declared in {@code @BrandedType(type = ...)} for the
+     * given element, or {@link Optional#empty()} if no explicit type was set (i.e. the attribute
+     * is still the default {@code void.class}) or the element is not a branded type.
      */
-    public static Optional<TypeMirror> getBrandedTypeUnderlyingMirror(TypeElement element) {
-        if (!isBrandedType(element)) {
-            return Optional.empty();
-        }
-
-        List<VariableElement> components;
-        if (element.getKind() == ElementKind.RECORD) {
-            components = element.getEnclosedElements().stream()
-                    .filter(e -> e.getKind() == ElementKind.RECORD_COMPONENT)
-                    .filter(VariableElement.class::isInstance)
-                    .map(VariableElement.class::cast)
-                    .toList();
-        } else {
-            components = getNonStaticFields(element);
-        }
-
-        if (components.size() != 1) {
-            return Optional.empty();
-        }
-
-        return Optional.of(components.getFirst().asType());
+    public static Optional<TypeMirror> getBrandedTypeExplicitTypeMirror(TypeElement element) {
+        return AnnotationElementUtils.findAnnotationMirror(element, "de.devx.project.annotations.BrandedType")
+                .flatMap(mirror -> {
+                    var fields = AnnotationElementUtils.extractFieldsFromAnnotationMirror(mirror);
+                    var typeValue = fields.get("type");
+                    if (typeValue == null) {
+                        return Optional.empty();
+                    }
+                    var typeMirror = (TypeMirror) typeValue.getValue();
+                    if (typeMirror.getKind() == TypeKind.VOID) {
+                        return Optional.empty();
+                    }
+                    return Optional.of(typeMirror);
+                });
     }
+
 
     public static List<VariableElement> getNonStaticFields(TypeElement element) {
         return element.getEnclosedElements()

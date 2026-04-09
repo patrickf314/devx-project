@@ -47,6 +47,23 @@ class SpringApiModelGeneratorTest {
         assertThat(idField.getClassName(), is("de.devx.project.test.UserID"));
     }
 
+    @Test
+    void testExplicitBrandedTypeIsRegisteredWithDeclaredUnderlyingType() throws Exception {
+        var model = compile("CorrelationId.java", "CorrelationDTO.java", "CorrelationController.java");
+
+        assertThat(model.getBrandedTypes().containsKey("de.devx.project.test.CorrelationId"), is(true));
+
+        var correlationId = model.getBrandedTypes().get("de.devx.project.test.CorrelationId");
+        assertThat(correlationId.getName(), is("CorrelationId"));
+        assertThat(correlationId.getUnderlyingType().getType(), is(ApiTypeType.JAVA_TYPE));
+        assertThat(correlationId.getUnderlyingType().getName(), is("string"));
+    }
+
+    @Test
+    void testBrandedTypeWithoutExplicitTypeAndMultipleFieldsFailsCompilation() {
+        compileExpectingFailure("InvalidBrandedType.java", "InvalidController.java");
+    }
+
     private ApiModel compile(String... sourceFiles) throws Exception {
         var compiler = ToolProvider.getSystemJavaCompiler();
         var fileManager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8);
@@ -65,6 +82,22 @@ class SpringApiModelGeneratorTest {
         try (var reader = new ApiModelReader(outputDir.resolve("api-model.json").toFile())) {
             return reader.read();
         }
+    }
+
+    private void compileExpectingFailure(String... sourceFiles) {
+        var compiler = ToolProvider.getSystemJavaCompiler();
+        var fileManager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8);
+
+        var sources = resolveSourceFiles(sourceFiles);
+        var compilationUnits = fileManager.getJavaFileObjects(sources);
+        var options = List.of(
+                "-classpath", System.getProperty("java.class.path"),
+                "-d", outputDir.toString()
+        );
+
+        var task = compiler.getTask(null, fileManager, null, options, null, compilationUnits);
+        task.setProcessors(List.of(new SpringAnnotationProcessor()));
+        assertThat("Compilation should have failed", task.call(), is(false));
     }
 
     private File[] resolveSourceFiles(String[] fileNames) {

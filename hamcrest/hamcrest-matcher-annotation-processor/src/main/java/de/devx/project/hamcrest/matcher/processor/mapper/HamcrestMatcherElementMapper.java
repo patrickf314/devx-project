@@ -131,9 +131,20 @@ public class HamcrestMatcherElementMapper {
             throw unexpectedTypeMirrorException(logger, element, type);
         }
 
-        var brandedTypeUnderlying = TypeElementUtils.getBrandedTypeUnderlyingMirror(typeElement);
-        if (brandedTypeUnderlying.isPresent()) {
-            return mapType(element, brandedTypeUnderlying.get());
+        if (TypeElementUtils.isBrandedType(typeElement)) {
+            var explicit = TypeElementUtils.getBrandedTypeExplicitTypeMirror(typeElement);
+            if (explicit.isPresent()) {
+                return mapType(element, explicit.get());
+            }
+            var fields = TypeElementUtils.getNonStaticFields(typeElement);
+            if (fields.size() != 1) {
+                logger.error(
+                        "@BrandedType without explicit type() must have exactly one non-static field, but found " + fields.size(),
+                        typeElement
+                );
+                throw unexpectedTypeMirrorException(logger, element, type);
+            }
+            return mapType(element, fields.getFirst().asType());
         }
 
         var generics = type.getTypeArguments()

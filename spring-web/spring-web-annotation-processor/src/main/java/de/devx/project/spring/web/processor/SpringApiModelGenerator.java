@@ -239,10 +239,13 @@ public class SpringApiModelGenerator {
             );
         }
 
-        var brandedTypeUnderlying = TypeElementUtils.getBrandedTypeUnderlyingMirror(typeElement);
-        if (brandedTypeUnderlying.isPresent()) {
-            var brandedTypeModel = createBrandedTypeModel(typeElement, className, element, brandedTypeUnderlying.get());
-            return new ApiTypeModel(brandedTypeModel.getName(), ApiTypeType.BRANDED_TYPE, brandedTypeModel.getClassName(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
+        if (TypeElementUtils.isBrandedType(typeElement)) {
+            var underlyingMirror = resolveBrandedTypeUnderlying(typeElement);
+            if (underlyingMirror != null) {
+                var brandedTypeModel = createBrandedTypeModel(typeElement, className, element, underlyingMirror);
+                return new ApiTypeModel(brandedTypeModel.getName(), ApiTypeType.BRANDED_TYPE, brandedTypeModel.getClassName(), required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
+            }
+            return new ApiTypeModel("unknown", ApiTypeType.UNKNOWN, className, required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
         }
 
         if (typeElement.getKind() == ElementKind.CLASS || typeElement.getKind() == ElementKind.RECORD) {
@@ -321,6 +324,34 @@ public class SpringApiModelGenerator {
         }
 
         return false;
+    }
+
+    private TypeMirror resolveBrandedTypeUnderlying(TypeElement element) {
+        var explicit = TypeElementUtils.getBrandedTypeExplicitTypeMirror(element);
+        if (explicit.isPresent()) {
+            return explicit.get();
+        }
+
+        List<VariableElement> components;
+        if (element.getKind() == ElementKind.RECORD) {
+            components = element.getEnclosedElements().stream()
+                    .filter(e -> e.getKind() == ElementKind.RECORD_COMPONENT)
+                    .filter(VariableElement.class::isInstance)
+                    .map(VariableElement.class::cast)
+                    .toList();
+        } else {
+            components = TypeElementUtils.getNonStaticFields(element);
+        }
+
+        if (components.size() != 1) {
+            logger.error(
+                    "@BrandedType without explicit type() must have exactly one non-static field, but found " + components.size(),
+                    element
+            );
+            return null;
+        }
+
+        return components.getFirst().asType();
     }
 
     private ApiBrandedTypeModel createBrandedTypeModel(TypeElement element, String className, Element context, TypeMirror underlyingMirror) {
