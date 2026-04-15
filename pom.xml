@@ -92,6 +92,9 @@
         <module>spring-webmvc-test/spring-webmvc-test-annotation-processor</module>
         <module>commons/spring-web-processor-commons</module>
         <module>spring-webmvc-test/spring-webmvc-test-maven-plugin</module>
+
+        <module>freemarker/freemarker-model-generator</module>
+        <module>freemarker/freemarker-model-maven-plugin</module>
     </modules>
 
     <build>

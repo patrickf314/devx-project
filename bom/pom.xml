@@ -125,6 +125,13 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <!-- FreeMarker -->
+            <dependency>
+                <groupId>de.devx.project</groupId>
+                <artifactId>freemarker-model-generator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <!-- Spring WebMVC Test -->
             <dependency>
                 <groupId>de.devx.project</groupId>
