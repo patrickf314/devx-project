@@ -28,7 +28,7 @@
         <jakarta-persistence.version>3.1.0</jakarta-persistence.version>
         <jakarta-servlet.version>6.1.0-M1</jakarta-servlet.version>
 
-        <jackson.version>2.13.3</jackson.version>
+        <jackson.version>2.18.2</jackson.version>
 
         <lombok.version>1.18.42</lombok.version>
 
@@ -42,6 +42,8 @@
         <hamcrest.version>2.2</hamcrest.version>
         <assertj.version>3.26.3</assertj.version>
         <mockito.version>5.7.0</mockito.version>
+
+        <swagger.version>2.2.31</swagger.version>
     </properties>
 
     <distributionManagement>
@@ -95,6 +97,9 @@
 
         <module>freemarker/freemarker-model-generator</module>
         <module>freemarker/freemarker-model-maven-plugin</module>
+
+        <module>openapi/openapi-generator</module>
+        <module>openapi/openapi-maven-plugin</module>
     </modules>
 
     <build>
