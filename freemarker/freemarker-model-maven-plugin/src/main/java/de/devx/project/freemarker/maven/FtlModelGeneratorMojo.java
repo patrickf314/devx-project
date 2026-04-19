@@ -29,6 +29,9 @@ public class FtlModelGeneratorMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.resources[0].directory}")
     private File resourcesDirectory;
 
+    @Parameter
+    private String include;
+
     @Parameter(required = true)
     private String outputPackage;
 
@@ -37,15 +40,18 @@ public class FtlModelGeneratorMojo extends AbstractMojo {
         getLog().info("Starting generation of FTL model classes...");
 
         try {
+            var resourcesPath = resourcesDirectory.toPath();
+            var scanPath = include != null && !include.isBlank() ? resourcesPath.resolve(include) : resourcesPath;
+
             var parser = new FtlTemplateParser();
-            var templates = parser.parseTemplates(resourcesDirectory.toPath(), outputPackage);
+            var templates = parser.parseTemplates(resourcesPath, scanPath, outputPackage);
 
             var modelsToGenerate = templates.stream()
                     .filter(t -> !t.getVariables().isEmpty())
                     .toList();
 
             if (modelsToGenerate.isEmpty()) {
-                getLog().info("No FTL templates with variables found in: " + resourcesDirectory);
+                getLog().info("No FTL templates with variables found in: " + scanPath);
                 return;
             }
 

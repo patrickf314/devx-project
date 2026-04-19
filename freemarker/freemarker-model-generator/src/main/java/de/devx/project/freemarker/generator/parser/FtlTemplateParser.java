@@ -16,12 +16,16 @@ public class FtlTemplateParser {
             Pattern.compile("<#--\\s*@ftlvariable\\s+name=\"([^\"]+)\"\\s+type=\"([^\"]+)\"\\s*-->");
 
     public List<FtlTemplateModel> parseTemplates(Path resourcesDirectory, String packageName) throws IOException {
-        if (!Files.isDirectory(resourcesDirectory)) {
+        return parseTemplates(resourcesDirectory, resourcesDirectory, packageName);
+    }
+
+    public List<FtlTemplateModel> parseTemplates(Path resourcesDirectory, Path scanDirectory, String packageName) throws IOException {
+        if (!Files.isDirectory(scanDirectory)) {
             return Collections.emptyList();
         }
 
         var result = new ArrayList<FtlTemplateModel>();
-        try (var stream = Files.walk(resourcesDirectory)) {
+        try (var stream = Files.walk(scanDirectory)) {
             var ftlFiles = stream
                     .filter(path -> path.toString().endsWith(".ftl"))
                     .toList();

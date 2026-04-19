@@ -61,7 +61,6 @@ public class FtlModelGenerator {
 
         model.getVariables().stream()
                 .flatMap(v -> v.getImports().stream())
-                .filter(imp -> !imp.startsWith(model.getPackageName() + "."))
                 .forEach(imports::add);
 
         return List.copyOf(imports);
