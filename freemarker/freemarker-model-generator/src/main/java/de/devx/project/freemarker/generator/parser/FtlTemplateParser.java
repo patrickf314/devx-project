@@ -30,13 +30,13 @@ public class FtlTemplateParser {
                     .filter(path -> path.toString().endsWith(".ftl"))
                     .toList();
             for (var ftlFile : ftlFiles) {
-                result.add(parseTemplate(resourcesDirectory, ftlFile, packageName));
+                result.add(parseTemplate(resourcesDirectory, scanDirectory, ftlFile, packageName));
             }
         }
         return result;
     }
 
-    private FtlTemplateModel parseTemplate(Path resourcesDirectory, Path ftlFile, String packageName) throws IOException {
+    private FtlTemplateModel parseTemplate(Path resourcesDirectory, Path scanDirectory, Path ftlFile, String packageName) throws IOException {
         var content = Files.readString(ftlFile);
         var variables = new ArrayList<FtlVariableModel>();
         var seenNames = new LinkedHashSet<String>();
@@ -54,8 +54,12 @@ public class FtlTemplateParser {
         var templateName = fileName.substring(0, fileName.lastIndexOf('.'));
         var className = toClassName(templateName);
         var templatePath = resourcesDirectory.relativize(ftlFile).toString().replace('\\', '/');
+        var groupDirectory = scanDirectory.relativize(ftlFile.getParent()).toString().replace('\\', '/');
+        var modelPackage = groupDirectory.isEmpty()
+                ? packageName
+                : packageName + "." + groupDirectory.replace('/', '.').replace('-', '_');
 
-        return new FtlTemplateModel(templateName, className, packageName, templatePath, variables);
+        return new FtlTemplateModel(templateName, className, modelPackage, groupDirectory, templatePath, variables);
     }
 
     private FtlVariableModel parseVariable(String name, String fqType) {

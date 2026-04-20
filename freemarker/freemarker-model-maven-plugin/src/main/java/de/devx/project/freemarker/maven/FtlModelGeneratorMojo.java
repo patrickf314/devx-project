@@ -2,6 +2,7 @@ package de.devx.project.freemarker.maven;
 
 import de.devx.project.commons.maven.io.MavenJavaFileGenerator;
 import de.devx.project.freemarker.generator.FtlModelGenerator;
+import de.devx.project.freemarker.generator.data.FtlTemplateModel;
 import de.devx.project.freemarker.generator.parser.FtlTemplateParser;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -12,6 +13,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 @Mojo(
         name = "generate-models",
@@ -31,6 +33,9 @@ public class FtlModelGeneratorMojo extends AbstractMojo {
 
     @Parameter
     private String include;
+
+    @Parameter
+    private String enginePackage;
 
     @Parameter(required = true)
     private String outputPackage;
@@ -55,14 +60,22 @@ public class FtlModelGeneratorMojo extends AbstractMojo {
                 return;
             }
 
+            var effectiveEnginePackage = enginePackage != null && !enginePackage.isBlank() ? enginePackage : outputPackage;
+
             var generator = new FtlModelGenerator(new MavenJavaFileGenerator(outputDirectory));
             for (var template : modelsToGenerate) {
                 getLog().debug("Generating model for: " + template.getTemplateName() + ".ftl");
                 generator.generateModel(template);
             }
 
-            generator.generateFreemarkerTemplate(outputPackage, modelsToGenerate);
-            generator.generateFreemarkerTemplateEngine(outputPackage);
+            var groups = modelsToGenerate.stream()
+                    .collect(Collectors.groupingBy(FtlTemplateModel::getGroupDirectory));
+            for (var group : groups.values()) {
+                generator.generateTemplatesClass(effectiveEnginePackage, group);
+            }
+
+            generator.generateFreemarkerTemplate(effectiveEnginePackage);
+            generator.generateFreemarkerTemplateEngine(effectiveEnginePackage);
 
             mavenProject.addCompileSourceRoot(outputDirectory);
             getLog().info("FTL model generation completed.");

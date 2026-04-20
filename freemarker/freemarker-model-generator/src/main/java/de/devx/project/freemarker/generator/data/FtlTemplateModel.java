@@ -15,6 +15,7 @@ public class FtlTemplateModel {
     private final String templateName;
     private final String className;
     private final String packageName;
+    private final String groupDirectory;
     private final String templatePath;
     private final List<FtlVariableModel> variables;
 
@@ -24,5 +25,22 @@ public class FtlTemplateModel {
 
     public String getTemplateIdentifier() {
         return CAMEL_CASE_PATTERN.matcher(className).replaceAll("$1_$2").toUpperCase();
+    }
+
+    public String getGroupClassName() {
+        if (groupDirectory.isEmpty()) {
+            return "Templates";
+        }
+        var sb = new StringBuilder();
+        for (var segment : groupDirectory.split("[/\\\\]")) {
+            for (var part : segment.split("[^a-zA-Z0-9]+")) {
+                if (!part.isEmpty()) {
+                    sb.append(Character.toUpperCase(part.charAt(0)));
+                    sb.append(part.substring(1));
+                }
+            }
+        }
+        sb.append("Templates");
+        return sb.toString();
     }
 }

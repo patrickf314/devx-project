@@ -1,5 +1,4 @@
 <#-- @ftlvariable name="packageName" type="java.lang.String" -->
-<#-- @ftlvariable name="models" type="java.util.List<de.devx.project.freemarker.generator.data.FtlTemplateModel>" -->
 package ${packageName};
 
 /**
@@ -7,9 +6,9 @@ package ${packageName};
  */
 public class FreemarkerTemplate<M> {
 
-    <#list models as model>
-    public static final FreemarkerTemplate<${model.modelClassName}> ${model.templateIdentifier} = new FreemarkerTemplate<>("${model.templatePath}", ${model.modelClassName}.class);
-    </#list>
+    public static <M> FreemarkerTemplate<M> of(String templatePath, Class<M> modelType) {
+        return new FreemarkerTemplate<>(templatePath, modelType);
+    }
 
     private final String templatePath;
     private final Class<M> modelType;

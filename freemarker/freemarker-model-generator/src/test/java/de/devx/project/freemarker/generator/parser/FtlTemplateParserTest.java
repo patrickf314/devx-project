@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -203,5 +204,75 @@ class FtlTemplateParserTest {
         var variable = result.getFirst().getVariables().getFirst();
         assertThat(variable.getSimpleType()).isEqualTo("String[]");
         assertThat(variable.getImports()).isEmpty();
+    }
+
+    @Test
+    void testRootTemplateHasEmptyGroupDirectoryAndRootPackage(@TempDir Path tempDir) throws IOException {
+        Files.writeString(tempDir.resolve("Foo.ftl"), "");
+
+        var result = sut.parseTemplates(tempDir, "com.example");
+
+        assertThat(result).singleElement().satisfies(t -> {
+            assertThat(t.getGroupDirectory()).isEmpty();
+            assertThat(t.getPackageName()).isEqualTo("com.example");
+        });
+    }
+
+    @Test
+    void testSubdirectoryTemplateGetsGroupDirectoryAndSubPackage(@TempDir Path tempDir) throws IOException {
+        var subDir = Files.createDirectories(tempDir.resolve("business_letter").resolve("pdf"));
+        Files.writeString(subDir.resolve("Template.ftl"), "");
+
+        var result = sut.parseTemplates(tempDir, "com.example");
+
+        assertThat(result).singleElement().satisfies(t -> {
+            assertThat(t.getGroupDirectory()).isEqualTo("business_letter/pdf");
+            assertThat(t.getPackageName()).isEqualTo("com.example.business_letter.pdf");
+            assertThat(t.getTemplatePath()).isEqualTo("business_letter/pdf/Template.ftl");
+        });
+    }
+
+    @Test
+    void testScanDirectoryRestrictsScanning(@TempDir Path tempDir) throws IOException {
+        Files.writeString(tempDir.resolve("Skip.ftl"), "");
+        var scanDir = Files.createDirectory(tempDir.resolve("templates"));
+        Files.writeString(scanDir.resolve("Include.ftl"), "");
+
+        var result = sut.parseTemplates(tempDir, scanDir, "com.example");
+
+        assertThat(result).singleElement().satisfies(t -> {
+            assertThat(t.getTemplateName()).isEqualTo("Include");
+            assertThat(t.getTemplatePath()).isEqualTo("templates/Include.ftl");
+            assertThat(t.getGroupDirectory()).isEmpty();
+            assertThat(t.getPackageName()).isEqualTo("com.example");
+        });
+    }
+
+    @Test
+    void testScanDirectoryTemplateInSubdirectoryUsesPathRelativeToResourcesRoot(@TempDir Path tempDir) throws IOException {
+        var scanDir = Files.createDirectory(tempDir.resolve("templates"));
+        var subDir = Files.createDirectory(scanDir.resolve("letters"));
+        Files.writeString(subDir.resolve("Welcome.ftl"), "");
+
+        var result = sut.parseTemplates(tempDir, scanDir, "com.example");
+
+        assertThat(result).singleElement().satisfies(t -> {
+            assertThat(t.getTemplatePath()).isEqualTo("templates/letters/Welcome.ftl");
+            assertThat(t.getGroupDirectory()).isEqualTo("letters");
+            assertThat(t.getPackageName()).isEqualTo("com.example.letters");
+        });
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'',                  Templates",
+            "sub,                 SubTemplates",
+            "business_letter/pdf, BusinessLetterPdfTemplates",
+            "my-dir/sub,          MyDirSubTemplates",
+    })
+    void testGroupClassNameFromGroupDirectory(String groupDirectory, String expectedClassName) {
+        var model = new FtlTemplateModel("T", "T", "com.example", groupDirectory, "T.ftl", List.of());
+
+        assertThat(model.getGroupClassName()).isEqualTo(expectedClassName);
     }
 }
