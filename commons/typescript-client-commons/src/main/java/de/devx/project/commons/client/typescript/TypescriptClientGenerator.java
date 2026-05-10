@@ -16,6 +16,9 @@ import static java.util.function.Predicate.not;
 
 public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProperties> {
 
+    private static final String SCHEMA_FILE_SUFFIX = "Schema";
+    private static final String MODEL_KEY = "model";
+
     protected final SourceFileGenerator fileGenerator;
     protected final P properties;
     protected final Configuration configuration;
@@ -40,10 +43,10 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
 
         var packageName = properties.getPackageNameForClass(model.getClassName());
 
-        processTemplate("enum-template.ts.ftl", packageName, model.getName(), Map.of("model", model));
+        processTemplate("enum-template.ts.ftl", packageName, model.getName(), Map.of(MODEL_KEY, model));
 
         if (properties.isGenerateZodSchemas()) {
-            processTemplate("enum-zod-schema-template.ts.ftl", packageName, model.getName() + "Schema", Map.of("model", model));
+            processTemplate("enum-zod-schema-template.ts.ftl", packageName, model.getName() + SCHEMA_FILE_SUFFIX, Map.of(MODEL_KEY, model));
         }
     }
 
@@ -57,15 +60,15 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
         var packageName = properties.getPackageNameForClass(model.getClassName());
 
         var typeTemplateData = new HashMap<String, Object>();
-        typeTemplateData.put("model", model);
+        typeTemplateData.put(MODEL_KEY, model);
         if (properties.isGenerateZodSchemas()) {
-            var schemaFileName = fileGenerator.fileName(model.getName() + "Schema", false);
+            var schemaFileName = fileGenerator.fileName(model.getName() + SCHEMA_FILE_SUFFIX, false);
             typeTemplateData.put("schemaImportPath", fileGenerator.importPath(packageName, packageName) + "/" + schemaFileName);
         }
         processTemplate("branded-type-template.ts.ftl", packageName, model.getName(), typeTemplateData);
 
         if (properties.isGenerateZodSchemas()) {
-            processTemplate("branded-type-zod-schema-template.ts.ftl", packageName, model.getName() + "Schema", Map.of("model", model));
+            processTemplate("branded-type-zod-schema-template.ts.ftl", packageName, model.getName() + SCHEMA_FILE_SUFFIX, Map.of(MODEL_KEY, model));
         }
     }
 
@@ -79,12 +82,21 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
         var packageName = properties.getPackageNameForClass(model.getClassName());
         var imports = resolveImports(packageName, model);
 
-        processTemplate("dto-template.ts.ftl", packageName, model.getName(), Map.of("model", model, "imports", imports));
+        processTemplate("dto-template.ts.ftl", packageName, model.getName(), Map.of(MODEL_KEY, model, "imports", imports));
 
         if (properties.isGenerateZodSchemas() && (model.getTypeArguments() == null || model.getTypeArguments().isEmpty())) {
-            var zodImports = resolveZodImports(packageName, model);
-            processTemplate("dto-zod-schema-template.ts.ftl", packageName, model.getName() + "Schema", Map.of("model", model, "imports", zodImports));
+            var recursive = isRecursiveType(model);
+            var zodImports = resolveZodImports(packageName, model, recursive);
+            processTemplate("dto-zod-schema-template.ts.ftl", packageName, model.getName() + SCHEMA_FILE_SUFFIX, Map.of(MODEL_KEY, model, "imports", zodImports, "recursive", recursive));
         }
+    }
+
+    private boolean isRecursiveType(TypeScriptDTOModel model) {
+        var className = model.getClassName();
+        return model.getFields().stream()
+                .map(TypeScriptDTOFieldModel::getType)
+                .map(TypeScriptTypeModel::getDependentClassNames)
+                .anyMatch(deps -> deps.contains(className));
     }
 
     protected void processTemplate(String template, String packageName, String className, Map<String, Object> dataModel) throws IOException {
@@ -166,7 +178,7 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
         var name = className.substring(className.lastIndexOf('.') + 1);
 
         var importPath = fileGenerator.importPath(currentPackage, targetPackage);
-        var fileName = fileGenerator.fileName(name);
+        var fileName = fileGenerator.fileName(name, false);
         return new TypeScriptImportModel(importPath + "/" + fileName, Set.of(name));
     }
 
@@ -187,7 +199,7 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
         return imports.values();
     }
 
-    private Collection<TypeScriptImportModel> resolveZodImports(String currentPackage, TypeScriptDTOModel model) {
+    private Collection<TypeScriptImportModel> resolveZodImports(String currentPackage, TypeScriptDTOModel model, boolean recursive) {
         var imports = new HashMap<String, TypeScriptImportModel>();
 
         var allTypes = model.getFields().stream().map(TypeScriptDTOFieldModel::getType);
@@ -198,6 +210,11 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
         allTypes.map(type -> importZodModelsForType(currentPackage, type, model.getClassName()))
                 .flatMap(List::stream)
                 .forEach(i -> addImport(i, imports));
+
+        if (recursive) {
+            var typeImport = Objects.requireNonNull(importModelForClassName(currentPackage, model.getClassName()));
+            addImport(typeImport, imports);
+        }
 
         return imports.values();
     }
@@ -238,7 +255,7 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
 
         var targetPackage = properties.getPackageNameForClass(className);
         var name = className.substring(className.lastIndexOf('.') + 1);
-        var schemaName = name + "Schema";
+        var schemaName = name + SCHEMA_FILE_SUFFIX;
 
         var importPath = fileGenerator.importPath(currentPackage, targetPackage);
         var schemaFileName = fileGenerator.fileName(schemaName);

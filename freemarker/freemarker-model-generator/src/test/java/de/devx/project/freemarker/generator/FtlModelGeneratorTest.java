@@ -285,7 +285,7 @@ class FtlModelGeneratorTest {
                          */
                         public class Templates {
 
-                            public static final FreemarkerTemplate<WelcomeEmailModel> WELCOME_EMAIL = FreemarkerTemplate.of("WelcomeEmail.ftl", WelcomeEmailModel.class);
+                            public static final FreemarkerTemplate<WelcomeEmailModel> WELCOME_EMAIL = FreemarkerTemplate.of("/WelcomeEmail.ftl", WelcomeEmailModel.class);
 
                             private Templates() {
                             }
@@ -323,7 +323,7 @@ class FtlModelGeneratorTest {
                          */
                         public class BusinessLetterPdfTemplates {
 
-                            public static final FreemarkerTemplate<TemplateModel> TEMPLATE = FreemarkerTemplate.of("business_letter/pdf/Template.ftl", TemplateModel.class);
+                            public static final FreemarkerTemplate<TemplateModel> TEMPLATE = FreemarkerTemplate.of("/business_letter/pdf/Template.ftl", TemplateModel.class);
 
                             private BusinessLetterPdfTemplates() {
                             }

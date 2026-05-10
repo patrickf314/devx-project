@@ -16,7 +16,7 @@ import ${import};
 public class ${groupClassName} {
 
     <#list templates as model>
-    public static final FreemarkerTemplate<${model.modelClassName}> ${model.templateIdentifier} = FreemarkerTemplate.of("${model.templatePath}", ${model.modelClassName}.class);
+    public static final FreemarkerTemplate<${model.modelClassName}> ${model.templateIdentifier} = FreemarkerTemplate.of("/${model.templatePath}", ${model.modelClassName}.class);
     </#list>
 
     private ${groupClassName}() {
