@@ -8,8 +8,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TypeScriptFileGeneratorTest {
 
@@ -49,20 +48,20 @@ class TypeScriptFileGeneratorTest {
         );
     }
 
-    @ParameterizedTest
     @MethodSource
+    @ParameterizedTest
     void testFileNames(String className, String expectedFileName) {
         var actualFileName = generator.fileName(className);
 
-        assertThat(actualFileName, is(expectedFileName));
+        assertThat(actualFileName).isEqualTo(expectedFileName);
     }
 
-    @ParameterizedTest
     @MethodSource
+    @ParameterizedTest
     void testImportPaths(String currentPackage, String targetPackage, String expectedImportPath) {
         var actualImportPath = generator.importPath(currentPackage, targetPackage);
 
-        assertThat(actualImportPath, is(expectedImportPath));
+        assertThat(actualImportPath).isEqualTo(expectedImportPath);
     }
 
 }

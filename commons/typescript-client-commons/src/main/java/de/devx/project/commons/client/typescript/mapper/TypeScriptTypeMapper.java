@@ -8,11 +8,11 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Named;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Collections.emptySet;
 
@@ -31,7 +31,7 @@ public interface TypeScriptTypeMapper {
         }
 
         if (Pattern.class.getName().equals(type.getClassName())) {
-            return createTypeScriptType("string", !type.isRequired(), emptySet(), "z.string()");
+            return createTypeScriptType("string", null, !type.isRequired(), emptySet(), "z.string()");
         }
 
         return switch (type.getType()) {
@@ -45,32 +45,31 @@ public interface TypeScriptTypeMapper {
     }
 
     default TypeScriptTypeModel mapTypeAlias(TypeScriptTypeAlias typeAlias, boolean optional) {
-        var zodSchema = typeAlias.getZodSchema() != null
-                ? typeAlias.getZodSchema()
-                : "z.custom<" + typeAlias.getType() + ">()";
-        return createTypeScriptType(typeAlias.getType(), optional, Set.of(typeAlias.getClassName()), zodSchema);
+        return createTypeScriptType(typeAlias.getType(), typeAlias.getClassName(), optional, emptySet(), typeAlias.getZodSchema());
     }
 
     default TypeScriptTypeModel mapGenericType(ApiTypeModel model) {
-        return createTypeScriptType(model.getName(), !model.isRequired(), emptySet(), "z.unknown()");
+        return new TypeScriptTypeModel(model.getName(), null, !model.isRequired(), emptySet(), model.getName());
     }
 
     default TypeScriptTypeModel mapJavaType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
         return switch (model.getName()) {
             case "int", "double", "float", "long", "short", "byte", "number" ->
-                    createTypeScriptType("number", !model.isRequired(), emptySet(), "z.number()");
-            case "boolean" -> createTypeScriptType("boolean", false, emptySet(), "z.boolean()");
-            case "char", "string" -> createTypeScriptType("string", !model.isRequired(), emptySet(), "z.string()");
-            case "void" -> createTypeScriptType("void", false, emptySet(), "z.void()");
+                    createTypeScriptType("number", null, !model.isRequired(), emptySet(), "z.number()");
+            case "boolean" -> createTypeScriptType("boolean", null, false, emptySet(), "z.boolean()");
+            case "char", "string" ->
+                    createTypeScriptType("string", null, !model.isRequired(), emptySet(), "z.string()");
+            case "void" -> createTypeScriptType("void", null, false, emptySet(), "z.void()");
             case "array", "collection" -> mapArrayType(model, typeAliases);
             case "map" -> mapMapType(model, typeAliases);
+            case "object" -> createTypeScriptType("unknown", null, !model.isRequired(), emptySet(), "z.unknown()");
             default -> mapUnknownType();
         };
     }
 
     default TypeScriptTypeModel mapArrayType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
-        var typeArgument = mapType(model.getTypeArguments().get(0), typeAliases);
-        return createTypeScriptType(typeArgument.getName() + "[]", !model.isRequired(), typeArgument.getDependentClassNames(), "z.array(" + typeArgument.getZodSchema() + ")");
+        var typeArgument = mapType(model.getTypeArguments().getFirst(), typeAliases);
+        return createTypeScriptType(typeArgument.getName() + "[]", null, !model.isRequired(), Set.of(typeArgument), "z.array(" + typeArgument.getZodSchema() + ")");
     }
 
     default TypeScriptTypeModel mapMapType(ApiTypeModel model, @Context Map<String, TypeScriptTypeAlias> typeAliases) {
@@ -82,22 +81,20 @@ public interface TypeScriptTypeMapper {
             throw new IllegalArgumentException("Invalid map type: key type must be string, number or an enum, but was " + keyType);
         }
 
-        return createTypeScriptType("Record<" + keyType.getName() + ", " + valueType.getName() + " | undefined>", false, Stream.concat(
-                keyType.getDependentClassNames().stream(),
-                valueType.getDependentClassNames().stream()
-        ).collect(Collectors.toSet()), "z.record(" + keyType.getZodSchema() + ", " + valueType.getZodSchema() + ".optional())");
+        var dependentTypes = keyType.equals(valueType) ? Set.of(keyType) : Set.of(keyType, valueType);
+        return createTypeScriptType("Record<" + keyType.getName() + ", " + valueType.getName() + " | undefined>", null, false, dependentTypes, "z.record(" + keyType.getZodSchema() + ", " + valueType.getZodSchema() + ".optional())");
     }
 
     default TypeScriptTypeModel mapUnknownType() {
-        return createTypeScriptType("unknown", false, emptySet(), "z.unknown()");
+        return createTypeScriptType("unknown", null, false, emptySet(), "z.unknown()");
     }
 
     default TypeScriptTypeModel mapEnumType(ApiTypeModel model) {
-        return createTypeScriptType(model.getName(), !model.isRequired(), Set.of(model.getClassName()), model.getName() + "Schema");
+        return createTypeScriptType(model.getName(), model.getClassName(), !model.isRequired(), emptySet(), model.getName() + "Schema");
     }
 
     default TypeScriptTypeModel mapBrandedType(ApiTypeModel model) {
-        return createTypeScriptType(model.getName(), !model.isRequired(), Set.of(model.getClassName()), model.getName() + "Schema");
+        return createTypeScriptType(model.getName(), model.getClassName(), !model.isRequired(), emptySet(), model.getName() + "Schema");
     }
 
     @Named("mapDTOType")
@@ -122,17 +119,20 @@ public interface TypeScriptTypeMapper {
                     .append(">");
         }
 
-        var dependentClassNames = Stream.concat(
-                typeArguments.stream().map(TypeScriptTypeModel::getDependentClassNames).flatMap(Set::stream),
-                Stream.of(model.getClassName())
-        ).collect(Collectors.toSet());
-
-        var zodSchema = model.getTypeArguments().isEmpty() ? model.getName() + "Schema" : "z.unknown()";
-
-        return createTypeScriptType(builder.toString(), !model.isRequired(), dependentClassNames, zodSchema);
+        var zodSchema = mapToZodSchema(model);
+        return createTypeScriptType(builder.toString(), model.getClassName(), !model.isRequired(), new HashSet<>(typeArguments), zodSchema);
     }
 
-    private TypeScriptTypeModel createTypeScriptType(String name, boolean optional, Set<String> dependentClassNames, String zodSchema) {
-        return new TypeScriptTypeModel(name, optional, dependentClassNames, zodSchema);
+    private static String mapToZodSchema(ApiTypeModel model) {
+        if (model.getTypeArguments().isEmpty()) {
+            return model.getName() + "Schema";
+        }
+
+        var genericArguments = model.getTypeArguments().stream().map(TypeScriptTypeMapper::mapToZodSchema).collect(Collectors.joining(", "));
+        return "create" + model.getName() + "Schema(" + genericArguments + ")";
+    }
+
+    private TypeScriptTypeModel createTypeScriptType(String name, String className, boolean optional, Set<TypeScriptTypeModel> dependentTypes, String zodSchema) {
+        return new TypeScriptTypeModel(name, className, optional, dependentTypes, zodSchema);
     }
 }

@@ -35,7 +35,7 @@
 <#-- -->
 <#-- -->
 <#macro mapResponse method>
-<#t><#if method.returnTypeWrapper == 'Observable'>mapStreamingResponse(res)<#elseif method.returnType.name == 'void'>mapVoidResponse(res)<#elseif method.returnType.name == 'string'>mapStringResponse(res)<#elseif method.returnType.name == 'DownloadInfo'>mapStreamingResponse(res)<#elseif generateZodSchemas && method.returnType.zodSchema?? && !method.returnType.zodSchema?starts_with("z.")>mapJsonResponse(res, ${method.returnType.zodSchema})<#else>mapJsonResponse<${method.returnType.name}>(res)</#if></#macro>
+<#t><#if method.returnTypeWrapper == 'Observable'>mapStreamingResponse(res)<#elseif method.returnType.name == 'void'>mapVoidResponse(res)<#elseif method.returnType.name == 'string'>mapStringResponse(res)<#elseif method.returnType.name == 'DownloadInfo'>mapStreamingResponse(res)<#elseif generateZodSchemas && method.returnType.zodSchema??>mapJsonResponse(res, ${method.returnType.zodSchema})<#else>mapJsonResponse<${method.returnType.name}>(res)</#if></#macro>
 <#-- -->
 <#-- -->
 <#macro url method state>
@@ -69,8 +69,8 @@ export const ${method.name}Thunk: AsyncThunk<<#if method.returnTypeWrapper == 'O
 
     const headers = new Headers();
     <#if method.bodyParameter?has_content && !method.formData>
-    headers.set('Content-Type', 'application/json');
     <#-- Do not set content type when using form data. See https://stackoverflow.com/questions/46640024/how-do-i-post-form-data-with-fetch-api -->
+    headers.set('Content-Type', 'application/json');
     </#if>
     <#if method.headerParams?has_content>
     <#list method.headerParams as headerParam>

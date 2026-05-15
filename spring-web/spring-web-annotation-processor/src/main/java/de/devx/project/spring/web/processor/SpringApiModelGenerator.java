@@ -191,6 +191,10 @@ public class SpringApiModelGenerator {
         }
 
         var className = typeElement.getQualifiedName().toString();
+        if(className.equals(Object.class.getName())) {
+            return new ApiTypeModel("object", ApiTypeType.JAVA_TYPE, className, required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
+        }
+
         if (className.equals(String.class.getName())) {
             return new ApiTypeModel("string", ApiTypeType.JAVA_TYPE, className, required, Collections.emptyList(), Collections.emptyList(), mapAnnotations(annotations));
         }

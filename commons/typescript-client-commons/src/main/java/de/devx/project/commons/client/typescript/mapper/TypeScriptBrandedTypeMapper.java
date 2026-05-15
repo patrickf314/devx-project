@@ -30,7 +30,7 @@ public interface TypeScriptBrandedTypeMapper {
             case "int", "double", "float", "long", "short", "byte", "number" -> "z.number()";
             case "string", "char" -> "z.string()";
             case "boolean" -> "z.boolean()";
-            default -> "z.unknown()";
+            default -> null;
         };
     }
 }

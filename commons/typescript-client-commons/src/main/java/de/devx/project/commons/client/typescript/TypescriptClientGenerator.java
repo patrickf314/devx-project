@@ -1,6 +1,13 @@
 package de.devx.project.commons.client.typescript;
 
-import de.devx.project.commons.client.typescript.data.*;
+import de.devx.project.commons.client.typescript.data.TypeScriptBrandedTypeModel;
+import de.devx.project.commons.client.typescript.data.TypeScriptDTOFieldModel;
+import de.devx.project.commons.client.typescript.data.TypeScriptDTOModel;
+import de.devx.project.commons.client.typescript.data.TypeScriptEnumModel;
+import de.devx.project.commons.client.typescript.data.TypeScriptImportModel;
+import de.devx.project.commons.client.typescript.data.TypeScriptServiceMethodModel;
+import de.devx.project.commons.client.typescript.data.TypeScriptServiceModel;
+import de.devx.project.commons.client.typescript.data.TypeScriptTypeModel;
 import de.devx.project.commons.client.typescript.properties.TypeScriptClientGeneratorProperties;
 import de.devx.project.commons.client.typescript.properties.TypeScriptDependency;
 import de.devx.project.commons.generator.io.SourceFileGenerator;
@@ -9,15 +16,23 @@ import freemarker.template.TemplateException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
-
-import static java.util.function.Predicate.not;
 
 public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProperties> {
 
     private static final String SCHEMA_FILE_SUFFIX = "Schema";
     private static final String MODEL_KEY = "model";
+
+    private static final TypeScriptImportModel ZOD_IMPORT_MODEL = new TypeScriptImportModel("zod", Set.of("z"));
 
     protected final SourceFileGenerator fileGenerator;
     protected final P properties;
@@ -84,10 +99,17 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
 
         processTemplate("dto-template.ts.ftl", packageName, model.getName(), Map.of(MODEL_KEY, model, "imports", imports));
 
-        if (properties.isGenerateZodSchemas() && (model.getTypeArguments() == null || model.getTypeArguments().isEmpty())) {
+        if (properties.isGenerateZodSchemas()) {
             var recursive = isRecursiveType(model);
+            var generic = !model.getTypeArguments().isEmpty();
             var zodImports = resolveZodImports(packageName, model, recursive);
-            processTemplate("dto-zod-schema-template.ts.ftl", packageName, model.getName() + SCHEMA_FILE_SUFFIX, Map.of(MODEL_KEY, model, "imports", zodImports, "recursive", recursive));
+
+            processTemplate("dto-zod-schema-template.ts.ftl", packageName, model.getName() + SCHEMA_FILE_SUFFIX, Map.of(
+                    MODEL_KEY, model,
+                    "imports", zodImports,
+                    "recursive", recursive,
+                    "generic", generic
+            ));
         }
     }
 
@@ -152,15 +174,24 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
     }
 
     protected List<TypeScriptImportModel> importModelsForType(String currentPackage, TypeScriptTypeModel typeModel, String currentClassName) {
-        return typeModel.getDependentClassNames()
-                .stream()
-                .filter(not(currentClassName::equals))
-                .map(className -> importModelForClassName(currentPackage, className))
-                .filter(Objects::nonNull)
-                .toList();
+        var imports = new ArrayList<TypeScriptImportModel>();
+        var typeImport = importModelForClassName(currentPackage, typeModel.getClassName(), currentClassName);
+        if (typeImport != null) {
+            imports.add(typeImport);
+        }
+
+        for (var dependentType : typeModel.getDependentTypes()) {
+            imports.addAll(importModelsForType(currentPackage, dependentType, currentClassName));
+        }
+
+        return imports;
     }
 
-    private TypeScriptImportModel importModelForClassName(String currentPackage, String className) {
+    private TypeScriptImportModel importModelForClassName(String currentPackage, String className, String currentClassName) {
+        if (className == null || className.equals(currentClassName)) {
+            return null;
+        }
+
         var alias = properties.getTypeAliases().stream().filter(a -> a.getClassName().equals(className)).findAny().orElse(null);
         if (alias != null) {
             if (alias.getDependency() == null && alias.getPath() == null) {
@@ -202,6 +233,8 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
     private Collection<TypeScriptImportModel> resolveZodImports(String currentPackage, TypeScriptDTOModel model, boolean recursive) {
         var imports = new HashMap<String, TypeScriptImportModel>();
 
+        addImport(ZOD_IMPORT_MODEL, imports);
+
         var allTypes = model.getFields().stream().map(TypeScriptDTOFieldModel::getType);
         if (model.getExtendedDTO() != null) {
             allTypes = Stream.concat(Stream.of(model.getExtendedDTO()), allTypes);
@@ -212,7 +245,7 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
                 .forEach(i -> addImport(i, imports));
 
         if (recursive) {
-            var typeImport = Objects.requireNonNull(importModelForClassName(currentPackage, model.getClassName()));
+            var typeImport = Objects.requireNonNull(importModelForClassName(currentPackage, model.getClassName(), null));
             addImport(typeImport, imports);
         }
 
@@ -220,30 +253,26 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
     }
 
     private List<TypeScriptImportModel> importZodModelsForType(String currentPackage, TypeScriptTypeModel typeModel, String currentClassName) {
-        return typeModel.getDependentClassNames()
-                .stream()
-                .filter(not(currentClassName::equals))
-                .map(className -> importZodModelForClassName(currentPackage, className))
-                .filter(Objects::nonNull)
-                .toList();
+        var imports = new ArrayList<TypeScriptImportModel>();
+        var typeImport = importZodModelForClassName(currentPackage, typeModel.getClassName(), currentClassName, typeModel.getZodSchema());
+        if (typeImport != null) {
+            imports.add(typeImport);
+        }
+
+        for (var dependentType : typeModel.getDependentTypes()) {
+            imports.addAll(importZodModelsForType(currentPackage, dependentType, currentClassName));
+        }
+
+        return imports;
     }
 
-    private TypeScriptImportModel importZodModelForClassName(String currentPackage, String className) {
+    private TypeScriptImportModel importZodModelForClassName(String currentPackage, String className, String currentClassName, String zodSchema) {
         var alias = properties.getTypeAliases().stream().filter(a -> a.getClassName().equals(className)).findAny().orElse(null);
         if (alias != null) {
-            if (alias.getZodSchema() == null) {
-                // z.custom<Type>(_ => true) — the type itself must be imported for the generic
-                if (alias.getDependency() != null) {
-                    return new TypeScriptImportModel(alias.getDependency(), Set.of(alias.getType()));
-                }
-                if (alias.getPath() != null) {
-                    return new TypeScriptImportModel(fileGenerator.importPath(currentPackage, alias.getPath()), Set.of(alias.getType()));
-                }
-                return null;
-            }
             if (alias.getZodSchemaDependency() != null) {
                 return new TypeScriptImportModel(alias.getZodSchemaDependency(), Set.of(alias.getZodSchema()));
             }
+
             if (alias.getZodSchemaPath() != null) {
                 var i = alias.getZodSchemaPath().lastIndexOf('/');
                 var targetPackage = i == -1 ? "" : alias.getZodSchemaPath().substring(0, i).replace('/', '.');
@@ -253,12 +282,26 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
             return null;
         }
 
+        if (zodSchema == null) {
+            return null;
+        }
+
+        if (zodSchema.startsWith("z.")) {
+            return ZOD_IMPORT_MODEL;
+        }
+
+        if (className == null || className.equals(currentClassName)) {
+            return null;
+        }
+
         var targetPackage = properties.getPackageNameForClass(className);
         var name = className.substring(className.lastIndexOf('.') + 1);
-        var schemaName = name + SCHEMA_FILE_SUFFIX;
-
         var importPath = fileGenerator.importPath(currentPackage, targetPackage);
-        var schemaFileName = fileGenerator.fileName(schemaName);
+        var schemaFileName = fileGenerator.fileName(name + SCHEMA_FILE_SUFFIX);
+
+        var i = zodSchema.indexOf('(');
+        var schemaName = i == -1 ? zodSchema : zodSchema.substring(0, i);
+
         return new TypeScriptImportModel(importPath + "/" + schemaFileName, Set.of(schemaName));
     }
 
@@ -266,14 +309,9 @@ public class TypescriptClientGenerator<P extends TypeScriptClientGeneratorProper
         var imports = new HashMap<String, TypeScriptImportModel>();
         model.getMethods().stream()
                 .map(TypeScriptServiceMethodModel::getReturnType)
-                .filter(TypescriptClientGenerator::isZodSchemaReference)
                 .map(type -> importZodModelsForType(currentPackage, type, model.getClassName()))
                 .flatMap(List::stream)
                 .forEach(i -> addImport(i, imports));
         return imports.values();
-    }
-
-    protected static boolean isZodSchemaReference(TypeScriptTypeModel type) {
-        return type != null && type.getZodSchema() != null && !type.getZodSchema().startsWith("z.");
     }
 }
