@@ -2,7 +2,6 @@
 <#-- @ftlvariable name="imports" type="java.util.List<de.devx.project.commons.client.typescript.data.TypeScriptImportModel>" -->
 <#-- @ftlvariable name="errorMapperIdentifier" type="java.lang.String" -->
 <#-- @ftlvariable name="generateZodSchemas" type="java.lang.Boolean" -->
-import { type DownloadStreamDTO } from './download-stream.dto';
 <#list imports as import>
 import { ${import.identifiers?join(", ")} } from '${import.path}';
 </#list>
@@ -61,85 +60,14 @@ export async function mapStringResponse(res: Response): Promise<string> {
     return await res.text();
 }
 
-export async function mapStreamingResponse(res: Response): Promise<DownloadStreamDTO<Uint8Array>> {
+export async function mapBlobResponse(res: Response): Promise<Blob> {
     if (res.status !== 200) {
         throw await ${errorMapperIdentifier}(res);
     }
 
-    const contentLength = res.headers.get('Content-Length');
-    const expectedBytes = contentLength == null ? undefined : Number(contentLength);
-    if (res.body === null) {
-        throw new Error('Invalid response body: null');
-    }
-
-    const reader = res.body.getReader();
-    const stream = new DownloadStream(reader, expectedBytes);
-
-    stream.run();
-
-    return stream as DownloadStreamDTO<Uint8Array>;
+    return await res.blob();
 }
 
 function invalidResponseBodyError(actualContentType: string | null): Error {
     return new Error(`Invalid response body: contentType is ${r"${actualContentType ?? 'null'}"}`);
-}
-
-class DownloadStream {
-
-    done = false;
-    private pid = -1;
-    private canceled = false;
-    receivedBytes = 0;
-    private readonly chunks = Array<Uint8Array>();
-    value: Uint8Array | undefined;
-
-    constructor(private readonly reader: ReadableStreamDefaultReader<Uint8Array>,
-                readonly expectedBytes?: number,
-                private readonly timeout: number = 100) {
-
-    }
-
-    run(): void {
-        if (this.canceled) {
-            return;
-        }
-
-        this.pid = window.setTimeout(() => {
-            this.pid = -1;
-            this.readNext().then(() => this.run());
-        }, this.timeout);
-    }
-
-    private async readNext(): Promise<void> {
-        const result = await this.reader.read();
-
-        if (result.done) {
-            this.complete();
-            return;
-        }
-
-        this.chunks.push(result.value);
-        this.receivedBytes += result.value.length;
-    }
-
-    private complete(): void {
-        const value = new Uint8Array(this.receivedBytes);
-        let position = 0;
-        for (const chunk of this.chunks) {
-            value.set(chunk, position);
-            position += chunk.length;
-        }
-        this.value = value;
-        this.done = true;
-    }
-
-    async cancel(): Promise<void> {
-        this.canceled = true;
-
-        if (this.pid !== -1) {
-            window.clearTimeout(this.pid);
-        }
-
-        await this.reader.cancel();
-    }
 }

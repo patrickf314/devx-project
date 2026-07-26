@@ -50,8 +50,7 @@ class ReactClientGeneratorTest {
                 import { useDispatch } from 'react-redux';
                 import { useMemo } from 'react';
                 import { State, ThunkOptions, Dispatch } from 'commons/thunk-options';
-                import { mapJsonResponse, mapVoidResponse, mapStreamingResponse, url, mapStringResponse } from 'commons/react-service-commons';
-                import { DownloadStreamDTO } from 'commons/download-stream.dto';
+                import { mapBlobResponse, mapJsonResponse, mapVoidResponse, url, mapStringResponse } from 'commons/react-service-commons';
                 import { testThunkConfig } from 'commons/service-commons';
                 import { testPrepareHeaders } from 'auth/user-authenticator';
 
@@ -97,28 +96,6 @@ class ReactClientGeneratorTest {
     void testGenerateUtilities() throws IOException {
         generator.generateUtilities();
 
-        var generatedDownloadStreamDTO = fileGenerator.getFileContent("commons", "DownloadStreamDTO");
-        assertThat(generatedDownloadStreamDTO.isPresent(), is(true));
-        assertThat(generatedDownloadStreamDTO.get(), is("""
-                interface DownloadStreamBaseDTO {
-                    cancel: () => Promise<void>;
-                    receivedBytes: number;
-                    expectedBytes?: number;
-                                
-                }
-                                
-                export interface DownloadDoneDTO<T> extends DownloadStreamBaseDTO {
-                    done: true;
-                    value: T
-                }
-                                
-                export interface DownloadProgressDTO extends DownloadStreamBaseDTO {
-                    done: false;
-                }
-                                
-                export type DownloadStreamDTO<T> = DownloadDoneDTO<T> | DownloadProgressDTO;                
-                """));
-
         var generatedThunkOptions = fileGenerator.getFileContent("commons", "ThunkOptions");
         assertThat(generatedThunkOptions.isPresent(), is(true));
         assertThat(generatedThunkOptions.get(), is("""
@@ -133,7 +110,6 @@ class ReactClientGeneratorTest {
         var generatedServiceCommons = fileGenerator.getFileContent("commons", "ReactServiceCommons");
         assertThat(generatedServiceCommons.isPresent(), is(true));
         assertThat(generatedServiceCommons.get(), is("""
-                import { type DownloadStreamDTO } from './download-stream.dto';
                 import { testErrorMapper } from 'commons/service-commons';
 
                 export function url(pathname: string, searchParams: Record<string, string | number | boolean | undefined | null | {
@@ -189,87 +165,16 @@ class ReactClientGeneratorTest {
                     return await res.text();
                 }
 
-                export async function mapStreamingResponse(res: Response): Promise<DownloadStreamDTO<Uint8Array>> {
+                export async function mapBlobResponse(res: Response): Promise<Blob> {
                     if (res.status !== 200) {
                         throw await testErrorMapper(res);
                     }
 
-                    const contentLength = res.headers.get('Content-Length');
-                    const expectedBytes = contentLength == null ? undefined : Number(contentLength);
-                    if (res.body === null) {
-                        throw new Error('Invalid response body: null');
-                    }
-
-                    const reader = res.body.getReader();
-                    const stream = new DownloadStream(reader, expectedBytes);
-
-                    stream.run();
-
-                    return stream as DownloadStreamDTO<Uint8Array>;
+                    return await res.blob();
                 }
 
                 function invalidResponseBodyError(actualContentType: string | null): Error {
                     return new Error(`Invalid response body: contentType is ${actualContentType ?? 'null'}`);
-                }
-
-                class DownloadStream {
-
-                    done = false;
-                    private pid = -1;
-                    private canceled = false;
-                    receivedBytes = 0;
-                    private readonly chunks = Array<Uint8Array>();
-                    value: Uint8Array | undefined;
-
-                    constructor(private readonly reader: ReadableStreamDefaultReader<Uint8Array>,
-                                readonly expectedBytes?: number,
-                                private readonly timeout: number = 100) {
-
-                    }
-
-                    run(): void {
-                        if (this.canceled) {
-                            return;
-                        }
-
-                        this.pid = window.setTimeout(() => {
-                            this.pid = -1;
-                            this.readNext().then(() => this.run());
-                        }, this.timeout);
-                    }
-
-                    private async readNext(): Promise<void> {
-                        const result = await this.reader.read();
-
-                        if (result.done) {
-                            this.complete();
-                            return;
-                        }
-
-                        this.chunks.push(result.value);
-                        this.receivedBytes += result.value.length;
-                    }
-
-                    private complete(): void {
-                        const value = new Uint8Array(this.receivedBytes);
-                        let position = 0;
-                        for (const chunk of this.chunks) {
-                            value.set(chunk, position);
-                            position += chunk.length;
-                        }
-                        this.value = value;
-                        this.done = true;
-                    }
-
-                    async cancel(): Promise<void> {
-                        this.canceled = true;
-
-                        if (this.pid !== -1) {
-                            window.clearTimeout(this.pid);
-                        }
-
-                        await this.reader.cancel();
-                    }
                 }
                 """));
     }

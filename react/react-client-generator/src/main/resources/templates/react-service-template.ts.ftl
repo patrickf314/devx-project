@@ -35,7 +35,7 @@
 <#-- -->
 <#-- -->
 <#macro mapResponse method>
-<#t><#if method.returnTypeWrapper == 'Observable'>mapStreamingResponse(res)<#elseif method.returnType.name == 'void'>mapVoidResponse(res)<#elseif method.returnType.name == 'string'>mapStringResponse(res)<#elseif method.returnType.name == 'DownloadInfo'>mapStreamingResponse(res)<#elseif generateZodSchemas && method.returnType.zodSchema??>mapJsonResponse(res, ${method.returnType.zodSchema})<#else>mapJsonResponse<${method.returnType.name}>(res)</#if></#macro>
+<#t><#if method.returnTypeWrapper == 'Observable'>mapBlobResponse(res)<#elseif method.returnType.name == 'void'>mapVoidResponse(res)<#elseif method.returnType.name == 'string'>mapStringResponse(res)<#elseif method.returnType.name == 'DownloadInfo'>mapBlobResponse(res)<#elseif generateZodSchemas && method.returnType.zodSchema??>mapJsonResponse(res, ${method.returnType.zodSchema})<#else>mapJsonResponse<${method.returnType.name}>(res)</#if></#macro>
 <#-- -->
 <#-- -->
 <#macro url method state>
@@ -62,7 +62,7 @@ function baseUrl(state: State${model.basePaths[0].params?has_content?then(", ", 
 }
 <#list model.methods as method>
 
-export const ${method.name}Thunk: AsyncThunk<<#if method.returnTypeWrapper == 'Observable'>DownloadStreamDTO<Uint8Array><#else>${method.returnType.name}</#if>, <@methodParameterType method=method emptyParameterType="undefined"/>, ThunkConfig> = createAsyncThunk('${model.name}/${method.name}', async function(arg: <@methodParameterType method=method emptyParameterType="undefined"/>, thunkAPI): <#if method.returnTypeWrapper == 'Observable'>Promise<DownloadStreamDTO<Uint8Array>><#else>${method.returnTypeWrapper}<${method.returnType.name}></#if> {
+export const ${method.name}Thunk: AsyncThunk<<#if method.returnTypeWrapper == 'Observable'>Blob<#else>${method.returnType.name}</#if>, <@methodParameterType method=method emptyParameterType="undefined"/>, ThunkConfig> = createAsyncThunk('${model.name}/${method.name}', async function(arg: <@methodParameterType method=method emptyParameterType="undefined"/>, thunkAPI): <#if method.returnTypeWrapper == 'Observable'>Promise<Blob><#else>${method.returnTypeWrapper}<${method.returnType.name}></#if> {
     <#if method.parameters?has_content>
     const { ${method.parameters?map(param -> param.name)?join(", ")} } = arg;
     </#if>
@@ -117,7 +117,7 @@ export const ${method.name}Thunk: AsyncThunk<<#if method.returnTypeWrapper == 'O
  */
 export interface ${model.name} {
 <#list model.methods as method>
-    ${method.name}: (${method.parameters?has_content?then('args: ', '')}<@methodParameterType method=method emptyParameterType=""/>) => Promise<${(method.returnType.name == "DownloadInfo")?then("DownloadStreamDTO<Uint8Array>", method.returnType.name)}>;
+    ${method.name}: (${method.parameters?has_content?then('args: ', '')}<@methodParameterType method=method emptyParameterType=""/>) => Promise<${(method.returnTypeWrapper == "Observable")?then("Blob", method.returnType.name)}>;
 </#list>
 }
 

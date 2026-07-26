@@ -20,7 +20,6 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
 
     private static final String THUNK_OPTIONS = "ThunkOptions";
     private static final String SERVICE_COMMONS = "ReactServiceCommons";
-    private static final String DOWNLOAD_STREAM = "DownloadStreamDTO";
 
     public ReactClientGenerator(SourceFileGenerator fileGenerator,
                                 ReactClientGeneratorProperties properties) {
@@ -44,8 +43,7 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
                 new TypeScriptDependency("mapJsonResponse", utilityPackage() + "/react-service-commons.ts"),
                 new TypeScriptDependency("mapVoidResponse", utilityPackage() + "/react-service-commons.ts"),
                 new TypeScriptDependency("mapStringResponse", utilityPackage() + "/react-service-commons.ts"),
-                new TypeScriptDependency("mapStreamingResponse", utilityPackage() + "/react-service-commons.ts"),
-                new TypeScriptDependency("DownloadStreamDTO", utilityPackage() + "/download-stream.dto.ts"),
+                new TypeScriptDependency("mapBlobResponse", utilityPackage() + "/react-service-commons.ts"),
                 properties.getReduxThunkConfig()
         ).forEach(i -> addImport(i, importMap));
 
@@ -65,11 +63,6 @@ public class ReactClientGenerator extends TypescriptClientGenerator<ReactClientG
 
     public void generateUtilities() throws IOException {
         var packageName = utilityPackage().replace('/', '.');
-        if (!generatedClasses.contains(packageName + "." + DOWNLOAD_STREAM)) {
-            generatedClasses.add(packageName + "." + DOWNLOAD_STREAM);
-            processTemplate("download-stream.dto.ts.ftl", packageName, DOWNLOAD_STREAM, Map.of());
-        }
-
         if (!generatedClasses.contains(packageName + "." + THUNK_OPTIONS)) {
             generatedClasses.add(packageName + "." + THUNK_OPTIONS);
             processTemplate("thunk-options.ts.ftl", packageName, THUNK_OPTIONS, Map.of(
