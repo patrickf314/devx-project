@@ -12,4 +12,5 @@ public class AssertJAssertionModel {
     private String name;
     private Set<AssertJAssertModel> asserts = new LinkedHashSet<>();
     private Set<AssertJAssertThatMethodModel> assertThatMethods = new LinkedHashSet<>();
+    private Set<AssertJFactoryFieldModel> factoryFields = new LinkedHashSet<>();
 }

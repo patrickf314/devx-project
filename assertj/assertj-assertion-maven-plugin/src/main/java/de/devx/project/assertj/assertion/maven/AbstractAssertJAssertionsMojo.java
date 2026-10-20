@@ -4,6 +4,7 @@ import de.devx.project.assertj.assertion.gennerator.AssertJAssertionGenerator;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertionModel;
+import de.devx.project.assertj.assertion.gennerator.data.AssertJFactoryFieldModel;
 import de.devx.project.commons.generator.model.JavaClassModel;
 import de.devx.project.commons.maven.io.MavenJavaFileGenerator;
 import org.apache.maven.plugin.AbstractMojo;
@@ -12,6 +13,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,6 +39,7 @@ public abstract class AbstractAssertJAssertionsMojo extends AbstractMojo {
             model.setName(name);
             model.setAsserts(createAssertModels());
             model.setAssertThatMethods(createAssertThatMethodModels());
+            model.setFactoryFields(createFactoryFieldModels());
 
             generateAssertions(model);
             getLog().info("Generation of assertJ assertions completed.");
@@ -48,6 +51,10 @@ public abstract class AbstractAssertJAssertionsMojo extends AbstractMojo {
     protected abstract Set<AssertJAssertModel> createAssertModels() throws MojoExecutionException;
 
     protected abstract Set<AssertJAssertThatMethodModel> createAssertThatMethodModels() throws MojoExecutionException;
+
+    protected Set<AssertJFactoryFieldModel> createFactoryFieldModels() throws MojoExecutionException {
+        return new LinkedHashSet<>();
+    }
 
     private void generateAssertions(AssertJAssertionModel model) throws MojoExecutionException {
         getLog().debug("Generation assertions for model...");

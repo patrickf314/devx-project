@@ -4,6 +4,7 @@ import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertFieldModel
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertionModel;
+import de.devx.project.assertj.assertion.gennerator.data.AssertJFactoryFieldModel;
 import de.devx.project.assertj.assertion.gennerator.mapper.AssertJAssertMapper;
 import de.devx.project.commons.generator.model.JavaClassModel;
 import de.devx.project.commons.generator.model.JavaTypeArgumentModel;
@@ -15,11 +16,13 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 
 import static de.devx.project.commons.generator.model.JavaTypeModel.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit test for {@link AssertJAssertionGenerator}
@@ -637,6 +640,106 @@ class AssertJAssertionGeneratorTest {
                         "return ClubAssertions.assertThat(actual);",
                         "return BadmintonAssertions.assertThat(actual);"
                 );
+    }
+
+    @Test
+    void testMergedFactoriesWithClashingNames() throws IOException {
+        var club = "de.tsv.neubiberg.club.api.section.dto";
+        var badminton = "de.tsv.neubiberg.badminton.api.section.dto";
+        var model = new AssertJAssertionModel();
+        model.setPackageName("de.devx.project.assertj.assertion");
+        model.setName("MergedAssertions");
+        model.setFactoryFields(new LinkedHashSet<>(List.of(
+                factoryFieldModel(club, "ClubAssertions", "SectionDTO", null),
+                factoryFieldModel(club, "ClubAssertions", "MemberDTO", null),
+                factoryFieldModel(badminton, "BadmintonAssertions", "SectionDTO", null)
+        )));
+
+        sut.generateAssertions(model);
+
+        assertThat(sourceFileGenerator.getFileContent("de.devx.project.assertj.assertion", "MergedAssertions"))
+                .isPresent()
+                .get()
+                .asString()
+                .contains(
+                        "import org.assertj.core.api.InstanceOfAssertFactory;",
+                        "public static final InstanceOfAssertFactory<" + club + ".SectionDTO, " + club + ".SectionDTOAssert> CLUB_SECTION_DTO = ClubAssertions.SECTION_DTO;",
+                        "public static final InstanceOfAssertFactory<MemberDTO, MemberDTOAssert> MEMBER_DTO = ClubAssertions.MEMBER_DTO;",
+                        "public static final InstanceOfAssertFactory<" + badminton + ".SectionDTO, " + badminton + ".SectionDTOAssert> BADMINTON_SECTION_DTO = BadmintonAssertions.SECTION_DTO;",
+                        "{@link " + club + ".SectionDTO}"
+                );
+    }
+
+    @Test
+    void testMergedFactoriesWithConfiguredPrefix() throws IOException {
+        var model = new AssertJAssertionModel();
+        model.setPackageName("de.devx.project.assertj.assertion");
+        model.setName("MergedAssertions");
+        model.setFactoryFields(new LinkedHashSet<>(List.of(
+                factoryFieldModel("de.devx.club", "ClubAssertions", "SectionDTO", "verein"),
+                factoryFieldModel("de.devx.badminton", "BadmintonAssertions", "SectionDTO", null)
+        )));
+
+        sut.generateAssertions(model);
+
+        assertThat(sourceFileGenerator.getFileContent("de.devx.project.assertj.assertion", "MergedAssertions"))
+                .isPresent()
+                .get()
+                .asString()
+                .contains(
+                        "VEREIN_SECTION_DTO = ClubAssertions.SECTION_DTO;",
+                        "BADMINTON_SECTION_DTO = BadmintonAssertions.SECTION_DTO;"
+                );
+    }
+
+    @Test
+    void testMergedFactoriesWithUnresolvableClash() {
+        var model = new AssertJAssertionModel();
+        model.setPackageName("de.devx.project.assertj.assertion");
+        model.setName("MergedAssertions");
+        model.setFactoryFields(new LinkedHashSet<>(List.of(
+                factoryFieldModel("a.dto", "ClubAssertions", "SectionDTO", null),
+                factoryFieldModel("b.a.dto", "BadmintonAssertions", "SectionDTO", null)
+        )));
+
+        assertThatThrownBy(() -> sut.generateAssertions(model))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("SECTION_DTO")
+                .hasMessageContaining("factoryPrefixes");
+    }
+
+    @Test
+    void testOwnFactoryClashingWithMergedFactory() throws IOException {
+        var model = new AssertJAssertionModel();
+        model.setPackageName("de.devx.project.assertj.assertion");
+        model.setName("EntityAssertions");
+        model.setAsserts(new LinkedHashSet<>(List.of(assertModel("TestEntity"))));
+        model.setFactoryFields(new LinkedHashSet<>(List.of(
+                factoryFieldModel("de.devx.other", "OtherAssertions", "TestEntity", null)
+        )));
+
+        sut.generateAssertions(model);
+
+        assertThat(sourceFileGenerator.getFileContent("de.devx.project.assertj.assertion", "EntityAssertions"))
+                .isPresent()
+                .get()
+                .asString()
+                .contains(
+                        "public static final InstanceOfAssertFactory<TestEntity, TestEntityAssert> TEST_TEST_ENTITY = new InstanceOfAssertFactory<>(TestEntity.class, EntityAssertions::assertThat);",
+                        "OTHER_TEST_ENTITY = OtherAssertions.TEST_ENTITY;"
+                );
+    }
+
+    private AssertJFactoryFieldModel factoryFieldModel(String packageName, String assertionClass, String type, String prefix) {
+        var model = new AssertJFactoryFieldModel();
+        model.setAssertionClass(new JavaClassModel(packageName, assertionClass, emptyList(), emptyList()));
+        model.setFieldName(type.replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase(Locale.ROOT));
+        model.setType(objectType("org.assertj.core.api", "InstanceOfAssertFactory", List.of(
+                objectType(packageName, type),
+                objectType(packageName, type + "Assert")
+        )));
+        model.setPrefix(prefix);
+        return model;
     }
 
     private AssertJAssertThatMethodModel assertThatMethodModel(String packageName, String assertionClass, String type) {

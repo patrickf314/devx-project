@@ -1,5 +1,6 @@
 <#-- @ftlvariable name="model" type="de.devx.project.assertj.assertion.gennerator.data.AssertJAssertionModel" -->
 <#-- @ftlvariable name="imports" type="java.util.List<java.lang.String>" -->
+<#-- @ftlvariable name="factories" type="java.util.List<de.devx.project.assertj.assertion.gennerator.data.AssertJFactoryDefinition>" -->
 <#-- @ftlvariable name="types" type="de.devx.project.assertj.assertion.gennerator.JavaTypeNameResolver" -->
 package ${model.packageName};
 
@@ -12,12 +13,12 @@ import ${import};
  * allowing for typed asserts of objects
  */
 public class ${model.name} extends Assertions {
-<#list model.asserts?filter(assert -> !assert.typeArguments?has_content) as assert>
+<#list factories as factory>
 
     /**
-     * {@link InstanceOfAssertFactory} for a {@link ${assert.name}}.
+     * {@link InstanceOfAssertFactory} for a {@link ${factory.assertedType}}.
      */
-    public static final InstanceOfAssertFactory<${assert.name}, ${assert.assertName}> ${assert.factoryName} = new InstanceOfAssertFactory<>(${assert.name}.class, ${model.name}::assertThat);
+    public static final ${factory.type} ${factory.name} = ${factory.initializer};
 </#list>
 <#list model.asserts as assert>
 
