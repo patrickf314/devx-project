@@ -19,8 +19,10 @@ import org.mapstruct.factory.Mappers;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static de.devx.project.commons.generator.model.JavaTypeModel.genericTemplateType;
 import static de.devx.project.commons.generator.model.JavaTypeModel.objectType;
@@ -45,18 +47,18 @@ public class AssertJApiModelAssertionsMojo extends AbstractAssertJAssertionsMojo
     private List<String> artifactIds = Collections.emptyList();
 
     @Override
-    protected List<AssertJAssertModel> createAssertModels() throws MojoExecutionException {
+    protected Set<AssertJAssertModel> createAssertModels() throws MojoExecutionException {
         var parser = new MavenApiModelParser(getLog(), apiModelJson, project, this::isArtifactIncluded);
         return parser.requireApiModels()
                 .stream()
                 .flatMap(model -> model.getDtos().values().stream())
                 .map(this::mapToModel)
-                .toList();
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
-    protected List<AssertJAssertThatMethodModel> createAssertThatMethodModels() {
-        return Collections.emptyList();
+    protected Set<AssertJAssertThatMethodModel> createAssertThatMethodModels() {
+        return Collections.emptySet();
     }
 
     private AssertJAssertModel mapToModel(ApiDTOModel apiModel) {

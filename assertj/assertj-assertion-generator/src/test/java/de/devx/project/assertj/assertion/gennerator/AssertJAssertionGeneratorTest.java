@@ -2,8 +2,10 @@ package de.devx.project.assertj.assertion.gennerator;
 
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertFieldModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
+import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertThatMethodModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertionModel;
 import de.devx.project.assertj.assertion.gennerator.mapper.AssertJAssertMapper;
+import de.devx.project.commons.generator.model.JavaClassModel;
 import de.devx.project.commons.generator.model.JavaTypeArgumentModel;
 import de.devx.project.commons.generator.model.JavaTypeModel;
 import de.devx.project.commons.test.io.TestSourceFileGenerator;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import static de.devx.project.commons.generator.model.JavaTypeModel.*;
@@ -39,7 +42,7 @@ class AssertJAssertionGeneratorTest {
         var model = new AssertJAssertionModel();
         model.setPackageName("de.devx.project.assertj.assertion");
         model.setName("EntityAssertions");
-        model.setAsserts(List.of(assertModel("TestEntity"), assertModel("AnotherTestEntity")));
+        model.setAsserts(new LinkedHashSet<>(List.of(assertModel("TestEntity"), assertModel("AnotherTestEntity"))));
 
         sut.generateAssertions(model);
 
@@ -108,7 +111,7 @@ class AssertJAssertionGeneratorTest {
         var model = new AssertJAssertionModel();
         model.setPackageName("de.devx.project.assertj.assertion");
         model.setName("EntityAssertions");
-        model.setAsserts(List.of(genericAssertModel()));
+        model.setAsserts(new LinkedHashSet<>(List.of(genericAssertModel())));
 
         sut.generateAssertions(model);
 
@@ -599,6 +602,51 @@ class AssertJAssertionGeneratorTest {
                                 return this.myself;
                             }
                         }""");
+    }
+
+    @Test
+    void testMergedAssertionsWithClashingSimpleNames() throws IOException {
+        var model = new AssertJAssertionModel();
+        model.setPackageName("de.devx.project.assertj.assertion");
+        model.setName("MergedAssertions");
+        model.setAssertThatMethods(new LinkedHashSet<>(List.of(
+                assertThatMethodModel("de.devx.project.club", "ClubAssertions", "SectionDTO"),
+                assertThatMethodModel("de.devx.project.club", "ClubAssertions", "MemberDTO"),
+                assertThatMethodModel("de.devx.project.badminton", "BadmintonAssertions", "SectionDTO")
+        )));
+
+        sut.generateAssertions(model);
+
+        assertThat(sourceFileGenerator.getFileContent("de.devx.project.assertj.assertion", "MergedAssertions"))
+                .isPresent()
+                .get()
+                .asString()
+                .contains("""
+                        import de.devx.project.badminton.BadmintonAssertions;
+                        import de.devx.project.club.ClubAssertions;
+                        import de.devx.project.club.MemberDTO;
+                        import de.devx.project.club.MemberDTOAssert;
+                        import org.assertj.core.api.Assertions;
+                        
+                        """)
+                .doesNotContain("import de.devx.project.club.SectionDTO;", "import de.devx.project.badminton.SectionDTO;")
+                .contains(
+                        "public static de.devx.project.club.SectionDTOAssert assertThat(de.devx.project.club.SectionDTO actual) {",
+                        "public static de.devx.project.badminton.SectionDTOAssert assertThat(de.devx.project.badminton.SectionDTO actual) {",
+                        "public static MemberDTOAssert assertThat(MemberDTO actual) {",
+                        "return ClubAssertions.assertThat(actual);",
+                        "return BadmintonAssertions.assertThat(actual);"
+                );
+    }
+
+    private AssertJAssertThatMethodModel assertThatMethodModel(String packageName, String assertionClass, String type) {
+        var model = new AssertJAssertThatMethodModel();
+        model.setName("assertThat");
+        model.setAssertionClass(new JavaClassModel(packageName, assertionClass, emptyList(), emptyList()));
+        model.setType(objectType(packageName, type));
+        model.setAssertType(objectType(packageName, type + "Assert"));
+        model.setTypeArguments(emptyList());
+        return model;
     }
 
     private AssertJAssertModel genericAssertModel() {

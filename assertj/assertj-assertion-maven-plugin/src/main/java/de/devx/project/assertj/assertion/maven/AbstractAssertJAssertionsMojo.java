@@ -13,6 +13,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractAssertJAssertionsMojo extends AbstractMojo {
 
@@ -44,9 +45,9 @@ public abstract class AbstractAssertJAssertionsMojo extends AbstractMojo {
         }
     }
 
-    protected abstract List<AssertJAssertModel> createAssertModels() throws MojoExecutionException;
+    protected abstract Set<AssertJAssertModel> createAssertModels() throws MojoExecutionException;
 
-    protected abstract List<AssertJAssertThatMethodModel> createAssertThatMethodModels() throws MojoExecutionException;
+    protected abstract Set<AssertJAssertThatMethodModel> createAssertThatMethodModels() throws MojoExecutionException;
 
     private void generateAssertions(AssertJAssertionModel model) throws MojoExecutionException {
         getLog().debug("Generation assertions for model...");

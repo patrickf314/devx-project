@@ -1,0 +1,31 @@
+{
+  "install": [
+    {
+      "type": "mise",
+      "toml": "./mise.toml"
+    },
+    {
+      "type": "maven",
+      "artifact": "org.apache.maven.plugins:maven-failsafe-plugin:3.6.0"
+    },
+    {
+      "type": "maven",
+      "artifact": "org.apache.maven.surefire:surefire-junit-platform:3.6.0"
+    },
+    {
+      "type": "maven",
+      "artifact": "org.junit.platform:junit-platform-launcher:6.0.3"
+    },
+    {
+      "type": "script",
+      "script": "mvn clean install -DskipTests -T1C"
+    }
+  ],
+  "secrets": {
+    "CLAUDE_CODE_OAUTH_TOKEN": "op://Private/Claude Token/password"
+  },
+  "claude": {
+    "model": "opus",
+    "settings": "~/.claude/settings.json"
+  }
+}

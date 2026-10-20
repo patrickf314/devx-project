@@ -42,11 +42,17 @@ public class AssertJAssertModel {
         return name.replace('.', '$') + "Assert";
     }
 
-    public Stream<String> asJavaImport(String currentPackage) {
+    /**
+     * @return the name of the root level class, e.g. TestEntity for TestEntity.NestedEntity
+     */
+    public String getRootName() {
         var i = name.indexOf('.');
-        var rootName = i == -1 ? name : name.substring(0, i);
+        return i == -1 ? name : name.substring(0, i);
+    }
+
+    public Stream<String> asJavaImport(String currentPackage) {
         return Stream.concat(
-                ImportUtils.asJavaImport(currentPackage, packageName, rootName).stream(),
+                ImportUtils.asJavaImport(currentPackage, packageName, getRootName()).stream(),
                 typeArguments.stream().flatMap(t -> t.streamImports(currentPackage))
         );
     }

@@ -1,5 +1,6 @@
 <#-- @ftlvariable name="model" type="de.devx.project.assertj.assertion.gennerator.data.AssertJAssertionModel" -->
 <#-- @ftlvariable name="imports" type="java.util.List<java.lang.String>" -->
+<#-- @ftlvariable name="types" type="de.devx.project.assertj.assertion.gennerator.JavaTypeNameResolver" -->
 package ${model.packageName};
 
 <#list imports as import>
@@ -33,13 +34,13 @@ public class ${model.name} extends Assertions {
 <#list model.assertThatMethods as assertThatMethod>
 
     /**
-    * Transitive method for {@link ${assertThatMethod.assertionClass.name}#${assertThatMethod.name}(${assertThatMethod.type.qualifiedTypeName})}.
+    * Transitive method for {@link ${types.className(assertThatMethod.assertionClass)}#${assertThatMethod.name}(${types.type(assertThatMethod.type)})}.
     *
     * @param actual the actual object
     * @return the typed assert
     */
-    public static<#if assertThatMethod.typeArguments?has_content> <${assertThatMethod.typeArguments?map(typeArgument -> typeArgument.definition)?join(", ")}></#if> ${assertThatMethod.assertType.qualifiedTypeName} ${assertThatMethod.name}(${assertThatMethod.type.qualifiedTypeName} actual) {
-        return ${assertThatMethod.assertionClass.name}.${assertThatMethod.name}(actual);
+    public static<#if assertThatMethod.typeArguments?has_content> <${assertThatMethod.typeArguments?map(typeArgument -> types.typeArgument(typeArgument))?join(", ")}></#if> ${types.type(assertThatMethod.assertType)} ${assertThatMethod.name}(${types.type(assertThatMethod.type)} actual) {
+        return ${types.className(assertThatMethod.assertionClass)}.${assertThatMethod.name}(actual);
     }
 </#list>
 }

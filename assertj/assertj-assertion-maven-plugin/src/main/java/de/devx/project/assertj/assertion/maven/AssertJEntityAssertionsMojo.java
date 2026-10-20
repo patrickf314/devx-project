@@ -14,7 +14,9 @@ import org.mapstruct.factory.Mappers;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Mojo(
@@ -27,7 +29,7 @@ public class AssertJEntityAssertionsMojo extends AbstractAssertJAssertionsMojo {
 
     private static final AssertJAssertMapper MAPPER = Mappers.getMapper(AssertJAssertMapper.class);
 
-    protected List<AssertJAssertModel> createAssertModels() throws MojoExecutionException {
+    protected Set<AssertJAssertModel> createAssertModels() throws MojoExecutionException {
         getLog().debug("Creating assert models...");
 
         try {
@@ -37,14 +39,14 @@ public class AssertJEntityAssertionsMojo extends AbstractAssertJAssertionsMojo {
                             parser.getClassesAnnotatedWith("Entity").stream()
                     )
                     .map(MAPPER::mapToAssert)
-                    .toList();
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
         } catch (IOException | DependencyResolutionRequiredException ex) {
             throw new MojoExecutionException("Failed to create assert models.", ex);
         }
     }
 
     @Override
-    protected List<AssertJAssertThatMethodModel> createAssertThatMethodModels() {
-        return Collections.emptyList();
+    protected Set<AssertJAssertThatMethodModel> createAssertThatMethodModels() {
+        return Collections.emptySet();
     }
 }

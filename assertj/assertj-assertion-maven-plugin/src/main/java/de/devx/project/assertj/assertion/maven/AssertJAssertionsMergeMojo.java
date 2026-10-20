@@ -17,7 +17,10 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Mojo(
         name = "merge-assertj-assertions",
@@ -31,14 +34,14 @@ public class AssertJAssertionsMergeMojo extends AbstractAssertJAssertionsMojo {
     private List<String> assertions;
 
     @Override
-    protected List<AssertJAssertModel> createAssertModels() {
-        return Collections.emptyList();
+    protected Set<AssertJAssertModel> createAssertModels() {
+        return Collections.emptySet();
     }
 
     @Override
-    protected List<AssertJAssertThatMethodModel> createAssertThatMethodModels() throws MojoExecutionException {
+    protected Set<AssertJAssertThatMethodModel> createAssertThatMethodModels() throws MojoExecutionException {
         try {
-            var models = new ArrayList<AssertJAssertThatMethodModel>();
+            var models = new LinkedHashSet<AssertJAssertThatMethodModel>();
             var parser = new MavenSourceFileParser(project, new MavenLogger(getLog()));
             var classLoader = new MavenProjectClassLoader(project);
             for (var assertion : assertions) {
@@ -53,7 +56,7 @@ public class AssertJAssertionsMergeMojo extends AbstractAssertJAssertionsMojo {
         }
     }
 
-    private List<AssertJAssertThatMethodModel> createAssertThatMethodModels(String assertion, MavenSourceFileParser parser, MavenProjectClassLoader classLoader) {
+    private Set<AssertJAssertThatMethodModel> createAssertThatMethodModels(String assertion, MavenSourceFileParser parser, MavenProjectClassLoader classLoader) {
         var assertionClass = parser.getClass(assertion)
                 .orElseGet(() -> classLoader.getClass(assertion));
 
@@ -62,7 +65,7 @@ public class AssertJAssertionsMergeMojo extends AbstractAssertJAssertionsMojo {
                 .filter(JavaClassMethodModel::isStatic)
                 .filter(m -> m.getName().startsWith("assert") && m.getParameterCount() == 1)
                 .map(m -> mapToModel(assertionClass, m))
-                .toList();
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private AssertJAssertThatMethodModel mapToModel(JavaClassModel assertionClass, JavaClassMethodModel methodDeclaration) {

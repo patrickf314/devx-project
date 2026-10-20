@@ -4,7 +4,6 @@ import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertFieldModel
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertModel;
 import de.devx.project.assertj.assertion.gennerator.data.AssertJAssertionModel;
 import de.devx.project.commons.generator.io.SourceFileGenerator;
-import de.devx.project.commons.generator.model.JavaTypeArgumentModel;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 
@@ -12,12 +11,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static de.devx.project.commons.generator.utils.ImportUtils.asJavaImport;
 import static de.devx.project.commons.generator.utils.ImportUtils.combineJavaImports;
 
 public class AssertJAssertionGenerator {
@@ -53,10 +50,11 @@ public class AssertJAssertionGenerator {
                 additionalImports = Stream.concat(additionalImports, Stream.of("org.assertj.core.api.InstanceOfAssertFactory"));
             }
 
-            var imports = getImports(model, additionalImports);
+            var types = createTypeNameResolver(model, additionalImports);
             configuration.getTemplate("AssertjAssertions.ftl").process(Map.of(
                     "model", model,
-                    "imports", imports
+                    "imports", types.getImports(),
+                    "types", types
             ), writer);
         } catch (TemplateException e) {
             throw new IOException("Failed to process template", e);
@@ -121,27 +119,33 @@ public class AssertJAssertionGenerator {
         );
     }
 
-    private List<String> getImports(AssertJAssertionModel model, Stream<String> additionalImports) {
-        return combineJavaImports(
+    private JavaTypeNameResolver createTypeNameResolver(AssertJAssertionModel model, Stream<String> additionalImports) {
+        var requiredTypes = Stream.concat(
+                additionalImports,
                 model.getAsserts()
                         .stream()
-                        .flatMap(m -> combineJavaImports(
-                                m.asJavaImport(model.getPackageName()),
-                                asJavaImport(model.getPackageName(), m.getPackageName(), m.getAssertName()).stream()
-                        ).stream()),
-                model.getAssertThatMethods()
-                        .stream()
-                        .flatMap(m -> combineJavaImports(
-                                m.getType().streamImports(model.getPackageName()),
-                                m.getAssertType().streamImports(model.getPackageName()),
+                        .flatMap(m -> Stream.concat(
+                                Stream.of(m.getPackageName() + "." + m.getRootName(), m.getPackageName() + "." + m.getAssertName()),
                                 m.getTypeArguments()
                                         .stream()
-                                        .map(JavaTypeArgumentModel::getTypeConstraint)
-                                        .flatMap(Optional::stream)
-                                        .flatMap(typeModel -> typeModel.streamImports(m.getName())),
-                                asJavaImport(model.getPackageName(), m.getAssertionClass()).stream()
-                        ).stream()),
-                additionalImports
-        );
+                                        .flatMap(t -> t.getTypeConstraint().stream())
+                                        .flatMap(JavaTypeNameResolver::streamQualifiedNames)
+                        ))
+        ).toList();
+
+        var optionalTypes = model.getAssertThatMethods()
+                .stream()
+                .flatMap(m -> Stream.of(
+                        JavaTypeNameResolver.streamQualifiedNames(m.getType()),
+                        JavaTypeNameResolver.streamQualifiedNames(m.getAssertType()),
+                        m.getTypeArguments()
+                                .stream()
+                                .flatMap(t -> t.getTypeConstraint().stream())
+                                .flatMap(JavaTypeNameResolver::streamQualifiedNames),
+                        Stream.of(m.getAssertionClass().getFullyQualifiedName())
+                ).flatMap(Function.identity()))
+                .toList();
+
+        return new JavaTypeNameResolver(model.getPackageName(), model.getName(), requiredTypes, optionalTypes);
     }
 }
